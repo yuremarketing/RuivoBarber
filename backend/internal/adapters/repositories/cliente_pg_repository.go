@@ -7,6 +7,7 @@ import (
     "math/rand"
     "time"
     "ruivobarber-api/internal/core/domain"
+    "ruivobarber-api/internal/core/ports"
 )
 
 type ClientePgRepository struct {
@@ -70,11 +71,11 @@ func (r *ClientePgRepository) Save(c *domain.Cliente) error {
     return err
 }
 
-func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) error {
+func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) (*ports.NotificationEvent, error) {
     ctx := context.Background()
     tx, err := r.db.BeginTx(ctx, nil)
     if err != nil {
-        return err
+        return nil, err
     }
     defer tx.Rollback()
 
@@ -83,18 +84,25 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) error {
     var status string
     err = tx.QueryRowContext(ctx, "SELECT clienteid, servicoid, status FROM Agendamentos WHERE id = $1 FOR UPDATE", agendamentoID).Scan(&clienteID, &servicoID, &status)
     if err != nil {
-        return err
+        return nil, err
     }
 
     if status == "Concluido" {
-        return errors.New("agendamento já concluído")
+        return nil, errors.New("agendamento já concluído")
+    }
+
+    // Obter nome do cliente
+    var clienteNome string
+    err = tx.QueryRowContext(ctx, "SELECT nome FROM Usuarios WHERE id = $1", clienteID).Scan(&clienteNome)
+    if err != nil {
+        return nil, err
     }
 
     // 2. Obter XP de recompensa do Serviço
     var xpRecompensa int
     err = tx.QueryRowContext(ctx, "SELECT xprecompensa FROM Servicos WHERE id = $1", servicoID).Scan(&xpRecompensa)
     if err != nil {
-        return err
+        return nil, err
     }
 
     // 3. Buscar produtos associados ao serviço e dar baixa no estoque
@@ -104,7 +112,7 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) error {
     }
     rows, err := tx.QueryContext(ctx, "SELECT produtoid, quantidadenecessaria FROM ServicoProdutos WHERE servicoid = $1", servicoID)
     if err != nil {
-        return err
+        return nil, err
     }
     defer rows.Close()
 
@@ -112,7 +120,7 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) error {
     for rows.Next() {
         var sp ServicoProduto
         if err := rows.Scan(&sp.ProdutoID, &sp.QuantidadeNecessaria); err != nil {
-            return err
+            return nil, err
         }
         produtos = append(produtos, sp)
     }
@@ -121,14 +129,14 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) error {
         _, err = tx.ExecContext(ctx, "UPDATE Produtos SET quantidade = quantidade - $1 WHERE id = $2", p.QuantidadeNecessaria, p.ProdutoID)
         if err != nil {
             // Se falhar (ex: quantidade < 0 CHECK constraint), a transação falha e o rollback é executado.
-            return err
+            return nil, err
         }
     }
 
     // 4. Atualizar status do agendamento
     _, err = tx.ExecContext(ctx, "UPDATE Agendamentos SET status = 'Concluido' WHERE id = $1", agendamentoID)
     if err != nil {
-        return err
+        return nil, err
     }
 
     // 5. Atualizar ou Criar ProgressoCliente e calcular XP/Nivel
@@ -141,7 +149,7 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) error {
             nivelAtual = 1
             progressoExiste = false
         } else {
-            return err
+            return nil, err
         }
     } else {
         progressoExiste = true
@@ -152,28 +160,31 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) error {
     // Carregar níveis para cálculo de nível atual e barra percentual
     type NivelInfo struct {
         ID           int
+        NomeDoNivel  string
         XpNecessario int
     }
-    rowsNiveis, err := tx.QueryContext(ctx, "SELECT id, xpnecessario FROM Niveis ORDER BY xpnecessario ASC")
+    rowsNiveis, err := tx.QueryContext(ctx, "SELECT id, nomedonivel, xpnecessario FROM Niveis ORDER BY xpnecessario ASC")
     if err != nil {
-        return err
+        return nil, err
     }
     defer rowsNiveis.Close()
 
     var niveis []NivelInfo
     for rowsNiveis.Next() {
         var n NivelInfo
-        if err := rowsNiveis.Scan(&n.ID, &n.XpNecessario); err != nil {
-            return err
+        if err := rowsNiveis.Scan(&n.ID, &n.NomeDoNivel, &n.XpNecessario); err != nil {
+            return nil, err
         }
         niveis = append(niveis, n)
     }
 
     // Determinar o nível atual
     calculatedNivel := 1 // Default
+    nivelNome := "Corte Iniciante"
     for _, l := range niveis {
         if xpAtual >= l.XpNecessario {
             calculatedNivel = l.ID
+            nivelNome = l.NomeDoNivel
         }
     }
 
@@ -204,10 +215,24 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) error {
         _, err = tx.ExecContext(ctx, "INSERT INTO ProgressoCliente (clienteid, xpatual, nivelatual, barrapercentual) VALUES ($1, $2, $3, $4)", clienteID, xpAtual, calculatedNivel, pct)
     }
     if err != nil {
-        return err
+        return nil, err
     }
 
-    return tx.Commit()
+    err = tx.Commit()
+    if err != nil {
+        return nil, err
+    }
+
+    subiuNivelMax := (nivelNome == "Lenda da Navalha" || nivelNome == "Rei da Cadeira")
+
+    return &ports.NotificationEvent{
+        ClienteID:     clienteID,
+        ClienteNome:   clienteNome,
+        XpGanhado:     xpRecompensa,
+        XpTotal:       xpAtual,
+        NivelNome:     nivelNome,
+        SubiuNivelMax: subiuNivelMax,
+    }, nil
 }
 
 func (r *ClientePgRepository) RegistrarFalta(agendamentoID int) error {

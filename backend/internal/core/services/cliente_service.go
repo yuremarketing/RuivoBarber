@@ -6,11 +6,12 @@ import (
 )
 
 type ClienteService struct {
-    repo ports.ClienteRepository
+    repo     ports.ClienteRepository
+    notifier ports.NotificationService
 }
 
-func NewClienteService(repo ports.ClienteRepository) *ClienteService {
-    return &ClienteService{repo: repo}
+func NewClienteService(repo ports.ClienteRepository, notifier ports.NotificationService) *ClienteService {
+    return &ClienteService{repo: repo, notifier: notifier}
 }
 
 func (s *ClienteService) ListarClientes() ([]domain.Cliente, error) {
@@ -22,7 +23,12 @@ func (s *ClienteService) BuscarCliente(id int) (*domain.Cliente, error) {
 }
 
 func (s *ClienteService) ConcluirAtendimento(agendamentoID int) error {
-    return s.repo.ConcluirAtendimento(agendamentoID)
+    event, err := s.repo.ConcluirAtendimento(agendamentoID)
+    if err != nil {
+        return err
+    }
+    s.notifier.EnqueueNotification(*event)
+    return nil
 }
 
 func (s *ClienteService) RegistrarFalta(agendamentoID int) error {

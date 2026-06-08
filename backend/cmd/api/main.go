@@ -39,8 +39,11 @@ func main() {
     }
     log.Println("✅ Conectado ao PostgreSQL com sucesso")
 
+    notificationService := services.NewNotificationService()
+    notificationService.StartWorker()
+
     clienteRepo := repositories.NewClientePgRepository(db)
-    clienteService := services.NewClienteService(clienteRepo)
+    clienteService := services.NewClienteService(clienteRepo, notificationService)
     clienteHandler := handlers.NewClienteHandler(clienteService)
 
     app := fiber.New(fiber.Config{AppName: "RuivoBarber API v1.0"})
