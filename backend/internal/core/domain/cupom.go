@@ -16,3 +16,7 @@ type Cupom struct {
     Usado           bool      `json:"usado"`
     ValidoAte       time.Time `json:"valido_ate"`
 }
+
+type ValidarCupomRequest struct {
+    Codigo string `json:"codigo"`
+}

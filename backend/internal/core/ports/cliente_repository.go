@@ -9,4 +9,5 @@ type ClienteRepository interface {
     ConcluirAtendimento(agendamentoID int) error
     RegistrarFalta(agendamentoID int) error
     ResgatarCupom(clienteID, nivelID int) (*domain.Cupom, error)
+    ValidarCupom(codigo string) (*domain.Cupom, error)
 }

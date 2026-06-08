@@ -30,8 +30,8 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 - [x] **Criar Rota de Resgate Manual (`POST /api/v1/cupons/resgatar`)**
   - [x] Validar se o `XPAtual` do cliente atinge o exigido pelo nível.
   - [x] Gerar código único de desconto vinculado ao `ClienteID`.
-- [ ] **Criar Rota de Validação Admin (`POST /api/v1/cupons/validar`)**
-  - [ ] Consultar e invalidar o cupom assim que ele for inserido no pagamento na barbearia.
+- [x] **Criar Rota de Validação Admin (`POST /api/v1/cupons/validar`)**
+  - [x] Consultar e invalidar o cupom assim que ele for inserido no pagamento na barbearia.
 
 ### 📱 Mensageria (Notificações)
 - [ ] Criar `NotificationWorker` assíncrono para integração com o WhatsApp.

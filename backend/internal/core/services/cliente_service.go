@@ -33,5 +33,9 @@ func (s *ClienteService) ResgatarCupom(clienteID, nivelID int) (*domain.Cupom, e
     return s.repo.ResgatarCupom(clienteID, nivelID)
 }
 
+func (s *ClienteService) ValidarCupom(codigo string) (*domain.Cupom, error) {
+    return s.repo.ValidarCupom(codigo)
+}
+
 
 

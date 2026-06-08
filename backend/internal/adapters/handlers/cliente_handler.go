@@ -25,6 +25,7 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
     api.Post("/atendimentos/concluir", h.ConcluirAtendimento)
     api.Post("/atendimentos/falta", h.RegistrarFalta)
     api.Post("/cupons/resgatar", h.ResgatarCupom)
+    api.Post("/cupons/validar", h.ValidarCupom)
     api.Get("/health", func(c *fiber.Ctx) error {
         return c.JSON(fiber.Map{"status": "ok", "service": "RuivoBarber API"})
     })
@@ -121,6 +122,31 @@ func (h *ClienteHandler) ResgatarCupom(c *fiber.Ctx) error {
 
     cupom, err := h.service.ResgatarCupom(req.ClienteID, req.NivelID)
     if err != nil {
+        return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+    }
+
+    return c.JSON(cupom)
+}
+
+func (h *ClienteHandler) ValidarCupom(c *fiber.Ctx) error {
+    if err := infra.Wait(context.Background()); err != nil {
+        return c.Status(429).JSON(fiber.Map{"error": "Too Many Requests"})
+    }
+
+    var req domain.ValidarCupomRequest
+    if err := c.BodyParser(&req); err != nil {
+        return c.Status(400).JSON(fiber.Map{"error": "corpo da requisição inválido"})
+    }
+
+    if req.Codigo == "" {
+        return c.Status(400).JSON(fiber.Map{"error": "codigo inválido"})
+    }
+
+    cupom, err := h.service.ValidarCupom(req.Codigo)
+    if err != nil {
+        if err.Error() == "cupom não encontrado" {
+            return c.Status(404).JSON(fiber.Map{"error": err.Error()})
+        }
         return c.Status(400).JSON(fiber.Map{"error": err.Error()})
     }
 

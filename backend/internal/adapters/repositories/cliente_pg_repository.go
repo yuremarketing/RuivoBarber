@@ -425,3 +425,47 @@ func (r *ClientePgRepository) ResgatarCupom(clienteID, nivelID int) (*domain.Cup
         ValidoAte:       validoAte,
     }, nil
 }
+
+func (r *ClientePgRepository) ValidarCupom(codigo string) (*domain.Cupom, error) {
+    ctx := context.Background()
+    tx, err := r.db.BeginTx(ctx, nil)
+    if err != nil {
+        return nil, err
+    }
+    defer tx.Rollback()
+
+    // 1. Buscar e bloquear o cupom
+    var c domain.Cupom
+    err = tx.QueryRowContext(ctx, "SELECT id, codigo, descricao, descontopercent, clienteid, usado, validoate FROM Cupons WHERE codigo = $1 FOR UPDATE", codigo).Scan(
+        &c.ID, &c.Codigo, &c.Descricao, &c.DescontoPercent, &c.ClienteID, &c.Usado, &c.ValidoAte,
+    )
+    if err != nil {
+        if errors.Is(err, sql.ErrNoRows) {
+            return nil, errors.New("cupom não encontrado")
+        }
+        return nil, err
+    }
+
+    // 2. Verificar estado do cupom
+    if c.Usado {
+        return nil, errors.New("este cupom já foi utilizado")
+    }
+
+    if time.Now().After(c.ValidoAte) {
+        return nil, errors.New("cupom expirado")
+    }
+
+    // 3. Invalidar o cupom (definir usado = TRUE)
+    _, err = tx.ExecContext(ctx, "UPDATE Cupons SET usado = TRUE WHERE id = $1", c.ID)
+    if err != nil {
+        return nil, err
+    }
+
+    err = tx.Commit()
+    if err != nil {
+        return nil, err
+    }
+
+    c.Usado = true
+    return &c, nil
+}
