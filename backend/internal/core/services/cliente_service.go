@@ -29,5 +29,9 @@ func (s *ClienteService) RegistrarFalta(agendamentoID int) error {
     return s.repo.RegistrarFalta(agendamentoID)
 }
 
+func (s *ClienteService) ResgatarCupom(clienteID, nivelID int) (*domain.Cupom, error) {
+    return s.repo.ResgatarCupom(clienteID, nivelID)
+}
+
 
 

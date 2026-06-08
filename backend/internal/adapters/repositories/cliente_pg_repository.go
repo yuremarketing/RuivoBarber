@@ -4,6 +4,8 @@ import (
     "context"
     "database/sql"
     "errors"
+    "math/rand"
+    "time"
     "ruivobarber-api/internal/core/domain"
 )
 
@@ -315,4 +317,111 @@ func (r *ClientePgRepository) RegistrarFalta(agendamentoID int) error {
     }
 
     return tx.Commit()
+}
+
+func generateRandomCode(prefix string) string {
+    const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
+    b := make([]byte, 6)
+    for i := range b {
+        b[i] = charset[seededRand.Intn(len(charset))]
+    }
+    return prefix + "-" + string(b)
+}
+
+func (r *ClientePgRepository) ResgatarCupom(clienteID, nivelID int) (*domain.Cupom, error) {
+    ctx := context.Background()
+    tx, err := r.db.BeginTx(ctx, nil)
+    if err != nil {
+        return nil, err
+    }
+    defer tx.Rollback()
+
+    // 1. Obter progresso do cliente
+    var xpAtual int
+    err = tx.QueryRowContext(ctx, "SELECT xpatual FROM ProgressoCliente WHERE clienteid = $1 FOR UPDATE", clienteID).Scan(&xpAtual)
+    if err != nil {
+        if errors.Is(err, sql.ErrNoRows) {
+            return nil, errors.New("cliente sem progresso registrado (XP zero)")
+        }
+        return nil, err
+    }
+
+    // 2. Buscar nível alvo
+    var nomeDoNivel, bonus string
+    var xpNecessario int
+    err = tx.QueryRowContext(ctx, "SELECT nomedonivel, xpnecessario, bonus FROM Niveis WHERE id = $1", nivelID).Scan(&nomeDoNivel, &xpNecessario, &bonus)
+    if err != nil {
+        if errors.Is(err, sql.ErrNoRows) {
+            return nil, errors.New("nível não encontrado")
+        }
+        return nil, err
+    }
+
+    // 3. Validar elegibilidade
+    if xpAtual < xpNecessario {
+        return nil, errors.New("XP insuficiente para resgatar a recompensa deste nível")
+    }
+
+    if nivelID == 1 {
+        return nil, errors.New("este nível não possui cupom de recompensa")
+    }
+
+    // 4. Prevenir resgate duplicado
+    descricaoRecompensa := "Recompensa de Nível: " + nomeDoNivel
+    var count int
+    err = tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM Cupons WHERE clienteid = $1 AND descricao = $2", clienteID, descricaoRecompensa).Scan(&count)
+    if err != nil {
+        return nil, err
+    }
+    if count > 0 {
+        return nil, errors.New("recompensa deste nível já resgatada")
+    }
+
+    // 5. Mapear o desconto percentual
+    var descontoPercent float64
+    var prefixCode string
+    switch nivelID {
+    case 2:
+        descontoPercent = 5.00
+        prefixCode = "BARBA5"
+    case 3:
+        descontoPercent = 10.00
+        prefixCode = "LENDA10"
+    case 4:
+        descontoPercent = 100.00
+        prefixCode = "REI100"
+    default:
+        descontoPercent = 0.00
+        prefixCode = "DESCONTO"
+    }
+
+    // 6. Gerar código único e inserir
+    codigoCupom := generateRandomCode(prefixCode)
+    validoAte := time.Now().AddDate(0, 0, 30)
+
+    var cupomID int
+    err = tx.QueryRowContext(ctx, `
+        INSERT INTO Cupons (codigo, descricao, descontopercent, clienteid, usado, validoate)
+        VALUES ($1, $2, $3, $4, FALSE, $5)
+        RETURNING id
+    `, codigoCupom, descricaoRecompensa, descontoPercent, clienteID, validoAte).Scan(&cupomID)
+    if err != nil {
+        return nil, err
+    }
+
+    err = tx.Commit()
+    if err != nil {
+        return nil, err
+    }
+
+    return &domain.Cupom{
+        ID:              cupomID,
+        Codigo:          codigoCupom,
+        Descricao:       descricaoRecompensa,
+        DescontoPercent: descontoPercent,
+        ClienteID:       clienteID,
+        Usado:           false,
+        ValidoAte:       validoAte,
+    }, nil
 }

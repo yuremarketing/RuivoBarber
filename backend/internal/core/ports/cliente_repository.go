@@ -8,4 +8,5 @@ type ClienteRepository interface {
     Save(c *domain.Cliente) error
     ConcluirAtendimento(agendamentoID int) error
     RegistrarFalta(agendamentoID int) error
+    ResgatarCupom(clienteID, nivelID int) (*domain.Cupom, error)
 }

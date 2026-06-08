@@ -27,9 +27,9 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
   - [x] Mapear JSON integrando o LEFT JOIN para expor "xp" numérico e a string "nivel" (ex: "Barba de Respeito").
 
 ### 🎟️ Gestão de Cupons
-- [ ] **Criar Rota de Resgate Manual (`POST /api/v1/cupons/resgatar`)**
-  - [ ] Validar se o `XPAtual` do cliente atinge o exigido pelo nível.
-  - [ ] Gerar código único de desconto vinculado ao `ClienteID`.
+- [x] **Criar Rota de Resgate Manual (`POST /api/v1/cupons/resgatar`)**
+  - [x] Validar se o `XPAtual` do cliente atinge o exigido pelo nível.
+  - [x] Gerar código único de desconto vinculado ao `ClienteID`.
 - [ ] **Criar Rota de Validação Admin (`POST /api/v1/cupons/validar`)**
   - [ ] Consultar e invalidar o cupom assim que ele for inserido no pagamento na barbearia.
 

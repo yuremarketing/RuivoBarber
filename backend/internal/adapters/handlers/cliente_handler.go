@@ -24,6 +24,7 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
     api.Get("/clientes/:id", h.BuscarCliente)
     api.Post("/atendimentos/concluir", h.ConcluirAtendimento)
     api.Post("/atendimentos/falta", h.RegistrarFalta)
+    api.Post("/cupons/resgatar", h.ResgatarCupom)
     api.Get("/health", func(c *fiber.Ctx) error {
         return c.JSON(fiber.Map{"status": "ok", "service": "RuivoBarber API"})
     })
@@ -99,4 +100,29 @@ func (h *ClienteHandler) RegistrarFalta(c *fiber.Ctx) error {
     }
 
     return c.JSON(fiber.Map{"status": "falta_registrada"})
+}
+
+func (h *ClienteHandler) ResgatarCupom(c *fiber.Ctx) error {
+    if err := infra.Wait(context.Background()); err != nil {
+        return c.Status(429).JSON(fiber.Map{"error": "Too Many Requests"})
+    }
+
+    var req domain.ResgatarCupomRequest
+    if err := c.BodyParser(&req); err != nil {
+        return c.Status(400).JSON(fiber.Map{"error": "corpo da requisição inválido"})
+    }
+
+    if req.ClienteID <= 0 {
+        return c.Status(400).JSON(fiber.Map{"error": "cliente_id inválido"})
+    }
+    if req.NivelID <= 0 {
+        return c.Status(400).JSON(fiber.Map{"error": "nivel_id inválido"})
+    }
+
+    cupom, err := h.service.ResgatarCupom(req.ClienteID, req.NivelID)
+    if err != nil {
+        return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+    }
+
+    return c.JSON(cupom)
 }

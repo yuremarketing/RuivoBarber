@@ -23,6 +23,7 @@ test:
 	@echo "===== Executando Testes de Integração ====="
 	./scripts/test_transaction_lock.sh
 	./scripts/test_no_show_penalty.sh
+	./scripts/test_coupon_redemption.sh
 	@echo "===== Executando Sanidade do Frontend (Build) ====="
 	cd frontend && npm run build
 
