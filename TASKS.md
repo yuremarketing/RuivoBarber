@@ -23,7 +23,7 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
   - [x] Calcular e adicionar o XP na tabela `ProgressoCliente`.
 - [x] **Implementar Penalidade de Falta (`POST /api/v1/atendimentos/falta`)**
   - [x] Regra Anti No-Show: Deduzir exatamente 100 XP do cliente em caso de falta sem cancelamento.
-- [ ] **Refatorar Consulta de Cliente (`GET /api/v1/clientes`)**
+- [x] **Refatorar Consulta de Cliente (`GET /api/v1/clientes`)**
   - [x] Mapear JSON integrando o LEFT JOIN para expor "xp" numérico e a string "nivel" (ex: "Barba de Respeito").
 
 ### 🎟️ Gestão de Cupons
