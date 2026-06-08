@@ -26,6 +26,7 @@ test:
 	./scripts/test_coupon_redemption.sh
 	./scripts/test_coupon_validation.sh
 	./scripts/test_notification_worker.sh
+	./scripts/test_progress_calculation.sh
 	@echo "===== Executando Sanidade do Frontend (Build) ====="
 	cd frontend && npm run build
 
