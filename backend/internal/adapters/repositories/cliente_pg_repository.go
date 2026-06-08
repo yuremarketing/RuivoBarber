@@ -207,3 +207,112 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) error {
 
     return tx.Commit()
 }
+
+func (r *ClientePgRepository) RegistrarFalta(agendamentoID int) error {
+    ctx := context.Background()
+    tx, err := r.db.BeginTx(ctx, nil)
+    if err != nil {
+        return err
+    }
+    defer tx.Rollback()
+
+    // 1. Obter e travar o agendamento (Transaction Lock)
+    var clienteID int
+    var status string
+    err = tx.QueryRowContext(ctx, "SELECT clienteid, status FROM Agendamentos WHERE id = $1 FOR UPDATE", agendamentoID).Scan(&clienteID, &status)
+    if err != nil {
+        return err
+    }
+
+    if status == "Concluido" || status == "Cancelado" || status == "Falta" {
+        return errors.New("agendamento já finalizado")
+    }
+
+    // 2. Atualizar status do agendamento
+    _, err = tx.ExecContext(ctx, "UPDATE Agendamentos SET status = 'Falta' WHERE id = $1", agendamentoID)
+    if err != nil {
+        return err
+    }
+
+    // 3. Atualizar ou Criar ProgressoCliente e calcular XP/Nivel
+    var xpAtual, nivelAtual int
+    var progressoExiste bool
+    err = tx.QueryRowContext(ctx, "SELECT xpatual, nivelatual FROM ProgressoCliente WHERE clienteid = $1", clienteID).Scan(&xpAtual, &nivelAtual)
+    if err != nil {
+        if errors.Is(err, sql.ErrNoRows) {
+            xpAtual = 0
+            nivelAtual = 1
+            progressoExiste = false
+        } else {
+            return err
+        }
+    } else {
+        progressoExiste = true
+    }
+
+    // Dedução de exatamente 100 XP (sem ficar menor que 0)
+    xpAtual -= 100
+    if xpAtual < 0 {
+        xpAtual = 0
+    }
+
+    // Carregar níveis para cálculo de nível atual e barra percentual
+    type NivelInfo struct {
+        ID           int
+        XpNecessario int
+    }
+    rowsNiveis, err := tx.QueryContext(ctx, "SELECT id, xpnecessario FROM Niveis ORDER BY xpnecessario ASC")
+    if err != nil {
+        return err
+    }
+    defer rowsNiveis.Close()
+
+    var niveis []NivelInfo
+    for rowsNiveis.Next() {
+        var n NivelInfo
+        if err := rowsNiveis.Scan(&n.ID, &n.XpNecessario); err != nil {
+            return err
+        }
+        niveis = append(niveis, n)
+    }
+
+    // Determinar o nível atual
+    calculatedNivel := 1 // Default
+    for _, l := range niveis {
+        if xpAtual >= l.XpNecessario {
+            calculatedNivel = l.ID
+        }
+    }
+
+    // Determinar o próximo nível para calcular barra percentual
+    var nextXp int = 100 // Default fallback
+    maxLevelReached := true
+    for _, l := range niveis {
+        if xpAtual < l.XpNecessario {
+            nextXp = l.XpNecessario
+            maxLevelReached = false
+            break
+        }
+    }
+
+    var pct float64
+    if maxLevelReached {
+        pct = 100.00
+    } else {
+        pct = (float64(xpAtual) / float64(nextXp)) * 100.00
+        if pct > 100.00 {
+            pct = 100.00
+        }
+    }
+
+    if progressoExiste {
+        _, err = tx.ExecContext(ctx, "UPDATE ProgressoCliente SET xpatual = $1, nivelatual = $2, barrapercentual = $3, updatedat = NOW() WHERE clienteid = $4", xpAtual, calculatedNivel, pct, clienteID)
+    } else {
+        _, err = tx.ExecContext(ctx, "INSERT INTO ProgressoCliente (clienteid, xpatual, nivelatual, barrapercentual) VALUES ($1, $2, $3, $4)", clienteID, xpAtual, calculatedNivel, pct)
+    }
+    if err != nil {
+        return err
+    }
+
+    return tx.Commit()
+}

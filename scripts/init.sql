@@ -53,7 +53,7 @@ CREATE TABLE Agendamentos (
     BarbeiroID INT REFERENCES Usuarios(ID),
     ServicoID INT REFERENCES Servicos(ID),
     DataHora TIMESTAMP NOT NULL,
-    Status VARCHAR(20) DEFAULT 'Pendente' CHECK (Status IN ('Pendente', 'Confirmado', 'Concluido', 'Cancelado')),
+    Status VARCHAR(20) DEFAULT 'Pendente' CHECK (Status IN ('Pendente', 'Confirmado', 'Concluido', 'Cancelado', 'Falta')),
     CriadoEm TIMESTAMP DEFAULT NOW()
 );
 

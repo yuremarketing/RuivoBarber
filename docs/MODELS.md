@@ -67,5 +67,5 @@ Gerencia o fluxo de horários e os atendimentos agendados entre Clientes, Barbei
 | **barbeiroid** (FK) | INT | `int` | `number` | FK para `Usuarios.id` (Barbeiro). |
 | **servicoid** (FK) | INT | `int` | `number` | FK para `Servicos.id` (Serviço). |
 | **datahora** | TIMESTAMP | `time.Time`| `string` | Data e hora agendadas para o atendimento. |
-| **status** | VARCHAR(20) | `string` | `string` | Estado do atendimento. Valores: `Pendente`, `Confirmado`, `Concluido`, `Cancelado`. |
+| **status** | VARCHAR(20) | `string` | `string` | Estado do atendimento. Valores: `Pendente`, `Confirmado`, `Concluido`, `Cancelado`, `Falta`. |
 | **criadoem** | TIMESTAMP | `time.Time`| `string` | Data de criação do registro de agendamento. |

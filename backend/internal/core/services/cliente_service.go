@@ -25,5 +25,9 @@ func (s *ClienteService) ConcluirAtendimento(agendamentoID int) error {
     return s.repo.ConcluirAtendimento(agendamentoID)
 }
 
+func (s *ClienteService) RegistrarFalta(agendamentoID int) error {
+    return s.repo.RegistrarFalta(agendamentoID)
+}
+
 
 

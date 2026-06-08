@@ -23,6 +23,7 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
     api.Get("/clientes", h.ListarClientes)
     api.Get("/clientes/:id", h.BuscarCliente)
     api.Post("/atendimentos/concluir", h.ConcluirAtendimento)
+    api.Post("/atendimentos/falta", h.RegistrarFalta)
     api.Get("/health", func(c *fiber.Ctx) error {
         return c.JSON(fiber.Map{"status": "ok", "service": "RuivoBarber API"})
     })
@@ -76,4 +77,26 @@ func (h *ClienteHandler) ConcluirAtendimento(c *fiber.Ctx) error {
     }
 
     return c.JSON(fiber.Map{"status": "concluido"})
+}
+
+func (h *ClienteHandler) RegistrarFalta(c *fiber.Ctx) error {
+    if err := infra.Wait(context.Background()); err != nil {
+        return c.Status(429).JSON(fiber.Map{"error": "Too Many Requests"})
+    }
+
+    var req domain.FaltaAtendimentoRequest
+    if err := c.BodyParser(&req); err != nil {
+        return c.Status(400).JSON(fiber.Map{"error": "corpo da requisição inválido"})
+    }
+
+    if req.AgendamentoID <= 0 {
+        return c.Status(400).JSON(fiber.Map{"error": "agendamento_id inválido"})
+    }
+
+    err := h.service.RegistrarFalta(req.AgendamentoID)
+    if err != nil {
+        return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+    }
+
+    return c.JSON(fiber.Map{"status": "falta_registrada"})
 }
