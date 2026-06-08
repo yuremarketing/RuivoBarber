@@ -1,21 +1,53 @@
 import React from 'react'
 
-function RpgProgressBar({ xpAtual, xpProximo }) {
-  const percentual = Math.min((xpAtual / xpProximo) * 100, 100).toFixed(1)
+function RpgProgressBar({ xpAtual = 0, nivel = 'Corte Iniciante' }) {
+  const getProximoNivelXP = (nivelNome, currentXp) => {
+    const nomeNormalizado = (nivelNome || '').trim()
+    switch (nomeNormalizado) {
+      case 'Rei da Cadeira':
+        return { nextXp: 1000, nextNivel: 'Nível Máximo', xpFaltando: 0, maxLevel: true }
+      case 'Lenda da Navalha':
+        return { nextXp: 1000, nextNivel: 'Rei da Cadeira', xpFaltando: Math.max(1000 - currentXp, 0), maxLevel: false }
+      case 'Barba de Respeito':
+        return { nextXp: 600, nextNivel: 'Lenda da Navalha', xpFaltando: Math.max(600 - currentXp, 0), maxLevel: false }
+      default:
+        return { nextXp: 300, nextNivel: 'Barba de Respeito', xpFaltando: Math.max(300 - currentXp, 0), maxLevel: false }
+    }
+  }
+
+  const { nextXp, nextNivel, xpFaltando, maxLevel } = getProximoNivelXP(nivel, xpAtual)
+  const percentual = maxLevel ? 100 : Math.min((xpAtual / nextXp) * 100, 100)
+  
+  // Média de 15 XP por atendimento
+  const atendimentosEstimados = Math.ceil(xpFaltando / 15)
 
   return (
-    <div style={{ maxWidth: '400px', marginBottom: '1rem' }}>
-      <p style={{ margin: '0 0 0.3rem', color: '#a8a8b3', fontSize: '0.85rem' }}>
-        Progresso para próximo nível: {xpAtual} / {xpProximo} XP ({percentual}%)
-      </p>
-      <div style={{ background: '#0f3460', borderRadius: '8px', height: '18px', overflow: 'hidden', border: '1px solid #e94560' }}>
-        <div style={{
-          width: `${percentual}%`,
-          height: '100%',
-          background: 'linear-gradient(90deg, #e94560, #f5a623)',
-          transition: 'width 0.5s ease'
-        }} />
+    <div style={{ width: '100%', marginBottom: '1.25rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+          {maxLevel ? 'Nível Máximo Atingido!' : `Próximo Nível: ${nextNivel}`}
+        </span>
+        <span style={{ fontSize: '0.85rem', color: 'var(--gold)', fontWeight: 700 }}>
+          {xpAtual} / {maxLevel ? xpAtual : nextXp} XP
+        </span>
       </div>
+
+      <div className="xp-bar" style={{ height: '14px', borderRadius: '10px' }}>
+        <div 
+          className="xp-bar-fill" 
+          style={{ width: `${percentual.toFixed(1)}%` }} 
+        />
+      </div>
+
+      <p style={{ margin: '0.5rem 0 0 0', color: 'var(--text-secondary)', fontSize: '0.82rem', textAlign: 'center', fontStyle: 'italic' }}>
+        {maxLevel ? (
+          <span>⚔️ Você é uma lenda viva na RuivoBarber! 👑</span>
+        ) : (
+          <span>
+            Faltam <strong>{xpFaltando} XP</strong> (~<strong>{atendimentosEstimados} atendimento(s)</strong>) para alcançar <strong>{nextNivel}</strong>!
+          </span>
+        )}
+      </p>
     </div>
   )
 }

@@ -1,26 +1,61 @@
 import React from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 
-const menuItems = [
-  { section: 'Principal' },
-  { path: '/dashboard', icon: '📊', label: 'Dashboard' },
-  { section: 'Gestão' },
-  { path: '/clientes', icon: '👥', label: 'Clientes' },
-  { path: '/agendamentos', icon: '📅', label: 'Agendamentos' },
-  { path: '/servicos', icon: '✂️', label: 'Serviços' },
-  { path: '/cupons', icon: '🎟️', label: 'Cupons' },
-  { section: 'Sistema' },
-  { path: '/niveis', icon: '⚔️', label: 'Níveis RPG' },
-  { path: '/configuracoes', icon: '⚙️', label: 'Configurações' },
-]
-
 export default function Sidebar() {
   const navigate = useNavigate()
+  const user = JSON.parse(localStorage.getItem('ruivobarber_user') || '{"nome":"Administrador","cargo":"Adm"}')
+  
+  const handleLogout = () => {
+    localStorage.removeItem('ruivobarber_user')
+    navigate('/login')
+  }
+
+  // Definição dinâmica do menu por cargo
+  const getMenuItems = () => {
+    if (user.cargo === 'Cliente') {
+      return [
+        { section: 'RPG de Fidelidade' },
+        { path: '/dashboard', icon: '⚔️', label: 'Meu RPG' },
+        { path: '/cupons', icon: '🎟️', label: 'Meus Cupons' },
+      ]
+    }
+    
+    if (user.cargo === 'Barbeiro') {
+      return [
+        { section: 'Atendimentos' },
+        { path: '/dashboard', icon: '📊', label: 'Dashboard' },
+        { path: '/agendamentos', icon: '📅', label: 'Agendamentos' },
+        { path: '/clientes', icon: '👥', label: 'Clientes' },
+      ]
+    }
+
+    // Adm por padrão
+    return [
+      { section: 'Principal' },
+      { path: '/dashboard', icon: '📊', label: 'Dashboard' },
+      { section: 'Gestão' },
+      { path: '/clientes', icon: '👥', label: 'Clientes' },
+      { path: '/agendamentos', icon: '📅', label: 'Agendamentos' },
+      { path: '/servicos', icon: '✂️', label: 'Serviços' },
+      { path: '/cupons', icon: '🎟️', label: 'Cupons' },
+      { section: 'Sistema' },
+      { path: '/niveis', icon: '⚔️', label: 'Níveis RPG' },
+      { path: '/configuracoes', icon: '⚙️', label: 'Configurações' },
+    ]
+  }
+
+  const menuItems = getMenuItems()
+  const iniciais = (user.nome || 'AD')
+    .split(' ')
+    .map(n => n[0])
+    .slice(0, 2)
+    .join('')
+
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
         <h1>✂️ RuivoBarber</h1>
-        <span>Painel Administrativo</span>
+        <span>{user.cargo === 'Cliente' ? 'Portal do Cliente' : 'Painel Administrativo'}</span>
       </div>
       <nav className="sidebar-nav">
         {menuItems.map((item, i) =>
@@ -37,12 +72,18 @@ export default function Sidebar() {
       </nav>
       <div className="sidebar-footer">
         <div className="sidebar-user">
-          <div className="sidebar-avatar">AD</div>
-          <div className="sidebar-user-info">
-            <div className="name">Administrador</div>
-            <div className="role">Admin</div>
+          <div className="sidebar-avatar" style={{
+            background: user.cargo === 'Cliente' ? 'linear-gradient(135deg, var(--gold), #ffd700)' : 'linear-gradient(135deg, var(--accent), var(--gold))'
+          }}>
+            {iniciais}
           </div>
-          <button className="btn-ghost" onClick={() => navigate('/login')} title="Sair">🚪</button>
+          <div className="sidebar-user-info">
+            <div className="name" style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '120px' }}>
+              {user.nome}
+            </div>
+            <div className="role">{user.cargo === 'Cliente' ? `Nível: ${user.nivel || 'Cliente'}` : user.cargo}</div>
+          </div>
+          <button className="btn-ghost" onClick={handleLogout} title="Sair">🚪</button>
         </div>
       </div>
     </aside>

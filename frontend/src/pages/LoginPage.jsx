@@ -13,11 +13,45 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setErro('')
+    
     setTimeout(() => {
-      if (login === 'admin' && senha === 'admin') {
+      if (cargo === 'Adm' && login === 'admin' && senha === 'admin') {
+        const userSession = {
+          id: 99,
+          nome: 'Administrador',
+          cargo: 'Adm',
+          login: 'admin'
+        }
+        localStorage.setItem('ruivobarber_user', JSON.stringify(userSession))
+        navigate('/dashboard')
+      } else if (cargo === 'Cliente' && ((login === 'cliente' && senha === 'cliente') || (login === 'joao.silva' && senha === 'pwd'))) {
+        const userSession = {
+          id: 1,
+          nome: 'João Silva',
+          cargo: 'Cliente',
+          login: 'joao.silva',
+          xp: 320,
+          nivel: 'Barba de Respeito'
+        }
+        localStorage.setItem('ruivobarber_user', JSON.stringify(userSession))
+        navigate('/dashboard')
+      } else if (cargo === 'Barbeiro' && login === 'barbeiro' && senha === 'barbeiro') {
+        const userSession = {
+          id: 10,
+          nome: 'Carlos Barbeiro',
+          cargo: 'Barbeiro',
+          login: 'barbeiro'
+        }
+        localStorage.setItem('ruivobarber_user', JSON.stringify(userSession))
         navigate('/dashboard')
       } else {
-        setErro('Login ou senha inválidos. Use: admin / admin')
+        if (cargo === 'Adm') {
+          setErro('Credenciais inválidas. Use: admin / admin')
+        } else if (cargo === 'Cliente') {
+          setErro('Credenciais inválidas. Use: cliente / cliente')
+        } else {
+          setErro('Credenciais inválidas. Use: barbeiro / barbeiro')
+        }
       }
       setLoading(false)
     }, 600)
@@ -56,7 +90,7 @@ export default function LoginPage() {
           </button>
         </form>
         <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-          Credenciais demo: <strong style={{ color: 'var(--text-secondary)' }}>admin / admin</strong>
+          Demos: <strong style={{ color: 'var(--text-secondary)' }}>admin/admin</strong> | <strong style={{ color: 'var(--text-secondary)' }}>cliente/cliente</strong>
         </p>
       </div>
     </div>

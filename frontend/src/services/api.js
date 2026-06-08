@@ -22,5 +22,9 @@ api.interceptors.response.use(
 export const listarClientes = () => api.get('/clientes')
 export const buscarCliente = (id) => api.get(`/clientes/${id}`)
 export const healthCheck = () => api.get('/health')
+export const resgatarCupom = (clienteId, nivelId) => api.post('/cupons/resgatar', { cliente_id: Number(clienteId), nivel_id: Number(nivelId) })
+export const validarCupom = (codigo) => api.post('/cupons/validar', { codigo })
+export const concluirAtendimento = (agendamentoId) => api.post('/atendimentos/concluir', { agendamento_id: Number(agendamentoId) })
+export const registrarFalta = (agendamentoId) => api.post('/atendimentos/falta', { agendamento_id: Number(agendamentoId) })
 
 export default api

@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { listarClientes } from '../services/api.js'
+import PlayerCard from '../components/PlayerCard.jsx'
+import RpgProgressBar from '../components/RpgProgressBar.jsx'
+import RedeemCouponManager from '../components/RedeemCouponManager.jsx'
 
 const mockClientes = [
   { id: 1, nome: 'João Silva', login: 'joao.silva', cargo: 'Cliente', xp: 320, nivel: 'Barba de Respeito' },
@@ -14,27 +17,28 @@ export default function ClientesPage() {
   const [loading, setLoading] = useState(true)
   const [busca, setBusca] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [selectedCliente, setSelectedCliente] = useState(null)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    const fetchClientes = async () => {
-      try {
-        setLoading(true)
-        const res = await listarClientes()
-        if (res && Array.isArray(res.data)) {
-          setClientes(res.data)
-        } else {
-          throw new Error('Formato de dados inválido recebido do servidor.')
-        }
-      } catch (err) {
-        console.error('Erro ao buscar clientes da API, usando dados mockados:', err)
-        setError('Não foi possível carregar os dados em tempo real. Exibindo dados locais offline.')
-        setClientes(mockClientes)
-      } finally {
-        setLoading(false)
+  const fetchClientes = async () => {
+    try {
+      setLoading(true)
+      const res = await listarClientes()
+      if (res && Array.isArray(res.data)) {
+        setClientes(res.data)
+      } else {
+        throw new Error('Formato de dados inválido recebido do servidor.')
       }
+    } catch (err) {
+      console.error('Erro ao buscar clientes da API, usando dados mockados:', err)
+      setError('Não foi possível carregar os dados em tempo real. Exibindo dados locais offline.')
+      setClientes(mockClientes)
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchClientes()
   }, [])
 
@@ -78,7 +82,7 @@ export default function ClientesPage() {
               <tbody>
                 {filtered.map(c => {
                   if (!c) return null
-                  const niveis = { 'Corte Iniciante': 100, 'Barba de Respeito': 300, 'Lenda da Navalha': 600, 'Rei da Cadeira': 1000 }
+                  const niveis = { 'Corte Iniciante': 300, 'Barba de Respeito': 600, 'Lenda da Navalha': 1000, 'Rei da Cadeira': 1000 }
                   const nivelNome = c.nivel || 'Corte Iniciante'
                   const max = niveis[nivelNome] || 300
                   const pct = Math.min((c.xp || 0) / max * 100, 100)
@@ -93,7 +97,7 @@ export default function ClientesPage() {
                         <div className="xp-bar"><div className="xp-bar-fill" style={{ width: `${pct}%` }} /></div>
                       </td>
                       <td>
-                        <button className="btn btn-ghost btn-sm" title="Ver detalhes">👁️</button>
+                        <button className="btn btn-ghost btn-sm" title="Ver detalhes" onClick={() => setSelectedCliente(c)}>👁️</button>
                         <button className="btn btn-ghost btn-sm" title="Editar">✏️</button>
                       </td>
                     </tr>
@@ -104,6 +108,7 @@ export default function ClientesPage() {
           </div>
         )}
       </div>
+
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
@@ -128,6 +133,42 @@ export default function ClientesPage() {
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
               <button className="btn btn-primary" onClick={() => setShowModal(false)}>Salvar Cliente</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedCliente && (
+        <div className="modal-overlay" onClick={() => setSelectedCliente(null)}>
+          <div className="modal" style={{ maxWidth: '640px', width: '100%' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ marginBottom: '1.25rem' }}>
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>⚔️ Ficha do Personagem RPG</h3>
+              <button className="btn-ghost" onClick={() => setSelectedCliente(null)}>✕</button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'row', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'start' }}>
+              <div style={{ flex: '1', minWidth: '240px', display: 'flex', justifyContent: 'center' }}>
+                <PlayerCard 
+                  nome={selectedCliente.nome} 
+                  nivel={selectedCliente.nivel} 
+                  xp={selectedCliente.xp} 
+                />
+              </div>
+              
+              <div style={{ flex: '1.2', minWidth: '260px', display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
+                <RpgProgressBar 
+                  xpAtual={selectedCliente.xp} 
+                  nivel={selectedCliente.nivel} 
+                />
+                <RedeemCouponManager 
+                  clienteId={selectedCliente.id} 
+                  xpAtual={selectedCliente.xp}
+                  onRedeemSuccess={() => {
+                    // Atualiza a lista de clientes para obter qualquer novo cupom ou sincronizar estado
+                    fetchClientes()
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>

@@ -1,18 +1,54 @@
 import React from 'react'
 
-function PlayerCard({ nome, nivel, xp }) {
+function PlayerCard({ nome = 'Cliente', nivel = 'Corte Iniciante', xp = 0 }) {
+  const getPatenteInfo = (nivelNome) => {
+    const nomeNormalizado = (nivelNome || '').trim()
+    switch (nomeNormalizado) {
+      case 'Rei da Cadeira':
+        return { frameClass: 'frame-royal', crown: true, color: '#b026ff', badgeEmoji: '👑' }
+      case 'Lenda da Navalha':
+        return { frameClass: 'frame-gold', crown: false, color: 'var(--gold)', badgeEmoji: '⚡' }
+      case 'Barba de Respeito':
+        return { frameClass: 'frame-silver', crown: false, color: '#a0a0b8', badgeEmoji: '🛡️' }
+      default:
+        return { frameClass: 'frame-bronze', crown: false, color: '#8a5a36', badgeEmoji: '🪵' }
+    }
+  }
+
+  const { frameClass, crown, color, badgeEmoji } = getPatenteInfo(nivel)
+  const iniciais = nome
+    .split(' ')
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('')
+
   return (
-    <div style={{
-      background: '#16213e',
-      border: '2px solid #e94560',
-      borderRadius: '12px',
-      padding: '1.5rem',
-      maxWidth: '400px',
-      marginBottom: '1rem'
-    }}>
-      <h2 style={{ margin: 0, color: '#e94560' }}>👤 {nome}</h2>
-      <p style={{ margin: '0.5rem 0', color: '#a8a8b3' }}>Nível: <strong style={{ color: '#fff' }}>{nivel}</strong></p>
-      <p style={{ margin: 0, color: '#a8a8b3' }}>XP Total: <strong style={{ color: '#f5a623' }}>{xp} XP</strong></p>
+    <div className="player-card-rpg">
+      <div className="avatar-rpg-container">
+        {crown && <div className="badge-crown-rpg">👑</div>}
+        <div className={`avatar-rpg-wrapper ${frameClass}`}>
+          <div className="avatar-rpg-placeholder">
+            {iniciais}
+          </div>
+        </div>
+      </div>
+
+      <h2 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 700 }}>
+        {nome}
+      </h2>
+
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1rem' }}>
+        <span className="rpg-level-badge" style={{ background: color, color: '#fff' }}>
+          {badgeEmoji} {nivel}
+        </span>
+      </div>
+
+      <div style={{ borderTop: '1px solid var(--border)', width: '100%', paddingTop: '0.75rem' }}>
+        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Ficha de Personagem</span>
+        <div style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--gold)', marginTop: '0.25rem' }}>
+          {xp} <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>XP Total</span>
+        </div>
+      </div>
     </div>
   )
 }
