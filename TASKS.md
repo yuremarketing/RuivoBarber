@@ -43,18 +43,18 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 ## 🎨 3. Frontend (React/Vite) - Experiência "Arcade Gamificada"
 
 ### 👤 Interface do Cliente
-- [ ] Desenvolver componente `PlayerCard.jsx`.
-  - [ ] Exibir avatar com moldura dinâmica dependendo da patente (ex: borda de ouro para Lenda da Navalha).
-- [ ] Desenvolver componente `RpgProgressBar.jsx`.
-  - [ ] Implementar barra de progresso baseada na fórmula `(XPAtual / XPNecessario) * 100`.
-  - [ ] Renderizar texto de conquistas (ex: "Faltam X cortes para a sua próxima recompensa").
-- [ ] Desenvolver componente `RedeemCouponManager.jsx`.
-  - [ ] Lógica visual: o botão "Resgatar Cupom" só deve ser clicável/visível quando o nível é atingido.
+- [x] Desenvolver componente `PlayerCard.jsx`.
+  - [x] Exibir avatar com moldura dinâmica dependendo da patente (ex: borda de ouro para Lenda da Navalha).
+- [x] Desenvolver componente `RpgProgressBar.jsx`.
+  - [x] Implementar barra de progresso baseada na fórmula `(XPAtual / XPNecessario) * 100`.
+  - [x] Renderizar texto de conquistas (ex: "Faltam X cortes para a sua próxima recompensa").
+- [x] Desenvolver componente `RedeemCouponManager.jsx`.
+  - [x] Lógica visual: o botão "Resgatar Cupom" só deve ser clicável/visível quando o nível é atingido.
 
 ### 🛡️ Dashboard Administrativo
-- [ ] Desenvolver componente `AdminValidationPanel.jsx`.
-  - [ ] Lista de clientes qualificados para resgate e tela de inserção de cupons na hora de pagar.
-- [ ] Tratamento de Erros e UX.
+- [x] Desenvolver componente `AdminValidationPanel.jsx`.
+  - [x] Lista de clientes qualificados para resgate e tela de inserção de cupons na hora de pagar.
+- [x] Tratamento de Erros e UX.
   - [x] Garantir que falhas de conexão (CORS/429) no `api.js` mostrem um banner amigável em vez de tela branca.
 
 ---

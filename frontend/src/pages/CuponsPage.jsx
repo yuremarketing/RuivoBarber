@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import AdminValidationPanel from '../components/AdminValidationPanel.jsx'
 
 const mockCupons = [
   { id: 1, codigo: 'BEMVINDO10', descricao: '10% de desconto para novos clientes', desconto: 10, cliente: 'João Silva', usado: false, validade: '2025-02-28' },
@@ -11,6 +12,8 @@ const mockCupons = [
 export default function CuponsPage() {
   const [showModal, setShowModal] = useState(false)
   const hoje = new Date().toISOString().split('T')[0]
+  const user = JSON.parse(localStorage.getItem('ruivobarber_user') || '{"nome":"Administrador","cargo":"Adm"}')
+  const isAdmin = user.cargo === 'Adm' || user.cargo === 'Barbeiro'
 
   return (
     <div className="fade-in-up">
@@ -18,43 +21,57 @@ export default function CuponsPage() {
         <div className="page-header-actions">
           <div>
             <h2>🎟️ Cupons</h2>
-            <p>Gestão de cupons de desconto e recompensas</p>
+            <p>{isAdmin ? 'Gestão de cupons de desconto e validação' : 'Seus cupons de desconto e recompensas RPG'}</p>
           </div>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>+ Novo Cupom</button>
+          {isAdmin && (
+            <button className="btn btn-primary" onClick={() => setShowModal(true)}>+ Novo Cupom</button>
+          )}
         </div>
       </div>
-      <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-        <div className="stat-card"><div className="icon">🎟️</div><div className="value">{mockCupons.length}</div><div className="label">Total Cupons</div></div>
-        <div className="stat-card"><div className="icon">✅</div><div className="value">{mockCupons.filter(c => !c.usado && c.validade >= hoje).length}</div><div className="label">Ativos</div></div>
-        <div className="stat-card"><div className="icon">📋</div><div className="value">{mockCupons.filter(c => c.usado).length}</div><div className="label">Utilizados</div></div>
-      </div>
-      <div className="card">
-        <div className="table-container">
-          <table className="data-table">
-            <thead><tr><th>Código</th><th>Descrição</th><th>Desconto</th><th>Cliente</th><th>Validade</th><th>Status</th><th>Ações</th></tr></thead>
-            <tbody>
-              {mockCupons.map(c => {
-                const expirado = c.validade < hoje
-                const statusClass = c.usado ? 'badge-usado' : expirado ? 'badge-cancelado' : 'badge-ativo'
-                const statusLabel = c.usado ? 'Usado' : expirado ? 'Expirado' : 'Ativo'
-                return (
-                  <tr key={c.id}>
-                    <td><code style={{ background: 'var(--bg-input)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.82rem', fontWeight: 600, color: 'var(--gold)' }}>{c.codigo}</code></td>
-                    <td style={{ maxWidth: '250px' }}>{c.descricao}</td>
-                    <td style={{ fontWeight: 700, color: 'var(--accent)' }}>{c.desconto}%</td>
-                    <td>{c.cliente}</td>
-                    <td>{new Date(c.validade + 'T00:00').toLocaleDateString('pt-BR')}</td>
-                    <td><span className={`badge ${statusClass}`}>{statusLabel}</span></td>
-                    <td>
-                      <button className="btn btn-ghost btn-sm" title="Editar">✏️</button>
-                      <button className="btn btn-ghost btn-sm" title="Remover">🗑️</button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+
+      <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'start' }}>
+        <div style={{ flex: '2', minWidth: '350px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', width: '100%', marginBottom: 0 }}>
+            <div className="stat-card"><div className="icon">🎟️</div><div className="value">{mockCupons.length}</div><div className="label">Total Cupons</div></div>
+            <div className="stat-card"><div className="icon">✅</div><div className="value">{mockCupons.filter(c => !c.usado && c.validade >= hoje).length}</div><div className="label">Ativos</div></div>
+            <div className="stat-card"><div className="icon">📋</div><div className="value">{mockCupons.filter(c => c.usado).length}</div><div className="label">Utilizados</div></div>
+          </div>
+          
+          <div className="card">
+            <div className="table-container">
+              <table className="data-table">
+                <thead><tr><th>Código</th><th>Descrição</th><th>Desconto</th><th>Cliente</th><th>Validade</th><th>Status</th><th>Ações</th></tr></thead>
+                <tbody>
+                  {mockCupons.map(c => {
+                    const expirado = c.validade < hoje
+                    const statusClass = c.usado ? 'badge-usado' : expirado ? 'badge-cancelado' : 'badge-ativo'
+                    const statusLabel = c.usado ? 'Usado' : expirado ? 'Expirado' : 'Ativo'
+                    return (
+                      <tr key={c.id}>
+                        <td><code style={{ background: 'var(--bg-input)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.82rem', fontWeight: 600, color: 'var(--gold)' }}>{c.codigo}</code></td>
+                        <td style={{ maxWidth: '250px' }}>{c.descricao}</td>
+                        <td style={{ fontWeight: 700, color: 'var(--accent)' }}>{c.desconto}%</td>
+                        <td>{c.cliente}</td>
+                        <td>{new Date(c.validade + 'T00:00').toLocaleDateString('pt-BR')}</td>
+                        <td><span className={`badge ${statusClass}`}>{statusLabel}</span></td>
+                        <td>
+                          <button className="btn btn-ghost btn-sm" title="Editar">✏️</button>
+                          <button className="btn btn-ghost btn-sm" title="Remover">🗑️</button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
+
+        {isAdmin && (
+          <div style={{ flex: '1', minWidth: '300px', display: 'flex', flexDirection: 'column' }}>
+            <AdminValidationPanel />
+          </div>
+        )}
       </div>
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
