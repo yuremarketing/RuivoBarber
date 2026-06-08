@@ -5,6 +5,7 @@ import (
     "strconv"
 
     "github.com/gofiber/fiber/v2"
+    "ruivobarber-api/internal/core/domain"
     "ruivobarber-api/internal/core/services"
     "ruivobarber-api/internal/infra"
 )
@@ -21,6 +22,7 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
     api := app.Group("/api/v1")
     api.Get("/clientes", h.ListarClientes)
     api.Get("/clientes/:id", h.BuscarCliente)
+    api.Post("/atendimentos/concluir", h.ConcluirAtendimento)
     api.Get("/health", func(c *fiber.Ctx) error {
         return c.JSON(fiber.Map{"status": "ok", "service": "RuivoBarber API"})
     })
@@ -54,4 +56,24 @@ func (h *ClienteHandler) BuscarCliente(c *fiber.Ctx) error {
     return c.JSON(cliente)
 }
 
+func (h *ClienteHandler) ConcluirAtendimento(c *fiber.Ctx) error {
+    if err := infra.Wait(context.Background()); err != nil {
+        return c.Status(429).JSON(fiber.Map{"error": "Too Many Requests"})
+    }
 
+    var req domain.ConcluirAtendimentoRequest
+    if err := c.BodyParser(&req); err != nil {
+        return c.Status(400).JSON(fiber.Map{"error": "corpo da requisição inválido"})
+    }
+
+    if req.AgendamentoID <= 0 {
+        return c.Status(400).JSON(fiber.Map{"error": "agendamento_id inválido"})
+    }
+
+    err := h.service.ConcluirAtendimento(req.AgendamentoID)
+    if err != nil {
+        return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+    }
+
+    return c.JSON(fiber.Map{"status": "concluido"})
+}

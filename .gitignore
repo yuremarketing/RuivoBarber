@@ -1,0 +1,40 @@
+# Node.js
+node_modules/
+dist/
+build/
+.npm
+.eslintcache
+
+# Go binaries and build artifacts
+backend/main
+main
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Environments and Sensitive files
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+.env.staging
+
+# Operating System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

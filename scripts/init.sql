@@ -76,3 +76,17 @@ CREATE TABLE Configuracoes (
 -- Utilizador admin inicial (trocar senha em produção)
 INSERT INTO Usuarios (Nome, Cargo, Login, Senha) VALUES
 ('Administrador', 'Adm', 'admin', '$2a$10$placeholder_hash_trocar');
+
+CREATE TABLE Produtos (
+    ID SERIAL PRIMARY KEY,
+    Nome VARCHAR(100) NOT NULL,
+    Quantidade INT NOT NULL DEFAULT 0 CHECK (Quantidade >= 0)
+);
+
+CREATE TABLE ServicoProdutos (
+    ServicoID INT REFERENCES Servicos(ID) ON DELETE CASCADE,
+    ProdutoID INT REFERENCES Produtos(ID) ON DELETE CASCADE,
+    QuantidadeNecessaria INT NOT NULL DEFAULT 1,
+    PRIMARY KEY (ServicoID, ProdutoID)
+);
+

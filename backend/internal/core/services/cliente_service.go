@@ -21,4 +21,9 @@ func (s *ClienteService) BuscarCliente(id int) (*domain.Cliente, error) {
     return s.repo.FindByID(id)
 }
 
+func (s *ClienteService) ConcluirAtendimento(agendamentoID int) error {
+    return s.repo.ConcluirAtendimento(agendamentoID)
+}
+
+
 

@@ -17,10 +17,10 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 ## ⚙️ 2. Backend (Go) - Casos de Uso e Domínios
 
 ### 📅 Agendamentos & Fidelização (Sistema de XP)
-- [ ] **Implementar Conclusão de Serviço (`POST /api/v1/atendimentos/concluir`)**
-  - [ ] Abrir transação única no banco (Transaction Lock).
-  - [ ] Dar baixa automática nos produtos utilizados (Billing/Inventory Context).
-  - [ ] Calcular e adicionar o XP na tabela `ProgressoCliente`.
+- [x] **Implementar Conclusão de Serviço (`POST /api/v1/atendimentos/concluir`)**
+  - [x] Abrir transação única no banco (Transaction Lock).
+  - [x] Dar baixa automática nos produtos utilizados (Billing/Inventory Context).
+  - [x] Calcular e adicionar o XP na tabela `ProgressoCliente`.
 - [ ] **Implementar Penalidade de Falta (`POST /api/v1/atendimentos/falta`)**
   - [ ] Regra Anti No-Show: Deduzir exatamente 100 XP do cliente em caso de falta sem cancelamento.
 - [ ] **Refatorar Consulta de Cliente (`GET /api/v1/clientes`)**
@@ -60,7 +60,7 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 ---
 
 ## 🧪 4. Validação e Testes Modulares (QA)
-- [ ] Criar `Test_TransactionLock`: Garantir rollback total (XP não sobe se estoque falhar).
+- [x] Criar `Test_TransactionLock`: Garantir rollback total (XP não sobe se estoque falhar).
 - [ ] Criar `Test_NoShowPenalty`: Validar matematicamente a dedução de 100 XP.
 - [ ] Criar `Test_ProgressCalculation`: Validar a transição correta de status ao cruzar a barreira de pontos do nível.
 
