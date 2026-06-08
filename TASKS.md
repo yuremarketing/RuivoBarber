@@ -34,9 +34,9 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
   - [x] Consultar e invalidar o cupom assim que ele for inserido no pagamento na barbearia.
 
 ### 📱 Mensageria (Notificações)
-- [ ] Criar `NotificationWorker` assíncrono para integração com o WhatsApp.
-- [ ] Disparar mensagem de "XP Adquirido" após o fechamento do serviço.
-- [ ] Regra de Prova Social: Injetar link do *Google Meu Negócio* caso o cliente suba para o nível máximo ("Lenda da Navalha").
+- [x] Criar `NotificationWorker` assíncrono para integração com o WhatsApp.
+- [x] Disparar mensagem de "XP Adquirido" após o fechamento do serviço.
+- [x] Regra de Prova Social: Injetar link do *Google Meu Negócio* caso o cliente suba para o nível máximo ("Lenda da Navalha").
 
 ---
 
