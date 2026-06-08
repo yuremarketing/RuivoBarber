@@ -1,0 +1,48 @@
+name: Deploy RuivoBarber to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Log in to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Configure Docker for Google Artifact Registry
+        run: gcloud auth configure-docker
+
+      - name: Build and Push Backend
+        run: |
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT }}/ruivobarber-backend ./backend
+          docker push gcr.io/${{ secrets.GCP_PROJECT }}/ruivobarber-backend
+
+      - name: Build and Push Frontend
+        run: |
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT }}/ruivobarber-frontend ./frontend
+          docker push gcr.io/${{ secrets.GCP_PROJECT }}/ruivobarber-frontend
+
+      - name: Deploy Backend to Cloud Run
+        run: |
+          gcloud run deploy ruivobarber-backend \
+            --image gcr.io/${{ secrets.GCP_PROJECT }}/ruivobarber-backend \
+            --region us-central1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars DB_HOST=${{ secrets.DB_HOST }},DB_USER=${{ secrets.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }},DB_NAME=ruivobarber
+
+      - name: Deploy Frontend to Cloud Run
+        run: |
+          gcloud run deploy ruivobarber-frontend \
+            --image gcr.io/${{ secrets.GCP_PROJECT }}/ruivobarber-frontend \
+            --region us-central1 \
+            --platform managed \
+            --allow-unauthenticated

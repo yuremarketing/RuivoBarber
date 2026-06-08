@@ -1,0 +1,24 @@
+<system_constraints>
+  <directive>OPERATIONAL GUIDELINES - RUIVOBARBER PROJECT</directive>
+  <execution_flow>
+    <rule>Do not spawn more than 3 simultaneous sub-agents when interacting with external APIs.</rule>
+    <rule>Wait for confirmation of the previous sub-agent task before initiating the next one (sequential preference).</rule>
+    <rule>In case of HTTP 429 errors, pause for 15 seconds before retrying.</rule>
+    <rule>Prioritize sequential operations over parallel ones when accessing external cloud resources.</rule>
+  </execution_flow>
+  <coding_standards>
+    <architecture>
+      <rule>Backend (Go): Strictly adhere to Ports and Adapters architecture. Handlers MUST NEVER contain direct SQL code.</rule>
+      <rule>Frontend (React/Vite): Isolate business logic in services or custom hooks. No loose Axios calls in JSX.</rule>
+    </architecture>
+    <style>
+      <rule>Naming: Use Portuguese for variables/files (e.g., listarClientes, cliente_service.go). REST routes must be lowercase.</rule>
+    </style>
+  </coding_standards>
+  <resource_management>
+    <defense_rules>
+      <rule>Directory Shield: NEVER scan frontend/node_modules/, frontend/dist/, or backend/main.</rule>
+      <rule>Context Economy: NEVER read docs/ folder proactively. Access only if explicitly requested.</rule>
+    </defense_rules>
+  </resource_management>
+</system_constraints>

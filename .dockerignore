@@ -1,0 +1,11 @@
+.git
+.github
+.vscode
+node_modules
+dist
+.env
+.antigravityrules
+docs/
+*.md
+**/*.test.go
+backend/main
