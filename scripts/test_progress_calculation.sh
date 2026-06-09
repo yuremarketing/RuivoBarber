@@ -64,11 +64,17 @@ AGEN4_ID=$(db_exec "SELECT id FROM Agendamentos WHERE clienteid=$CLI4_ID ORDER B
 
 echo "Massa de testes de progresso RPG configurada com sucesso."
 
+# Obter Token JWT do Administrador para autenticação
+db_exec "DELETE FROM Usuarios WHERE login = 'test_admin';"
+db_exec "INSERT INTO Usuarios (nome, cargo, login, senha) VALUES ('Test Admin', 'Adm', 'test_admin', 'pwd');"
+AUTH_RESP=$(curl -s -X POST -H "Content-Type: application/json" -d '{"login": "test_admin", "senha": "pwd"}' "$API_URL/api/v1/auth/login")
+TOKEN=$(echo "$AUTH_RESP" | jq -r '.token')
+
 # -------------------------------------------------------------
 # TESTE 1: Transição do Nível 1 para Nível 2 (280 XP + 25 XP = 305 XP -> Nível 2)
 # -------------------------------------------------------------
 echo "Executando Teste 1: transição do Nível 1 para o Nível 2..."
-curl -s -X POST -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN1_ID}" "$API_URL/api/v1/atendimentos/concluir" > /dev/null
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN1_ID}" "$API_URL/api/v1/atendimentos/concluir" > /dev/null
 
 XP_CLI1=$(db_exec "SELECT xpatual FROM ProgressoCliente WHERE clienteid=$CLI1_ID;")
 NIVEL_CLI1=$(db_exec "SELECT nivelatual FROM ProgressoCliente WHERE clienteid=$CLI1_ID;")
@@ -88,7 +94,7 @@ fi
 # TESTE 2: Transição do Nível 2 para Nível 3 (580 XP + 25 XP = 605 XP -> Nível 3)
 # -------------------------------------------------------------
 echo "Executando Teste 2: transição do Nível 2 para o Nível 3..."
-curl -s -X POST -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN2_ID}" "$API_URL/api/v1/atendimentos/concluir" > /dev/null
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN2_ID}" "$API_URL/api/v1/atendimentos/concluir" > /dev/null
 
 XP_CLI2=$(db_exec "SELECT xpatual FROM ProgressoCliente WHERE clienteid=$CLI2_ID;")
 NIVEL_CLI2=$(db_exec "SELECT nivelatual FROM ProgressoCliente WHERE clienteid=$CLI2_ID;")
@@ -107,7 +113,7 @@ fi
 # TESTE 3: Transição do Nível 3 para Nível 4 (980 XP + 25 XP = 1005 XP -> Nível 4)
 # -------------------------------------------------------------
 echo "Executando Teste 3: transição do Nível 3 para o Nível 4..."
-curl -s -X POST -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN3_ID}" "$API_URL/api/v1/atendimentos/concluir" > /dev/null
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN3_ID}" "$API_URL/api/v1/atendimentos/concluir" > /dev/null
 
 XP_CLI3=$(db_exec "SELECT xpatual FROM ProgressoCliente WHERE clienteid=$CLI3_ID;")
 NIVEL_CLI3=$(db_exec "SELECT nivelatual FROM ProgressoCliente WHERE clienteid=$CLI3_ID;")
@@ -127,7 +133,7 @@ fi
 # TESTE 4: Limite Máximo no Nível 4 (1050 XP + 25 XP = 1075 XP -> Nível 4, barra 100%)
 # -------------------------------------------------------------
 echo "Executando Teste 4: ganho de XP mantendo limite máximo no Nível 4..."
-curl -s -X POST -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN4_ID}" "$API_URL/api/v1/atendimentos/concluir" > /dev/null
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN4_ID}" "$API_URL/api/v1/atendimentos/concluir" > /dev/null
 
 XP_CLI4=$(db_exec "SELECT xpatual FROM ProgressoCliente WHERE clienteid=$CLI4_ID;")
 NIVEL_CLI4=$(db_exec "SELECT nivelatual FROM ProgressoCliente WHERE clienteid=$CLI4_ID;")

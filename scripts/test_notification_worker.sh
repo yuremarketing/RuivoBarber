@@ -16,6 +16,7 @@ echo "===== INICIANDO TESTE DE NOTIFICATION WORKER & PROVA SOCIAL ====="
 db_exec "DELETE FROM Agendamentos WHERE clienteid IN (SELECT id FROM Usuarios WHERE login = 'test_notif_cli');"
 db_exec "DELETE FROM ProgressoCliente WHERE clienteid IN (SELECT id FROM Usuarios WHERE login = 'test_notif_cli');"
 db_exec "DELETE FROM Usuarios WHERE login = 'test_notif_cli';"
+db_exec "DELETE FROM ServicoProdutos WHERE servicoid = 1;"
 
 # 2. Inserir Cliente de Teste com 550 XP (Nível 2 / Barba de Respeito)
 db_exec "INSERT INTO Usuarios (nome, cargo, login, senha) VALUES ('Cliente Notificacao RPG', 'Cliente', 'test_notif_cli', 'pwd');"
@@ -39,9 +40,15 @@ AGEN_ID=$(db_exec "SELECT id FROM Agendamentos WHERE clienteid=$CLI_ID ORDER BY 
 
 echo "Criado Cliente ID: $CLI_ID (550 XP), Agendamento ID: $AGEN_ID"
 
+# Obter Token JWT do Administrador para autenticação
+db_exec "DELETE FROM Usuarios WHERE login = 'test_admin';"
+db_exec "INSERT INTO Usuarios (nome, cargo, login, senha) VALUES ('Test Admin', 'Adm', 'test_admin', 'pwd');"
+AUTH_RESP=$(curl -s -X POST -H "Content-Type: application/json" -d '{"login": "test_admin", "senha": "pwd"}' "$API_URL/api/v1/auth/login")
+TOKEN=$(echo "$AUTH_RESP" | jq -r '.token')
+
 # 4. Chamar conclusão de atendimento (irá somar +50 XP = 600 XP -> Nível 3 Lenda da Navalha)
 echo "Concluindo atendimento..."
-RESP=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN_ID}" "$API_URL/api/v1/atendimentos/concluir")
+RESP=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN_ID}" "$API_URL/api/v1/atendimentos/concluir")
 echo "Resposta API: $RESP"
 
 # Restaurar recompensa padrão do serviço 1

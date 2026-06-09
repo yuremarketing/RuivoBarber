@@ -63,6 +63,24 @@ func (r *ClientePgRepository) FindByID(id int) (*domain.Cliente, error) {
     return &c, nil
 }
 
+func (r *ClientePgRepository) FindByLogin(login string) (*domain.Cliente, string, error) {
+    var c domain.Cliente
+    var senha string
+    query := `
+        SELECT u.id, u.nome, u.login, u.cargo, u.senha, COALESCE(p.xpatual, 0) as xp, COALESCE(n.nomedonivel, 'Corte Iniciante') as nivel
+        FROM Usuarios u
+        LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
+        LEFT JOIN Niveis n ON p.nivelatual = n.id
+        WHERE u.login = $1
+    `
+    row := r.db.QueryRow(query, login)
+    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &senha, &c.XP, &c.Nivel)
+    if err != nil {
+        return nil, "", err
+    }
+    return &c, senha, nil
+}
+
 func (r *ClientePgRepository) Save(c *domain.Cliente) error {
     _, err := r.db.Exec(
         "INSERT INTO Usuarios (nome, login, senha, cargo) VALUES ($1, $2, $3, $4)",

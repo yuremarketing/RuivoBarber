@@ -26,11 +26,15 @@ db_exec "INSERT INTO ProgressoCliente (clienteid, xpatual, nivelatual, barraperc
 
 echo "Criado Cliente ID: $CLI_ID com 500 XP."
 
+# Obter Token JWT do Cliente para autenticação
+AUTH_RESP=$(curl -s -X POST -H "Content-Type: application/json" -d '{"login": "test_coupon_cli", "senha": "pwd"}' "$API_URL/api/v1/auth/login")
+TOKEN=$(echo "$AUTH_RESP" | jq -r '.token')
+
 # -------------------------------------------------------------
 # TESTE 1: Resgatar Cupom de Nível 2 (Elegível - Custo: 300 XP)
 # -------------------------------------------------------------
 echo "Executando Teste 1: Resgatar cupom de Nível 2 (Sucesso esperado)..."
-RESP1=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"cliente_id\": $CLI_ID, \"nivel_id\": 2}" "$API_URL/api/v1/cupons/resgatar")
+RESP1=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"cliente_id\": $CLI_ID, \"nivel_id\": 2}" "$API_URL/api/v1/cupons/resgatar")
 echo "Resposta: $RESP1"
 
 CUPOM_COUNT=$(db_exec "SELECT COUNT(*) FROM Cupons WHERE clienteid=$CLI_ID AND descontopercent=5.00;")
@@ -47,7 +51,7 @@ fi
 # TESTE 2: Tentar resgatar o mesmo nível novamente (Duplicado)
 # -------------------------------------------------------------
 echo "Executando Teste 2: Tentar resgatar Nível 2 novamente (Erro esperado)..."
-RESP2=$(curl -s -w "%{http_code}" -o /dev/null -X POST -H "Content-Type: application/json" -d "{\"cliente_id\": $CLI_ID, \"nivel_id\": 2}" "$API_URL/api/v1/cupons/resgatar")
+RESP2=$(curl -s -w "%{http_code}" -o /dev/null -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"cliente_id\": $CLI_ID, \"nivel_id\": 2}" "$API_URL/api/v1/cupons/resgatar")
 
 echo "Resultados Teste 2 - HTTP Code (esperado 400): $RESP2"
 
@@ -62,7 +66,7 @@ fi
 # TESTE 3: Tentar resgatar Nível 3 (XP Insuficiente: 500/600)
 # -------------------------------------------------------------
 echo "Executando Teste 3: Tentar resgatar Nível 3 (XP Insuficiente - Erro esperado)..."
-RESP3=$(curl -s -w "%{http_code}" -o /dev/null -X POST -H "Content-Type: application/json" -d "{\"cliente_id\": $CLI_ID, \"nivel_id\": 3}" "$API_URL/api/v1/cupons/resgatar")
+RESP3=$(curl -s -w "%{http_code}" -o /dev/null -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"cliente_id\": $CLI_ID, \"nivel_id\": 3}" "$API_URL/api/v1/cupons/resgatar")
 
 echo "Resultados Teste 3 - HTTP Code (esperado 400): $RESP3"
 
@@ -77,7 +81,7 @@ fi
 # TESTE 4: Tentar resgatar Nível 1 (Iniciante - Sem recompensa)
 # -------------------------------------------------------------
 echo "Executando Teste 4: Tentar resgatar Nível 1 (Sem recompensa - Erro esperado)..."
-RESP4=$(curl -s -w "%{http_code}" -o /dev/null -X POST -H "Content-Type: application/json" -d "{\"cliente_id\": $CLI_ID, \"nivel_id\": 1}" "$API_URL/api/v1/cupons/resgatar")
+RESP4=$(curl -s -w "%{http_code}" -o /dev/null -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"cliente_id\": $CLI_ID, \"nivel_id\": 1}" "$API_URL/api/v1/cupons/resgatar")
 
 echo "Resultados Teste 4 - HTTP Code (esperado 400): $RESP4"
 

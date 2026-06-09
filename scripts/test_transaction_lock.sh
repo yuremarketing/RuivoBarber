@@ -23,6 +23,12 @@ db_exec "DELETE FROM Produtos WHERE nome = 'Shampoo Premium';"
 db_exec "INSERT INTO Usuarios (nome, cargo, login, senha) VALUES ('Cliente RPG', 'Cliente', 'test_xp_cli', 'pwd');"
 CLI_ID=$(db_exec "SELECT id FROM Usuarios WHERE login='test_xp_cli';")
 
+# 2b. Inserir Administrador para autenticação do teste e obter token JWT
+db_exec "DELETE FROM Usuarios WHERE login = 'test_admin';"
+db_exec "INSERT INTO Usuarios (nome, cargo, login, senha) VALUES ('Test Admin', 'Adm', 'test_admin', 'pwd');"
+AUTH_RESP=$(curl -s -X POST -H "Content-Type: application/json" -d '{"login": "test_admin", "senha": "pwd"}' "$API_URL/api/v1/auth/login")
+TOKEN=$(echo "$AUTH_RESP" | jq -r '.token')
+
 # 3. Inserir Produto e mapear ao Serviço 1 (Corte Simples, recompensa 10 XP)
 # Estoque inicial de Shampoo Premium = 1
 db_exec "INSERT INTO Produtos (nome, quantidade) VALUES ('Shampoo Premium', 1);"
@@ -48,7 +54,7 @@ echo "Agendamento 1: $AGEN1_ID, Agendamento 2: $AGEN2_ID"
 
 # 5. TESTE 1: Concluir o Agendamento 1 (Estoque disponível = 1, necessário = 1)
 echo "Executando Conclusão do Agendamento 1..."
-RESP1=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN1_ID}" "$API_URL/api/v1/atendimentos/concluir")
+RESP1=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN1_ID}" "$API_URL/api/v1/atendimentos/concluir")
 echo "Resposta 1: $RESP1"
 
 # Verificar estoque, status e XP do cliente
@@ -70,7 +76,7 @@ fi
 # 6. TESTE 2: Concluir o Agendamento 2 (Estoque atual = 0, necessário = 1)
 # Deverá falhar e dar Rollback total na transação
 echo "Executando Conclusão do Agendamento 2 (deverá falhar por estoque)..."
-RESP2=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN2_ID}" "$API_URL/api/v1/atendimentos/concluir")
+RESP2=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN2_ID}" "$API_URL/api/v1/atendimentos/concluir")
 echo "Resposta 2: $RESP2"
 
 # Verificar que nada foi alterado para o Agendamento 2 e o XP do cliente

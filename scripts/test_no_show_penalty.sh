@@ -54,6 +54,12 @@ AGEN2_ID=$(db_exec "SELECT id FROM Agendamentos WHERE clienteid=$CLI2_ID ORDER B
 db_exec "INSERT INTO Agendamentos (clienteid, barbeiroid, servicoid, datahora, status) VALUES ($CLI3_ID, $BARBEIRO_ID, 1, NOW() + INTERVAL '3 hours', 'Concluido');"
 AGEN3_ID=$(db_exec "SELECT id FROM Agendamentos WHERE clienteid=$CLI3_ID ORDER BY id DESC LIMIT 1;")
 
+# Obter Token JWT do Administrador
+db_exec "DELETE FROM Usuarios WHERE login = 'test_admin';"
+db_exec "INSERT INTO Usuarios (nome, cargo, login, senha) VALUES ('Test Admin', 'Adm', 'test_admin', 'pwd');"
+AUTH_RESP=$(curl -s -X POST -H "Content-Type: application/json" -d '{"login": "test_admin", "senha": "pwd"}' "$API_URL/api/v1/auth/login")
+TOKEN=$(echo "$AUTH_RESP" | jq -r '.token')
+
 echo "Massa de testes inserida com sucesso."
 echo "Agendamento 1 (Cli 1): ID $AGEN1_ID"
 echo "Agendamento 2 (Cli 2): ID $AGEN2_ID"
@@ -63,7 +69,7 @@ echo "Agendamento 3 (Cli 3): ID $AGEN3_ID"
 # TESTE 1: Registrar Falta no Agendamento 1 (150 XP -> 50 XP, Nivel 2 -> Nivel 1)
 # -------------------------------------------------------------
 echo "Executando Teste 1: registrar falta para Cliente 1..."
-RESP1=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN1_ID}" "$API_URL/api/v1/atendimentos/falta")
+RESP1=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN1_ID}" "$API_URL/api/v1/atendimentos/falta")
 echo "Resposta: $RESP1"
 
 STATUS_AGEN1=$(db_exec "SELECT status FROM Agendamentos WHERE id=$AGEN1_ID;")
@@ -83,7 +89,7 @@ fi
 # TESTE 2: Registrar Falta no Agendamento 2 (50 XP -> 0 XP, limitador de mínimo)
 # -------------------------------------------------------------
 echo "Executando Teste 2: registrar falta para Cliente 2..."
-RESP2=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN2_ID}" "$API_URL/api/v1/atendimentos/falta")
+RESP2=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN2_ID}" "$API_URL/api/v1/atendimentos/falta")
 echo "Resposta: $RESP2"
 
 STATUS_AGEN2=$(db_exec "SELECT status FROM Agendamentos WHERE id=$AGEN2_ID;")
@@ -103,7 +109,7 @@ fi
 # TESTE 3: Chamar falta em agendamento já finalizado (Status Concluido)
 # -------------------------------------------------------------
 echo "Executando Teste 3: tentar registrar falta em agendamento Concluido..."
-RESP3=$(curl -s -w "%{http_code}" -o /dev/null -X POST -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN3_ID}" "$API_URL/api/v1/atendimentos/falta")
+RESP3=$(curl -s -w "%{http_code}" -o /dev/null -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"agendamento_id\": $AGEN3_ID}" "$API_URL/api/v1/atendimentos/falta")
 
 STATUS_AGEN3=$(db_exec "SELECT status FROM Agendamentos WHERE id=$AGEN3_ID;")
 XP_CLI3=$(db_exec "SELECT xpatual FROM ProgressoCliente WHERE clienteid=$CLI3_ID;")

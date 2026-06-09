@@ -30,13 +30,19 @@ db_exec "INSERT INTO Cupons (codigo, descricao, descontopercent, clienteid, usad
 # Cupom 3: Já utilizado
 db_exec "INSERT INTO Cupons (codigo, descricao, descontopercent, clienteid, usado, validoate) VALUES ('TESTVAL-USADO', 'Cupom de Teste Já Usado', 10.00, $CLI_ID, TRUE, NOW() + INTERVAL '30 days');"
 
+# Obter Token JWT do Administrador
+db_exec "DELETE FROM Usuarios WHERE login = 'test_admin';"
+db_exec "INSERT INTO Usuarios (nome, cargo, login, senha) VALUES ('Test Admin', 'Adm', 'test_admin', 'pwd');"
+AUTH_RESP=$(curl -s -X POST -H "Content-Type: application/json" -d '{"login": "test_admin", "senha": "pwd"}' "$API_URL/api/v1/auth/login")
+TOKEN=$(echo "$AUTH_RESP" | jq -r '.token')
+
 echo "Massa de testes de cupons inserida."
 
 # -------------------------------------------------------------
 # TESTE 1: Validar Cupom Válido (Sucesso esperado)
 # -------------------------------------------------------------
 echo "Executando Teste 1: Validar cupom ativo..."
-RESP1=$(curl -s -X POST -H "Content-Type: application/json" -d '{"codigo": "TESTVAL-OK"}' "$API_URL/api/v1/cupons/validar")
+RESP1=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"codigo": "TESTVAL-OK"}' "$API_URL/api/v1/cupons/validar")
 echo "Resposta: $RESP1"
 
 CUPOM_USADO=$(db_exec "SELECT usado FROM Cupons WHERE codigo='TESTVAL-OK';")
@@ -52,7 +58,7 @@ fi
 # TESTE 2: Validar Cupom já Utilizado (Erro esperado)
 # -------------------------------------------------------------
 echo "Executando Teste 2: Validar cupom já utilizado (Erro esperado)..."
-RESP2=$(curl -s -w "%{http_code}" -o /dev/null -X POST -H "Content-Type: application/json" -d '{"codigo": "TESTVAL-USADO"}' "$API_URL/api/v1/cupons/validar")
+RESP2=$(curl -s -w "%{http_code}" -o /dev/null -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"codigo": "TESTVAL-USADO"}' "$API_URL/api/v1/cupons/validar")
 
 echo "Resultados Teste 2 - HTTP Code (esperado 400): $RESP2"
 
@@ -67,7 +73,7 @@ fi
 # TESTE 3: Validar Cupom Expirado (Erro esperado)
 # -------------------------------------------------------------
 echo "Executando Teste 3: Validar cupom expirado (Erro esperado)..."
-RESP3=$(curl -s -w "%{http_code}" -o /dev/null -X POST -H "Content-Type: application/json" -d '{"codigo": "TESTVAL-EXP"}' "$API_URL/api/v1/cupons/validar")
+RESP3=$(curl -s -w "%{http_code}" -o /dev/null -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"codigo": "TESTVAL-EXP"}' "$API_URL/api/v1/cupons/validar")
 
 echo "Resultados Teste 3 - HTTP Code (esperado 400): $RESP3"
 
@@ -82,7 +88,7 @@ fi
 # TESTE 4: Validar Cupom Inexistente (Erro esperado)
 # -------------------------------------------------------------
 echo "Executando Teste 4: Validar cupom inexistente (Erro esperado)..."
-RESP4=$(curl -s -w "%{http_code}" -o /dev/null -X POST -H "Content-Type: application/json" -d '{"codigo": "TESTVAL-NADA"}' "$API_URL/api/v1/cupons/validar")
+RESP4=$(curl -s -w "%{http_code}" -o /dev/null -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"codigo": "TESTVAL-NADA"}' "$API_URL/api/v1/cupons/validar")
 
 echo "Resultados Teste 4 - HTTP Code (esperado 404): $RESP4"
 

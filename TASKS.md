@@ -62,9 +62,9 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 ## 🧪 4. Validação e Testes Modulares (QA)
 - [x] Criar `Test_TransactionLock`: Garantir rollback total (XP não sobe se estoque falhar).
 - [x] Criar `Test_NoShowPenalty`: Validar matematicamente a dedução de 100 XP.
-- [ ] Criar `Test_ProgressCalculation`: Validar a transição correta de status ao cruzar a barreira de pontos do nível.
+- [x] Criar `Test_ProgressCalculation`: Validar a transição correta de status ao cruzar a barreira de pontos do nível.
 
 ## 🔐 5. Segurança (Pré-Produção)
-- [ ] Implementar autenticação JWT (`POST /api/v1/auth/login`)
-- [ ] Middleware de autorização por Cargo (Adm, Barbeiro, Cliente)
-- [ ] Proteger rotas admin contra acesso de Cliente
+- [x] Implementar autenticação JWT (`POST /api/v1/auth/login`)
+- [x] Middleware de autorização por Cargo (Adm, Barbeiro, Cliente)
+- [x] Proteger rotas admin contra acesso de Cliente
