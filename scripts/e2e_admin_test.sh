@@ -70,7 +70,11 @@ assert_http_status() {
   local desc="$1" expected_status="$2" method="$3" url="$4"
   shift 4
   local status
-  status=$(curl -s -o /dev/null -w '%{http_code}' -X "$method" "$url" "$@")
+  if [[ -n "${TOKEN:-}" && "$url" == *"/api/v1/"* && "$url" != *"/health"* && "$url" != *"/auth/login"* && "$url" != *"/inexistente"* ]]; then
+    status=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $TOKEN" -X "$method" "$url" "$@")
+  else
+    status=$(curl -s -o /dev/null -w '%{http_code}' -X "$method" "$url" "$@")
+  fi
   assert_eq "$desc" "$expected_status" "$status"
 }
 
@@ -205,9 +209,15 @@ assert_contains "Barbeiro inserido com sucesso (ID=$BARBEIRO_ID)" "$BARBEIRO_ID"
 # ─────────────────────────────────────────────────────────────
 section "7. Fluxo Admin — Listar Clientes via API"
 
+# Obter Token JWT do Administrador de Testes
+db_exec "DELETE FROM Usuarios WHERE login = 'e2e_admin';" >/dev/null 2>&1 || true
+db_exec "INSERT INTO Usuarios (nome, cargo, login, senha) VALUES ('Admin E2E', 'Adm', 'e2e_admin', 'pwd_admin');"
+AUTH_RESP=$(curl -s -X POST -H "Content-Type: application/json" -d '{"login": "e2e_admin", "senha": "pwd_admin"}' "$API_URL/api/v1/auth/login")
+TOKEN=$(echo "$AUTH_RESP" | jq -r '.token')
+
 assert_http_status "GET /clientes retorna HTTP 200" "200" "GET" "$API_URL/api/v1/clientes"
 
-CLIENTES_JSON=$(curl -s "$API_URL/api/v1/clientes")
+CLIENTES_JSON=$(curl -s -H "Authorization: Bearer $TOKEN" "$API_URL/api/v1/clientes")
 assert_contains "Resposta contém 'Cliente Teste 1'"  "Cliente Teste 1" "$CLIENTES_JSON"
 assert_contains "Resposta contém 'Cliente Teste 2'"  "Cliente Teste 2" "$CLIENTES_JSON"
 
@@ -238,7 +248,7 @@ section "8. Fluxo Admin — Buscar Cliente por ID via API"
 
 assert_http_status "GET /clientes/$CLIENTE1_ID retorna HTTP 200" "200" "GET" "$API_URL/api/v1/clientes/$CLIENTE1_ID"
 
-CLIENTE1_JSON=$(curl -s "$API_URL/api/v1/clientes/$CLIENTE1_ID")
+CLIENTE1_JSON=$(curl -s -H "Authorization: Bearer $TOKEN" "$API_URL/api/v1/clientes/$CLIENTE1_ID")
 assert_contains "Retorna nome 'Cliente Teste 1'"     "Cliente Teste 1"  "$CLIENTE1_JSON"
 assert_contains "Retorna login 'e2e_cliente1'"        "e2e_cliente1"     "$CLIENTE1_JSON"
 assert_contains "Retorna cargo 'Cliente'"             "Cliente"          "$CLIENTE1_JSON"
@@ -358,12 +368,12 @@ section "14. Tratamento de Erros — API"
 
 assert_http_status "GET /clientes/abc retorna HTTP 400 (ID inválido)" "400" "GET" "$API_URL/api/v1/clientes/abc"
 
-ERROR_MSG=$(curl -s "$API_URL/api/v1/clientes/abc")
+ERROR_MSG=$(curl -s -H "Authorization: Bearer $TOKEN" "$API_URL/api/v1/clientes/abc")
 assert_contains "Mensagem de erro para ID inválido" "inv" "$ERROR_MSG"
 
 assert_http_status "GET /clientes/99999 retorna HTTP 404 (não encontrado)" "404" "GET" "$API_URL/api/v1/clientes/99999"
 
-ERROR_404=$(curl -s "$API_URL/api/v1/clientes/99999")
+ERROR_404=$(curl -s -H "Authorization: Bearer $TOKEN" "$API_URL/api/v1/clientes/99999")
 assert_contains "Mensagem de erro para cliente inexistente" "encontrado" "$ERROR_404"
 
 assert_http_status "GET rota inexistente retorna HTTP 404" "404" "GET" "$API_URL/api/v1/inexistente"
