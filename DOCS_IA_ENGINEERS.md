@@ -1,56 +1,42 @@
 # 🤖 Guia Prático de Engenharia de IA - RuivoBarber
 
-Este guia foi elaborado para orientar você (**Mark**, **Rodrigo** e **Igor**) a atuar como **Engenheiro de IA** utilizando o agente **Antigravity**. 
+Este guia orienta o Engenheiro de IA (**Mark**, **Rodrigo** e **Igor**) a atuar na direção estratégica do projeto, utilizando o agente **Antigravity**. 
 
-Aqui, focamos no conceito de **Orquestração de Agentes "Zero Code"**, onde o Engenheiro humano atua na tomada de decisões, arquitetura e validação, enquanto a IA executa e depura o código sob demanda.
-
----
-
-## 🧭 1. O Papel do Engenheiro de IA
-Como Engenheiro de IA, você não digita código-fonte. Suas responsabilidades são:
-1.  **Definir Objetivos Claros**: Traduzir regras de negócios complexas em metas claras para o agente de IA.
-2.  **Desenhar a Arquitetura**: Garantir que a IA respeite as diretrizes estabelecidas (como *Ports & Adapters* em Go e isolamento de regras em *Hooks/Services* no React).
-3.  **Aprovar Planos**: Analisar criticamente os planos técnicos que a IA propõe antes de dar o aval para a escrita de código.
-4.  **Validar Resultados**: Rodar e avaliar suítes de testes automatizados e simulações E2E.
+Aqui, adotamos o princípio da **Abstração Total de Código (Zero Code)** para o humano. O Engenheiro humano foca na lógica de negócio e na arquitetura de IA, enquanto a IA executa os códigos e a infraestrutura técnica nos bastidores.
 
 ---
 
-## 📈 2. Gerenciamento de Janela de Contexto e Tokens
-IAs baseadas em LLM funcionam com base em tokens (pedaços de palavras). Compreender este fluxo é crucial para evitar lentidão e custos desnecessários:
+## 🧭 1. O Papel do Engenheiro de IA: Tradução Funcional
+O Engenheiro de IA não escreve código de programação (Go, React, SQL). Ele atua traduzindo os requisitos de negócio em **Fluxos Funcionais** para o agente de IA:
 
-### Janela de Contexto
-Tudo o que é enviado na conversa (código lido, mensagens anteriores, logs de comandos) preenche a **Janela de Contexto** do agente.
-*   **Compactação Automática**: Quando o contexto do Antigravity fica muito grande, o sistema realiza uma compactação (resumo). Isso limpa o histórico de chat detalhado, mas mantém os artefatos (`task.md`, `walkthrough.md` e `implementation_plan.md`) intactos.
-*   **Boas Práticas de Economia de Tokens**:
-    *   Evite ler arquivos gigantescos de uma vez se puder usar busca focada (`grep_search`).
-    *   Mantenha discussões paralelas curtas. Se o objetivo mudar drasticamente, resuma o estado atual e inicie uma nova etapa.
+| O que o Cliente/Usuário final precisa | O que o Engenheiro de IA pede para a IA fazer | O que a IA executa nos bastidores |
+| :--- | :--- | :--- |
+| "Quero poder fazer login com segurança na minha conta de Administrador." | "Conecte a tela de login real para validar as credenciais e guardar a chave de acesso." | Implementa `POST /api/v1/auth/login` no backend e armazena o token JWT no `localStorage` do frontend. |
+| "Se eu digitar um link que não existe, quero ver um aviso claro de página não encontrada." | "Corrija o comportamento de páginas não encontradas para retornar o status 404." | Ajusta a ordem dos middlewares no Go/Fiber para tratar rotas inválidas antes de validar o token JWT. |
 
 ---
 
-## ⚡ 3. Limites de Taxa da API (Rate Limits)
-As APIs de LLM do Google possuem limites estritos para garantir estabilidade:
-*   **RPM (Requests Per Minute)**: Limite de chamadas que podem ser feitas por minuto.
-*   **TPM (Tokens Per Minute)**: Limite de tokens (dados enviados e recebidos) por minuto.
+## ⚙️ 2. Arquitetura Técnica da Engenharia de IA
+Embora você não precise saber sintaxe de código, como Engenheiro de IA você precisa entender os componentes técnicos que controlam o **Agente de IA**:
 
-### Como lidar com erros HTTP 429 (Too Many Requests)?
-Se o agente de IA ou suas integrações receberem o erro HTTP 429, significa que o limite foi atingido. As diretrizes do projeto ditam:
-1.  **Exponential Backoff (Espera Exponencial)**: Pause a execução do agente por um tempo progressivamente maior (ex: 15s, depois 30s) antes de tentar novamente.
-2.  **Sequencialização**: Priorize operações sequenciais em vez de spawnar múltiplos sub-agentes paralelos que consomem a cota de TPM muito rápido.
+### A. O Modelo Context Context Protocol (MCP)
+O **MCP** é a tecnologia que conecta a inteligência do LLM a ferramentas e APIs do mundo real.
+*   **Como funciona a comunicação (Ex: GitHub Projects)**: O agente de IA não acessa o GitHub diretamente por mágica. Ele usa um servidor MCP configurado no ambiente local. O agente traduz a solicitação em uma consulta **GraphQL** (enviada via HTTP POST) usando o token de acesso pessoal (`personal access token`), criando cartões (issues) e movendo-os entre as colunas do Kanban (`Todo`, `In Progress`, `Done`).
+*   **Por que isso importa**: Se um serviço externo falhar (como o GitHub), o Engenheiro de IA deve saber que o problema está na conexão do servidor MCP ou nas credenciais do token, e não no código da aplicação.
 
----
+### B. Tokens, Janela de Contexto e Compactação
+*   **Tokens**: LLMs leem dados em pedaços chamados tokens. Cada arquivo que a IA lê, cada comando que ela executa e cada resposta gerada consome tokens.
+*   **Janela de Contexto**: É a "memória de trabalho" da IA em tempo de execução. Se a conversa ficar muito longa, o Antigravity realiza uma **Compactação Automática** do histórico para liberar memória (tokens).
+*   **Controle de IA**: O Engenheiro de IA deve instruir o agente de forma concisa para evitar o desperdício de tokens, o que otimiza a velocidade de resposta e previne a perda de contexto essencial.
 
-## 🔄 4. O Fluxo de Trabalho do Agente (Plan-Approve-Execute-Verify)
-Ao trabalhar com o Antigravity, o ciclo ideal de engenharia de IA segue 4 passos:
+### C. Limites de Taxa da API (Rate Limits)
+O Google Gemini possui limites de:
+*   **RPM** (Requisições por Minuto)
+*   **TPM** (Tokens por Minuto)
+*   **HTTP 429 (Too Many Requests)**: Ocorre quando enviamos muitos dados de uma vez. O Engenheiro de IA deve orientar o agente a usar **Exponential Backoff** (pausas progressivas) e evitar paralelizar muitos sub-agentes simultâneos para respeitar essa cota.
 
-```mermaid
-graph TD
-    A[1. Planejar & Pesquisar] -->|Cria Plano de Implementação| B[2. Revisar & Aprovar]
-    B -->|Aprovação do Engenheiro de IA| C[3. Executar Código]
-    C -->|Roda Testes e E2E| D[4. Verificar & Documentar]
-    D -->|Commita as mudanças| E[Pronto]
-```
-
-1.  **Planejar (Research & Plan)**: O agente pesquisa os arquivos, entende a arquitetura e escreve um plano de implementação.
-2.  **Revisar (Approve)**: Você avalia as dependências, se o plano segue o padrão de arquitetura e aprova ou solicita alterações.
-3.  **Executar (Execute)**: O agente escreve o código e executa os testes automáticos locais (`./scripts/*.sh`).
-4.  **Verificar (Verify & Walkthrough)**: O agente cria um passo a passo do que foi alterado e o Engenheiro de IA realiza a homologação final.
+### D. Rastreamento e Alinhamento do Agente
+Para evitar que o agente de IA se desvie do objetivo durante tarefas longas, o Engenheiro monitora três arquivos locais gerados na pasta de dados do aplicativo (`.gemini/antigravity/brain/...`):
+*   `implementation_plan.md`: O plano de design arquitetural sugerido pela IA e aprovado pelo Engenheiro antes da escrita de código.
+*   `task.md`: O checklist dinâmico de tarefas ativas e concluídas.
+*   `walkthrough.md`: O relatório técnico pós-execução detalhando o que foi testado e os resultados.
