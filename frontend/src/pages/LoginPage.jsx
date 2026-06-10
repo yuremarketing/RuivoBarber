@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { login as loginService } from '../services/api'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -14,47 +15,37 @@ export default function LoginPage() {
     setLoading(true)
     setErro('')
     
-    setTimeout(() => {
-      if (cargo === 'Adm' && login === 'admin' && senha === 'admin') {
+    loginService(login, senha)
+      .then(response => {
+        const data = response.data
+        // Valida se o cargo retornado é o mesmo selecionado pelo usuário
+        if (data.user.cargo !== cargo) {
+          setErro(`Acesso negado. Seu perfil de acesso real é ${data.user.cargo}.`)
+          setLoading(false)
+          return
+        }
+
         const userSession = {
-          id: 99,
-          nome: 'Administrador',
-          cargo: 'Adm',
-          login: 'admin'
+          id: data.user.id,
+          nome: data.user.nome,
+          cargo: data.user.cargo,
+          login: data.user.login,
+          xp: data.user.xp,
+          nivel: data.user.nivel,
+          token: data.token
         }
         localStorage.setItem('ruivobarber_user', JSON.stringify(userSession))
         navigate('/dashboard')
-      } else if (cargo === 'Cliente' && ((login === 'cliente' && senha === 'cliente') || (login === 'joao.silva' && senha === 'pwd'))) {
-        const userSession = {
-          id: 1,
-          nome: 'João Silva',
-          cargo: 'Cliente',
-          login: 'joao.silva',
-          xp: 320,
-          nivel: 'Barba de Respeito'
-        }
-        localStorage.setItem('ruivobarber_user', JSON.stringify(userSession))
-        navigate('/dashboard')
-      } else if (cargo === 'Barbeiro' && login === 'barbeiro' && senha === 'barbeiro') {
-        const userSession = {
-          id: 10,
-          nome: 'Carlos Barbeiro',
-          cargo: 'Barbeiro',
-          login: 'barbeiro'
-        }
-        localStorage.setItem('ruivobarber_user', JSON.stringify(userSession))
-        navigate('/dashboard')
-      } else {
-        if (cargo === 'Adm') {
-          setErro('Credenciais inválidas. Use: admin / admin')
-        } else if (cargo === 'Cliente') {
-          setErro('Credenciais inválidas. Use: cliente / cliente')
+      })
+      .catch(error => {
+        console.error('Erro de autenticação:', error)
+        if (error.response && error.response.data && error.response.data.error) {
+          setErro(`Credenciais inválidas: ${error.response.data.error}`)
         } else {
-          setErro('Credenciais inválidas. Use: barbeiro / barbeiro')
+          setErro('Erro ao se conectar ao servidor. Certifique-se de que o backend está online.')
         }
-      }
-      setLoading(false)
-    }, 600)
+        setLoading(false)
+      })
   }
 
   return (

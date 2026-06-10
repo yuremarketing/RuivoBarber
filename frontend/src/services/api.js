@@ -6,6 +6,26 @@ const api = axios.create({
     : '/api/v1'
 })
 
+api.interceptors.request.use(
+  config => {
+    const userSessionStr = localStorage.getItem('ruivobarber_user')
+    if (userSessionStr) {
+      try {
+        const userSession = JSON.parse(userSessionStr)
+        if (userSession && userSession.token) {
+          config.headers['Authorization'] = `Bearer ${userSession.token}`
+        }
+      } catch (e) {
+        console.error('Erro ao ler token do localStorage:', e)
+      }
+    }
+    return config
+  },
+  error => {
+    return Promise.reject(error)
+  }
+)
+
 api.interceptors.response.use(
   response => {
     console.log('API Request URL:', response.config.baseURL + response.config.url)
@@ -19,6 +39,7 @@ api.interceptors.response.use(
   }
 )
 
+export const login = (login, senha) => api.post('/auth/login', { login, senha })
 export const listarClientes = () => api.get('/clientes')
 export const buscarCliente = (id) => api.get(`/clientes/${id}`)
 export const healthCheck = () => api.get('/health')
@@ -28,3 +49,4 @@ export const concluirAtendimento = (agendamentoId) => api.post('/atendimentos/co
 export const registrarFalta = (agendamentoId) => api.post('/atendimentos/falta', { agendamento_id: Number(agendamentoId) })
 
 export default api
+
