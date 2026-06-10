@@ -94,6 +94,13 @@ echo -e "${BOLD}╔════════════════════�
 echo -e "${BOLD}║     ✂️  RuivoBarber — Teste E2E: Fluxo Administrador      ║${NC}"
 echo -e "${BOLD}╚════════════════════════════════════════════════════════════╝${NC}"
 
+# Limpeza inicial para garantir idempotência caso o script anterior tenha abortado no meio
+db_exec "DELETE FROM Cupons WHERE codigo LIKE 'E2E-%';" >/dev/null 2>&1 || true
+db_exec "DELETE FROM Agendamentos WHERE clienteid IN (SELECT id FROM Usuarios WHERE login LIKE 'e2e_%' OR login = 'api_cli');" >/dev/null 2>&1 || true
+db_exec "DELETE FROM ProgressoCliente WHERE clienteid IN (SELECT id FROM Usuarios WHERE login LIKE 'e2e_%' OR login = 'api_cli');" >/dev/null 2>&1 || true
+db_exec "DELETE FROM Usuarios WHERE login LIKE 'e2e_%' OR login = 'api_cli';" >/dev/null 2>&1 || true
+db_exec "DELETE FROM Configuracoes WHERE chaveapiwhatsapp='test_api_key_123';" >/dev/null 2>&1 || true
+
 # ─────────────────────────────────────────────────────────────
 # 1. HEALTH CHECK DA API
 # ─────────────────────────────────────────────────────────────
@@ -203,6 +210,54 @@ assert_contains "Cliente 2 inserido com sucesso (ID=$CLIENTE2_ID)" "$CLIENTE2_ID
 db_exec "INSERT INTO Usuarios (nome, cargo, login, senha, comissao) VALUES ('Barbeiro Teste', 'Barbeiro', 'e2e_barbeiro1', 'hash_teste', 30.00);"
 BARBEIRO_ID=$(db_exec "SELECT id FROM Usuarios WHERE login='e2e_barbeiro1';")
 assert_contains "Barbeiro inserido com sucesso (ID=$BARBEIRO_ID)" "$BARBEIRO_ID" "$BARBEIRO_ID"
+
+# ─────────────────────────────────────────────────────────────
+# 6.5. CADASTRO DE CLIENTES VIA API (Opção A)
+# ─────────────────────────────────────────────────────────────
+section "6.5. Cadastro de Clientes via API"
+
+# Criar Admin token temporário para usar nesta etapa se necessário
+db_exec "DELETE FROM Usuarios WHERE login = 'e2e_admin';" >/dev/null 2>&1 || true
+db_exec "INSERT INTO Usuarios (nome, cargo, login, senha) VALUES ('Admin E2E', 'Adm', 'e2e_admin', 'pwd_admin');"
+AUTH_RESP_TEMP=$(curl -s -X POST -H "Content-Type: application/json" -d '{"login": "e2e_admin", "senha": "pwd_admin"}' "$API_URL/api/v1/auth/login")
+TOKEN_TEMP=$(echo "$AUTH_RESP_TEMP" | jq -r '.token')
+
+# 1. Sem Auth
+STATUS_NO_AUTH=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/api/v1/clientes" -H "Content-Type: application/json" -d '{"nome":"API Cliente", "login":"api_cli", "senha":"123"}')
+assert_eq "Criar cliente sem token retorna HTTP 401" "401" "$STATUS_NO_AUTH"
+
+# 2. Com token de cliente comum
+db_exec "UPDATE Usuarios SET senha = 'pwd_cliente' WHERE id = $CLIENTE1_ID;"
+CLIENTE_AUTH=$(curl -s -X POST -H "Content-Type: application/json" -d '{"login": "e2e_cliente1", "senha": "pwd_cliente"}' "$API_URL/api/v1/auth/login")
+CLIENTE_TOKEN=$(echo "$CLIENTE_AUTH" | jq -r '.token')
+
+STATUS_CLIENTE_AUTH=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $CLIENTE_TOKEN" -X POST "$API_URL/api/v1/clientes" -H "Content-Type: application/json" -d '{"nome":"API Cliente", "login":"api_cli", "senha":"123"}')
+assert_eq "Criar cliente com token de cliente comum retorna HTTP 403" "403" "$STATUS_CLIENTE_AUTH"
+
+# 3. Criar com sucesso usando token de Admin
+db_exec "DELETE FROM ProgressoCliente WHERE clienteid IN (SELECT id FROM Usuarios WHERE login = 'api_cli');" >/dev/null 2>&1 || true
+db_exec "DELETE FROM Usuarios WHERE login = 'api_cli';" >/dev/null 2>&1 || true
+
+API_CREATION_RESP=$(curl -s -H "Authorization: Bearer $TOKEN_TEMP" -H "Content-Type: application/json" -X POST "$API_URL/api/v1/clientes" -d '{"nome":"API Cliente", "login":"api_cli", "senha":"pwd_api_cliente"}')
+assert_contains "Resposta da criação contém nome" "API Cliente" "$API_CREATION_RESP"
+assert_contains "Resposta da criação contém login" "api_cli" "$API_CREATION_RESP"
+
+NEW_CLI_ID=$(db_exec "SELECT id FROM Usuarios WHERE login='api_cli';")
+assert_contains "Cliente novo criado com sucesso no BD" "$NEW_CLI_ID" "$NEW_CLI_ID"
+
+NEW_CLI_CARGO=$(db_exec "SELECT cargo FROM Usuarios WHERE login='api_cli';")
+assert_eq "Cliente novo tem cargo 'Cliente'" "Cliente" "$NEW_CLI_CARGO"
+
+NEW_CLI_XP=$(db_exec "SELECT xpatual FROM ProgressoCliente WHERE clienteid=$NEW_CLI_ID;")
+assert_eq "Cliente novo inicia com 0 XP" "0" "$NEW_CLI_XP"
+
+# 4. Criar duplicado retorna erro
+STATUS_DUPLICATE=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $TOKEN_TEMP" -X POST "$API_URL/api/v1/clientes" -H "Content-Type: application/json" -d '{"nome":"API Cliente", "login":"api_cli", "senha":"pwd_api_cliente"}')
+assert_eq "Criar cliente duplicado retorna HTTP 400" "400" "$STATUS_DUPLICATE"
+
+# Limpar após o teste do cadastro via API para não interferir nas seções seguintes
+db_exec "DELETE FROM ProgressoCliente WHERE clienteid = $NEW_CLI_ID;" >/dev/null 2>&1 || true
+db_exec "DELETE FROM Usuarios WHERE id = $NEW_CLI_ID;" >/dev/null 2>&1 || true
 
 # ─────────────────────────────────────────────────────────────
 # 7. FLUXO ADMIN: LISTAR CLIENTES VIA API

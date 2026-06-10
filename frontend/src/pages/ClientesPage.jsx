@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { listarClientes } from '../services/api.js'
+import { listarClientes, cadastrarCliente } from '../services/api.js'
 import PlayerCard from '../components/PlayerCard.jsx'
 import RpgProgressBar from '../components/RpgProgressBar.jsx'
 import RedeemCouponManager from '../components/RedeemCouponManager.jsx'
@@ -12,6 +12,28 @@ const mockClientes = [
   { id: 5, nome: 'Lucas Ferreira', login: 'lucas.f', cargo: 'Cliente', xp: 210, nivel: 'Barba de Respeito' },
 ]
 
+const getCustomClientes = () => {
+  try {
+    const data = localStorage.getItem('ruivobarber_custom_clientes')
+    return data ? JSON.parse(data) : []
+  } catch (e) {
+    return []
+  }
+}
+
+const saveCustomCliente = (cliente) => {
+  try {
+    const list = getCustomClientes()
+    // Evita duplicidade no localStorage
+    if (!list.some(c => c.login === cliente.login)) {
+      list.push(cliente)
+      localStorage.setItem('ruivobarber_custom_clientes', JSON.stringify(list))
+    }
+  } catch (e) {
+    console.error(e)
+  }
+}
+
 export default function ClientesPage() {
   const [clientes, setClientes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -20,19 +42,79 @@ export default function ClientesPage() {
   const [selectedCliente, setSelectedCliente] = useState(null)
   const [error, setError] = useState(null)
 
+  // Estados para o cadastro de novo cliente
+  const [nomeNovo, setNomeNovo] = useState('')
+  const [loginNovo, setLoginNovo] = useState('')
+  const [senhaNovo, setSenhaNovo] = useState('')
+  const [modalError, setModalError] = useState(null)
+  const [modalSaving, setModalSaving] = useState(false)
+
+  const handleOpenModal = () => {
+    setNomeNovo('')
+    setLoginNovo('')
+    setSenhaNovo('')
+    setModalError(null)
+    setShowModal(true)
+  }
+
+  const handleSalvarCliente = async () => {
+    if (!nomeNovo || !loginNovo || !senhaNovo) {
+      setModalError('Todos os campos são obrigatórios.')
+      return
+    }
+    const tempClient = {
+      id: Date.now(),
+      nome: nomeNovo,
+      login: loginNovo,
+      cargo: 'Cliente',
+      xp: 0,
+      nivel: 'Corte Iniciante'
+    }
+    try {
+      setModalSaving(true)
+      setModalError(null)
+      
+      // Salva localmente para garantir exibição mesmo sob fallback/mock do frontend
+      saveCustomCliente(tempClient)
+      
+      await cadastrarCliente(nomeNovo, loginNovo, senhaNovo)
+      setShowModal(false)
+      fetchClientes()
+    } catch (err) {
+      console.error('Erro ao cadastrar cliente:', err)
+      // Se deu erro de duplicidade, removemos do localStorage
+      if (err.response?.data?.error === 'login já cadastrado no sistema') {
+        const list = getCustomClientes().filter(c => c.login !== loginNovo)
+        localStorage.setItem('ruivobarber_custom_clientes', JSON.stringify(list))
+      }
+      const msg = err.response?.data?.error || 'Erro ao cadastrar cliente. Verifique os dados e tente novamente.'
+      setModalError(msg)
+    } finally {
+      setModalSaving(false)
+    }
+  }
+
   const fetchClientes = async () => {
     try {
       setLoading(true)
       const res = await listarClientes()
       if (res && Array.isArray(res.data)) {
-        setClientes(res.data)
+        const custom = getCustomClientes()
+        const merged = [...res.data]
+        custom.forEach(c => {
+          if (!merged.some(m => m.login === c.login)) {
+            merged.push(c)
+          }
+        })
+        setClientes(merged)
       } else {
         throw new Error('Formato de dados inválido recebido do servidor.')
       }
     } catch (err) {
       console.error('Erro ao buscar clientes da API, usando dados mockados:', err)
       setError('Não foi possível carregar os dados em tempo real. Exibindo dados locais offline.')
-      setClientes(mockClientes)
+      const custom = getCustomClientes()
+      setClientes([...mockClientes, ...custom])
     } finally {
       setLoading(false)
     }
@@ -54,7 +136,7 @@ export default function ClientesPage() {
             <h2>👥 Clientes</h2>
             <p>Gestão de clientes e progresso RPG</p>
           </div>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>+ Novo Cliente</button>
+          <button className="btn btn-primary" onClick={handleOpenModal}>+ Novo Cliente</button>
         </div>
       </div>
 
@@ -114,25 +196,53 @@ export default function ClientesPage() {
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>👤 Novo Cliente</h3>
-              <button className="btn-ghost" onClick={() => setShowModal(false)}>✕</button>
+              <button className="btn-ghost" onClick={() => setShowModal(false)} disabled={modalSaving}>✕</button>
             </div>
+            {modalError && (
+              <div style={{ padding: '0.75rem', marginBottom: '1rem', borderRadius: '6px', background: 'rgba(233, 69, 96, 0.15)', border: '1px solid #e94560', color: '#ff8a8a', fontSize: '0.85rem' }}>
+                ⚠️ {modalError}
+              </div>
+            )}
             <div className="form-group">
               <label className="form-label">Nome Completo</label>
-              <input type="text" className="form-input" placeholder="Nome do cliente" />
+              <input 
+                type="text" 
+                className="form-input" 
+                placeholder="Nome do cliente" 
+                value={nomeNovo} 
+                onChange={e => setNomeNovo(e.target.value)} 
+                disabled={modalSaving}
+              />
             </div>
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Login</label>
-                <input type="text" className="form-input" placeholder="Login de acesso" />
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  placeholder="Login de acesso" 
+                  value={loginNovo} 
+                  onChange={e => setLoginNovo(e.target.value)} 
+                  disabled={modalSaving}
+                />
               </div>
               <div className="form-group">
                 <label className="form-label">Senha</label>
-                <input type="password" className="form-input" placeholder="Senha inicial" />
+                <input 
+                  type="password" 
+                  className="form-input" 
+                  placeholder="Senha inicial" 
+                  value={senhaNovo} 
+                  onChange={e => setSenhaNovo(e.target.value)} 
+                  disabled={modalSaving}
+                />
               </div>
             </div>
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
-              <button className="btn btn-primary" onClick={() => setShowModal(false)}>Salvar Cliente</button>
+              <button className="btn btn-secondary" onClick={() => setShowModal(false)} disabled={modalSaving}>Cancelar</button>
+              <button className="btn btn-primary" onClick={handleSalvarCliente} disabled={modalSaving}>
+                {modalSaving ? 'A salvar...' : 'Salvar Cliente'}
+              </button>
             </div>
           </div>
         </div>

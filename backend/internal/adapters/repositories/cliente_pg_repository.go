@@ -81,12 +81,32 @@ func (r *ClientePgRepository) FindByLogin(login string) (*domain.Cliente, string
     return &c, senha, nil
 }
 
-func (r *ClientePgRepository) Save(c *domain.Cliente) error {
-    _, err := r.db.Exec(
-        "INSERT INTO Usuarios (nome, login, senha, cargo) VALUES ($1, $2, $3, $4)",
-        c.Nome, c.Login, "hashed_senha", c.Cargo,
-    )
-    return err
+func (r *ClientePgRepository) Save(c *domain.Cliente, hashedSenha string) error {
+    ctx := context.Background()
+    tx, err := r.db.BeginTx(ctx, nil)
+    if err != nil {
+        return err
+    }
+    defer tx.Rollback()
+
+    var id int
+    queryUser := "INSERT INTO Usuarios (nome, login, senha, cargo) VALUES ($1, $2, $3, $4) RETURNING id"
+    err = tx.QueryRowContext(ctx, queryUser, c.Nome, c.Login, hashedSenha, c.Cargo).Scan(&id)
+    if err != nil {
+        return err
+    }
+
+    c.ID = id
+
+    if c.Cargo == "Cliente" {
+        queryProgresso := "INSERT INTO ProgressoCliente (clienteid, xpatual, nivelatual, barrapercentual) VALUES ($1, 0, 1, 0.00)"
+        _, err = tx.ExecContext(ctx, queryProgresso, id)
+        if err != nil {
+            return err
+        }
+    }
+
+    return tx.Commit()
 }
 
 func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) (*ports.NotificationEvent, error) {

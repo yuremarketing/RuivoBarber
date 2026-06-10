@@ -6,7 +6,7 @@ type ClienteRepository interface {
     FindAll() ([]domain.Cliente, error)
     FindByID(id int) (*domain.Cliente, error)
     FindByLogin(login string) (*domain.Cliente, string, error)
-    Save(c *domain.Cliente) error
+    Save(c *domain.Cliente, hashedSenha string) error
     ConcluirAtendimento(agendamentoID int) (*NotificationEvent, error)
     RegistrarFalta(agendamentoID int) error
     ResgatarCupom(clienteID, nivelID int) (*domain.Cupom, error)

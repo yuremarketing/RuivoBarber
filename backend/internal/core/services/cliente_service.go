@@ -81,6 +81,22 @@ func (s *ClienteService) Login(login, senha string) (*domain.Cliente, string, er
 	return cliente, tokenString, nil
 }
 
+func (s *ClienteService) CadastrarCliente(cliente *domain.Cliente, password string) error {
+	_, _, err := s.repo.FindByLogin(cliente.Login)
+	if err == nil {
+		return errors.New("login já cadastrado no sistema")
+	}
+
+	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	cliente.Cargo = "Cliente"
+	return s.repo.Save(cliente, string(hashedBytes))
+}
+
+
 
 
 

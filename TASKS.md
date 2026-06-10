@@ -68,3 +68,9 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 - [x] Implementar autenticação JWT (`POST /api/v1/auth/login`)
 - [x] Middleware de autorização por Cargo (Adm, Barbeiro, Cliente)
 - [x] Proteger rotas admin contra acesso de Cliente
+
+---
+
+## 🚀 6. Deploy e Produção (GCP & CI/CD)
+- [ ] Configurar banco de dados PostgreSQL em produção no Cloud SQL (GCP)
+- [ ] Configurar Secrets no GitHub e homologar deploy automático para a main (Cloud Run)

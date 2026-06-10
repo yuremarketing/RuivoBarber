@@ -22,6 +22,12 @@ type LoginRequest struct {
 	Senha string `json:"senha"`
 }
 
+type CadastrarClienteRequest struct {
+	Nome  string `json:"nome"`
+	Login string `json:"login"`
+	Senha string `json:"senha"`
+}
+
 func NewClienteHandler(service *services.ClienteService) *ClienteHandler {
 	return &ClienteHandler{service: service}
 }
@@ -90,6 +96,7 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
 
 	// Rotas de Clientes (Protegidas)
 	api.Get("/clientes", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.ListarClientes)
+	api.Post("/clientes", JWTMiddleware, RequireCargo("Adm"), h.CadastrarCliente)
 	api.Get("/clientes/:id", JWTMiddleware, h.BuscarCliente)
 
 	// Rotas de Atendimentos (Protegidas)
@@ -258,3 +265,34 @@ func (h *ClienteHandler) ValidarCupom(c *fiber.Ctx) error {
 
     return c.JSON(cupom)
 }
+
+func (h *ClienteHandler) CadastrarCliente(c *fiber.Ctx) error {
+	if err := infra.Wait(context.Background()); err != nil {
+		return c.Status(429).JSON(fiber.Map{"error": "Too Many Requests"})
+	}
+
+	var req CadastrarClienteRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "corpo da requisição inválido"})
+	}
+
+	if req.Nome == "" || req.Login == "" || req.Senha == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "Nome, login e senha são obrigatórios"})
+	}
+
+	cliente := &domain.Cliente{
+		Nome:  req.Nome,
+		Login: req.Login,
+	}
+
+	err := h.service.CadastrarCliente(cliente, req.Senha)
+	if err != nil {
+		if err.Error() == "login já cadastrado no sistema" {
+			return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(201).JSON(cliente)
+}
+

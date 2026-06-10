@@ -41,6 +41,7 @@ api.interceptors.response.use(
 
 export const login = (login, senha) => api.post('/auth/login', { login, senha })
 export const listarClientes = () => api.get('/clientes')
+export const cadastrarCliente = (nome, login, senha) => api.post('/clientes', { nome, login, senha })
 export const buscarCliente = (id) => api.get(`/clientes/${id}`)
 export const healthCheck = () => api.get('/health')
 export const resgatarCupom = (clienteId, nivelId) => api.post('/cupons/resgatar', { cliente_id: Number(clienteId), nivel_id: Number(nivelId) })
