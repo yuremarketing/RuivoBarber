@@ -88,20 +88,17 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
 		return c.JSON(fiber.Map{"status": "ok", "service": "RuivoBarber API"})
 	})
 
-	// Rotas Protegidas por Autenticação JWT
-	api.Use(JWTMiddleware)
+	// Rotas de Clientes (Protegidas)
+	api.Get("/clientes", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.ListarClientes)
+	api.Get("/clientes/:id", JWTMiddleware, h.BuscarCliente)
 
-	// Rotas de Clientes
-	api.Get("/clientes", RequireCargo("Adm", "Barbeiro"), h.ListarClientes)
-	api.Get("/clientes/:id", h.BuscarCliente)
+	// Rotas de Atendimentos (Protegidas)
+	api.Post("/atendimentos/concluir", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.ConcluirAtendimento)
+	api.Post("/atendimentos/falta", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.RegistrarFalta)
 
-	// Rotas de Atendimentos
-	api.Post("/atendimentos/concluir", RequireCargo("Adm", "Barbeiro"), h.ConcluirAtendimento)
-	api.Post("/atendimentos/falta", RequireCargo("Adm", "Barbeiro"), h.RegistrarFalta)
-
-	// Rotas de Cupons
-	api.Post("/cupons/resgatar", RequireCargo("Cliente"), h.ResgatarCupom)
-	api.Post("/cupons/validar", RequireCargo("Adm", "Barbeiro"), h.ValidarCupom)
+	// Rotas de Cupons (Protegidas)
+	api.Post("/cupons/resgatar", JWTMiddleware, RequireCargo("Cliente"), h.ResgatarCupom)
+	api.Post("/cupons/validar", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.ValidarCupom)
 }
 
 func (h *ClienteHandler) Login(c *fiber.Ctx) error {
