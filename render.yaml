@@ -45,9 +45,7 @@ services:
     plan: free
     envVars:
       - key: VITE_API_URL
-        fromService:
-          name: ruivobarber-backend
-          value: url
+        value: https://ruivobarber-backend.onrender.com/api/v1
 
 databases:
   - name: ruivobarber-db
