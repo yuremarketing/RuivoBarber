@@ -1,0 +1,55 @@
+services:
+  # Backend Go Web Service
+  - type: web
+    name: ruivobarber-backend
+    env: docker
+    dockerfilePath: Dockerfile
+    context: backend
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: DB_HOST
+        fromDatabase:
+          name: ruivobarber-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: ruivobarber-db
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: ruivobarber-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: ruivobarber-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: ruivobarber-db
+          property: database
+      - key: DB_SSLMODE
+        value: require
+      - key: JWT_SECRET
+        generateValue: true
+
+  # Frontend React Static Site
+  - type: web
+    name: ruivobarber-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    publishDir: dist
+    baseDir: frontend
+    plan: free
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          name: ruivobarber-backend
+          value: url
+
+databases:
+  - name: ruivobarber-db
+    plan: free
+    databaseName: ruivobarber
+    user: ruivobarber_user

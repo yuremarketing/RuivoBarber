@@ -71,6 +71,6 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 
 ---
 
-## 🚀 6. Deploy e Produção (GCP & CI/CD)
-- [ ] Configurar banco de dados PostgreSQL em produção no Cloud SQL (GCP)
-- [ ] Configurar Secrets no GitHub e homologar deploy automático para a main (Cloud Run)
+## 🚀 6. Deploy e Produção (Render Blueprints)
+- [ ] Conectar repositório GitHub ao Render e criar grupo de serviços através do blueprint `render.yaml`
+- [ ] Configurar conexão segura do banco de dados e homologar deploys automáticos
