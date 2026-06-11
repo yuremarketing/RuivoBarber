@@ -35,9 +35,8 @@ services:
         generateValue: true
 
   # Frontend React Static Site
-  - type: web
+  - type: static
     name: ruivobarber-frontend
-    env: static
     buildCommand: npm install && npm run build
     publishDir: dist
     baseDir: frontend
