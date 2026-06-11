@@ -2,7 +2,7 @@ services:
   # Backend Go Web Service
   - type: web
     name: ruivobarber-backend
-    env: docker
+    runtime: docker
     dockerfilePath: Dockerfile
     context: backend
     plan: free
@@ -35,10 +35,11 @@ services:
         generateValue: true
 
   # Frontend React Static Site
-  - type: static
+  - type: web
     name: ruivobarber-frontend
+    runtime: static
     buildCommand: npm install && npm run build
-    publishDir: dist
+    staticPublishPath: dist
     baseDir: frontend
     plan: free
     envVars:
