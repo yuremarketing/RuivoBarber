@@ -72,5 +72,5 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 ---
 
 ## 🚀 6. Deploy e Produção (Render Blueprints)
-- [ ] Conectar repositório GitHub ao Render e criar grupo de serviços através do blueprint `render.yaml`
-- [ ] Configurar conexão segura do banco de dados e homologar deploys automáticos
+- [x] Conectar repositório GitHub ao Render e criar grupo de serviços através do blueprint `render.yaml`
+- [x] Configurar conexão segura do banco de dados e homologar deploys automáticos
