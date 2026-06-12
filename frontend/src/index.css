@@ -3,31 +3,31 @@
    ============================================================ */
 
 :root {
-  --bg-body: #f7f9fc;
-  --bg-sidebar: #ffffff;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f1f5f9;
-  --bg-input: #f8fafc;
-  --bg-overlay: rgba(15, 23, 42, 0.5);
+  --bg-body: #0a0a1a;
+  --bg-sidebar: #0d0d22;
+  --bg-card: #16213e;
+  --bg-card-hover: #1a2744;
+  --bg-input: #0f1729;
+  --bg-overlay: rgba(0, 0, 0, 0.6);
   --accent: #e94560;
   --accent-hover: #d63851;
-  --accent-glow: rgba(233, 69, 96, 0.15);
+  --accent-glow: rgba(233, 69, 96, 0.3);
   --gold: #f5a623;
-  --gold-glow: rgba(245, 166, 35, 0.15);
+  --gold-glow: rgba(245, 166, 35, 0.3);
   --green: #22c55e;
   --blue: #3b82f6;
   --red: #ef4444;
   --orange: #f97316;
-  --text-primary: #0f172a;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --border: #e2e8f0;
+  --text-primary: #f0f0f5;
+  --text-secondary: #8888a0;
+  --text-muted: #55556a;
+  --border: #1e2a45;
   --border-accent: #e94560;
   --sidebar-w: 260px;
   --radius: 14px;
   --radius-sm: 8px;
   --radius-xs: 6px;
-  --shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
   --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -215,7 +215,7 @@ a { color: inherit; text-decoration: none; }
   background: radial-gradient(circle, var(--gold-glow), transparent 70%); bottom: -150px; left: -100px; pointer-events: none;
 }
 .login-card {
-  background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); border: 1px solid var(--border);
+  background: rgba(22, 33, 62, 0.8); backdrop-filter: blur(20px); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 2.5rem; width: 100%; max-width: 420px;
   box-shadow: var(--shadow); position: relative; z-index: 1;
 }
@@ -243,7 +243,7 @@ a { color: inherit; text-decoration: none; }
 
 /* ── Gamified Player Card RPG ─── */
 .player-card-rpg {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(22, 33, 62, 0.7);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-radius: var(--radius);
