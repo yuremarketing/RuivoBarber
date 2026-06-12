@@ -2,15 +2,15 @@ import React, { useEffect, useState } from 'react'
 import PlayerCard from '../components/PlayerCard.jsx'
 import RpgProgressBar from '../components/RpgProgressBar.jsx'
 import RedeemCouponManager from '../components/RedeemCouponManager.jsx'
-import { buscarCliente } from '../services/api.js'
+import { buscarCliente, listarClientes } from '../services/api.js'
 
 const stats = [
   { icon: '👥', label: 'Total Clientes', value: '47', change: '+5 este mês' },
   { icon: '📅', label: 'Agendamentos Hoje', value: '12', change: '3 pendentes' },
   { icon: '💰', label: 'Receita do Mês', value: 'R$ 4.280', change: '+18% vs anterior' },
   { icon: '🎟️', label: 'Cupons Ativos', value: '8', change: '2 resgatados hoje' },
-]
-
+ ]
+ 
 const agendamentos = [
   { id: 1, cliente: 'João Silva', servico: 'Corte + Barba', barbeiro: 'Carlos', horario: '10:00', status: 'Confirmado' },
   { id: 2, cliente: 'Pedro Santos', servico: 'Corte Simples', barbeiro: 'Ricardo', horario: '11:30', status: 'Pendente' },
@@ -19,19 +19,31 @@ const agendamentos = [
   { id: 5, cliente: 'Lucas Ferreira', servico: 'Corte + Barba', barbeiro: 'Carlos', horario: '16:00', status: 'Concluido' },
 ]
 
-const topClientes = [
-  { nome: 'João Silva', nivel: 'Barba de Respeito', xp: 320, max: 600 },
-  { nome: 'Pedro Santos', nivel: 'Lenda da Navalha', xp: 580, max: 600 },
-  { nome: 'André Costa', nivel: 'Corte Iniciante', xp: 75, max: 100 },
-]
-
 export default function DashboardPage() {
   const user = JSON.parse(localStorage.getItem('ruivobarber_user') || '{"nome":"Administrador","cargo":"Adm"}')
   const [clientData, setClientData] = useState(null)
+  const [ranking, setRanking] = useState([])
   const [loading, setLoading] = useState(false)
-
+ 
   const isClient = user.cargo === 'Cliente'
   const hoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+ 
+  const loadRanking = async () => {
+    try {
+      const res = await listarClientes()
+      if (res && Array.isArray(res.data)) {
+        const sorted = [...res.data].sort((a, b) => (b.xp || 0) - (a.xp || 0))
+        setRanking(sorted)
+      }
+    } catch (err) {
+      console.error('Erro ao buscar ranking:', err)
+      setRanking([
+        { nome: 'João Silva', nivel: 'Barba de Respeito', xp: 320 },
+        { nome: 'Pedro Santos', nivel: 'Lenda da Navalha', xp: 580 },
+        { nome: 'André Costa', nivel: 'Corte Iniciante', xp: 75 },
+      ])
+    }
+  }
 
   const loadRealTimeClientData = async () => {
     if (!isClient) return
@@ -43,15 +55,15 @@ export default function DashboardPage() {
       }
     } catch (err) {
       console.error('Erro ao buscar dados do cliente logado em tempo real:', err)
-      // Fallback para dados locais da sessão se a chamada de API falhar (ex: offline/mock)
       setClientData(user)
     } finally {
       setLoading(false)
     }
   }
-
+ 
   useEffect(() => {
     loadRealTimeClientData()
+    loadRanking()
   }, [])
 
   // ── Render do Dashboard do Cliente (Gamificado) ──
@@ -93,6 +105,40 @@ export default function DashboardPage() {
                 loadRealTimeClientData()
               }}
             />
+          </div>
+        </div>
+
+        <div className="card" style={{ marginTop: '2.5rem' }}>
+          <div className="card-header">
+            <h3>🏆 Ranking dos Barbeados (Top Clientes)</h3>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+            {ranking.length === 0 ? (
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center' }}>Nenhum cliente cadastrado no ranking.</p>
+            ) : (
+              ranking.slice(0, 5).map((c, i) => {
+                const niveis = { 'Corte Iniciante': 300, 'Barba de Respeito': 600, 'Lenda da Navalha': 1000, 'Rei da Cadeira': 1000 }
+                const max = niveis[c.nivel] || 300
+                const pct = Math.min((c.xp || 0) / max * 100, 100)
+                return (
+                  <div key={i}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                      <div>
+                        <span style={{ marginRight: '0.5rem', fontWeight: 'bold', color: i === 0 ? 'var(--gold)' : i === 1 ? 'silver' : i === 2 ? '#cd7f32' : 'var(--text-muted)' }}>
+                          {i + 1}º
+                        </span>
+                        <strong style={{ fontSize: '0.85rem' }}>{c.nome}</strong>
+                        <span className="rpg-level-badge" style={{ marginLeft: '0.5rem', fontSize: '0.55rem' }}>{c.nivel || 'Corte Iniciante'}</span>
+                      </div>
+                      <span style={{ color: 'var(--gold)', fontWeight: 600, fontSize: '0.8rem' }}>{c.xp || 0} XP</span>
+                    </div>
+                    <div className="xp-bar">
+                      <div className="xp-bar-fill" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                )
+              })
+            )}
           </div>
         </div>
 
@@ -163,20 +209,34 @@ export default function DashboardPage() {
           <div className="card-header">
             <h3>⚔️ Top Clientes RPG</h3>
           </div>
-          {topClientes.map((c, i) => (
-            <div key={i} style={{ marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <div>
-                  <strong style={{ fontSize: '0.9rem' }}>{c.nome}</strong>
-                  <span className="rpg-level-badge" style={{ marginLeft: '0.5rem', fontSize: '0.6rem' }}>{c.nivel}</span>
-                </div>
-                <span style={{ color: 'var(--gold)', fontWeight: 600, fontSize: '0.85rem' }}>{c.xp} / {c.max} XP</span>
-              </div>
-              <div className="xp-bar">
-                <div className="xp-bar-fill" style={{ width: `${(c.xp / c.max * 100).toFixed(0)}%` }} />
-              </div>
-            </div>
-          ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+            {ranking.length === 0 ? (
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center' }}>Nenhum cliente cadastrado no ranking.</p>
+            ) : (
+              ranking.slice(0, 5).map((c, i) => {
+                const niveis = { 'Corte Iniciante': 300, 'Barba de Respeito': 600, 'Lenda da Navalha': 1000, 'Rei da Cadeira': 1000 }
+                const max = niveis[c.nivel] || 300
+                const pct = Math.min((c.xp || 0) / max * 100, 100)
+                return (
+                  <div key={i}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                      <div>
+                        <span style={{ marginRight: '0.5rem', fontWeight: 'bold', color: i === 0 ? 'var(--gold)' : i === 1 ? 'silver' : i === 2 ? '#cd7f32' : 'var(--text-muted)' }}>
+                          {i + 1}º
+                        </span>
+                        <strong style={{ fontSize: '0.85rem' }}>{c.nome}</strong>
+                        <span className="rpg-level-badge" style={{ marginLeft: '0.5rem', fontSize: '0.55rem' }}>{c.nivel || 'Corte Iniciante'}</span>
+                      </div>
+                      <span style={{ color: 'var(--gold)', fontWeight: 600, fontSize: '0.8rem' }}>{c.xp || 0} XP</span>
+                    </div>
+                    <div className="xp-bar">
+                      <div className="xp-bar-fill" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
         </div>
       </div>
     </div>
