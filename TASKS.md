@@ -81,5 +81,5 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 - [ ] Adicionar Chat/Assistente Inteligente de Agendamento (Function Calling + SSE)
   - [ ] Mapear as funções locais de criação de agendamento e checagem de horários no Go (Function Calling).
   - [ ] Implementar streaming de tokens (SSE) no backend e no frontend React.
-- [ ] [AI Dev-Ops] Automatizar a descrição de encerramento nos cards do Kanban ao finalizar tarefas
-  - [ ] Definir o modelo de relatório técnico de fechamento para inserção automática via API do GitHub.
+- [x] [AI Dev-Ops] Automatizar a descrição de encerramento nos cards do Kanban ao finalizar tarefas
+  - [x] Definir o modelo de relatório técnico de fechamento para inserção automática via API do GitHub.
