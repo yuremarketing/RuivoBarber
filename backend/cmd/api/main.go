@@ -43,6 +43,32 @@ func main() {
     }
     log.Println("✅ Conectado ao PostgreSQL com sucesso")
 
+    // Atualizar senha do admin se for o placeholder para permitir login
+    _, err = db.Exec("UPDATE Usuarios SET Senha = 'admin' WHERE Login = 'admin' AND Senha = '$2a$10$placeholder_hash_trocar'")
+    if err != nil {
+        log.Printf("[SEED] Erro ao atualizar senha do admin: %v", err)
+    }
+
+    // Criar cliente de demonstração se não existir
+    var clientCount int
+    err = db.QueryRow("SELECT COUNT(*) FROM Usuarios WHERE Login = 'cliente'").Scan(&clientCount)
+    if err == nil && clientCount == 0 {
+        log.Println("🌱 Semeando cliente de demonstração...")
+        _, err = db.Exec("INSERT INTO Usuarios (Nome, Cargo, Login, Senha) VALUES ($1, $2, $3, $4)", "Cliente Demo", "Cliente", "cliente", "cliente")
+        if err != nil {
+            log.Printf("[SEED] Erro ao semear cliente: %v", err)
+        }
+        
+        var clienteID int
+        err = db.QueryRow("SELECT ID FROM Usuarios WHERE Login = 'cliente'").Scan(&clienteID)
+        if err == nil {
+            _, err = db.Exec("INSERT INTO ProgressoCliente (ClienteID, XPAtual, NivelAtual, BarraPercentual) VALUES ($1, $2, $3, $4)", clienteID, 120, 2, 40.0)
+            if err != nil {
+                log.Printf("[SEED] Erro ao criar progresso para cliente: %v", err)
+            }
+        }
+    }
+
     notificationService := services.NewNotificationService()
     notificationService.StartWorker()
 
