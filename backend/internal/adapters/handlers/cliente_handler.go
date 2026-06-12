@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -94,6 +96,8 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
 	
 	// Rotas Públicas
 	api.Post("/auth/login", h.Login)
+	api.Post("/auth/register", h.RegisterPublico)
+	api.Post("/auth/google", h.GoogleLogin)
 	api.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "ok", "service": "RuivoBarber API"})
 	})
@@ -416,5 +420,123 @@ func (h *ClienteHandler) ChatStream(c *fiber.Ctx) error {
 
 	return nil
 }
+
+func (h *ClienteHandler) RegisterPublico(c *fiber.Ctx) error {
+	var req CadastrarClienteRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "corpo da requisição inválido"})
+	}
+
+	if req.Nome == "" || req.Login == "" || req.Senha == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "Nome, login e senha são obrigatórios"})
+	}
+
+	cliente := &domain.Cliente{
+		Nome:  req.Nome,
+		Login: req.Login,
+	}
+
+	err := h.service.CadastrarCliente(cliente, req.Senha)
+	if err != nil {
+		if err.Error() == "login já cadastrado no sistema" {
+			return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	// Login automático após registro
+	loggedCliente, token, loginErr := h.service.Login(req.Login, req.Senha)
+	if loginErr != nil {
+		return c.Status(201).JSON(fiber.Map{"user": cliente})
+	}
+
+	return c.Status(201).JSON(fiber.Map{
+		"token": token,
+		"user": fiber.Map{
+			"id":    loggedCliente.ID,
+			"nome":  loggedCliente.Nome,
+			"login": loggedCliente.Login,
+			"cargo": loggedCliente.Cargo,
+			"xp":    loggedCliente.XP,
+			"nivel": loggedCliente.Nivel,
+		},
+	})
+}
+
+func (h *ClienteHandler) GoogleLogin(c *fiber.Ctx) error {
+	var req struct {
+		Credential string `json:"credential"`
+		IDToken    string `json:"id_token"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "corpo da requisição inválido"})
+	}
+
+	idToken := req.Credential
+	if idToken == "" {
+		idToken = req.IDToken
+	}
+
+	if idToken == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "credential ou id_token é obrigatório"})
+	}
+
+	var email, nome string
+
+	// Suporte a Simulação Local para testes simplificados
+	if strings.HasPrefix(idToken, "mock_google_") {
+		email = strings.TrimPrefix(idToken, "mock_google_")
+		nome = "Google Client Test"
+	} else {
+		// Validar token no endpoint oficial do Google
+		googleURL := fmt.Sprintf("https://oauth2.googleapis.com/tokeninfo?id_token=%s", idToken)
+		resp, err := http.Get(googleURL)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "falha ao conectar na API do Google"})
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != 200 {
+			return c.Status(401).JSON(fiber.Map{"error": "token do Google inválido ou expirado"})
+		}
+
+		var googleInfo struct {
+			Email string `json:"email"`
+			Name  string `json:"name"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&googleInfo); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "falha ao parsear informações do Google"})
+		}
+
+		email = googleInfo.Email
+		nome = googleInfo.Name
+	}
+
+	if email == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "não foi possível extrair o e-mail do token do Google"})
+	}
+
+	if nome == "" {
+		nome = "Google User"
+	}
+
+	cliente, token, err := h.service.GoogleLogin(email, nome)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{
+		"token": token,
+		"user": fiber.Map{
+			"id":    cliente.ID,
+			"nome":  cliente.Nome,
+			"login": cliente.Login,
+			"cargo": cliente.Cargo,
+			"xp":    cliente.XP,
+			"nivel": cliente.Nivel,
+		},
+	})
+}
+
 
 

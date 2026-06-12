@@ -1,49 +1,142 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { login as loginService } from '../services/api'
+import { login as loginService, registrarPublico, loginComGoogle } from '../services/api'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const [isRegistering, setIsRegistering] = useState(false)
+  
+  // Login fields
   const [login, setLogin] = useState('')
   const [senha, setSenha] = useState('')
-  const [cargo, setCargo] = useState('Adm')
+  const [cargo, setCargo] = useState('Cliente') // default para cliente
+  
+  // Register fields
+  const [regNome, setRegNome] = useState('')
+  const [regLogin, setRegLogin] = useState('')
+  const [regSenha, setRegSenha] = useState('')
+
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
+  const [sucesso, setSucesso] = useState('')
 
-  const handleSubmit = (e) => {
+  // Efeito para configurar o Google Sign-In
+  useEffect(() => {
+    // Carregar SDK oficial do Google
+    const script = document.createElement('script')
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.async = true
+    script.defer = true
+    document.body.appendChild(script)
+
+    window.handleCredentialResponse = (response) => {
+      setLoading(true)
+      setErro('')
+      loginComGoogle(response.credential)
+        .then(res => {
+          const data = res.data
+          saveSessionAndNavigate(data)
+        })
+        .catch(err => {
+          console.error(err)
+          setErro('Erro no login do Google: ' + (err.response?.data?.error || err.message))
+          setLoading(false)
+        })
+    }
+
+    return () => {
+      try {
+        document.body.removeChild(script)
+      } catch (e) {}
+    }
+  }, [])
+
+  const saveSessionAndNavigate = (data) => {
+    const userSession = {
+      id: data.user.id,
+      nome: data.user.nome,
+      cargo: data.user.cargo,
+      login: data.user.login,
+      xp: data.user.xp,
+      nivel: data.user.nivel,
+      token: data.token
+    }
+    localStorage.setItem('ruivobarber_user', JSON.stringify(userSession))
+    navigate('/dashboard')
+  }
+
+  const handleLoginSubmit = (e) => {
     e.preventDefault()
     setLoading(true)
     setErro('')
+    setSucesso('')
     
     loginService(login, senha)
       .then(response => {
         const data = response.data
-        // Valida se o cargo retornado é o mesmo selecionado pelo usuário
         if (data.user.cargo !== cargo) {
           setErro(`Acesso negado. Seu perfil de acesso real é ${data.user.cargo}.`)
           setLoading(false)
           return
         }
-
-        const userSession = {
-          id: data.user.id,
-          nome: data.user.nome,
-          cargo: data.user.cargo,
-          login: data.user.login,
-          xp: data.user.xp,
-          nivel: data.user.nivel,
-          token: data.token
-        }
-        localStorage.setItem('ruivobarber_user', JSON.stringify(userSession))
-        navigate('/dashboard')
+        saveSessionAndNavigate(data)
       })
       .catch(error => {
         console.error('Erro de autenticação:', error)
         if (error.response && error.response.data && error.response.data.error) {
-          setErro(`Credenciais inválidas: ${error.response.data.error}`)
+          setErro(`Erro: ${error.response.data.error}`)
         } else {
           setErro('Erro ao se conectar ao servidor. Certifique-se de que o backend está online.')
         }
+        setLoading(false)
+      })
+  }
+
+  const handleRegisterSubmit = (e) => {
+    e.preventDefault()
+    if (!regNome || !regLogin || !regSenha) {
+      setErro('Por favor, preencha todos os campos.')
+      return
+    }
+
+    setLoading(true)
+    setErro('')
+    setSucesso('')
+
+    registrarPublico(regNome, regLogin, regSenha)
+      .then(response => {
+        const data = response.data
+        setSucesso('Conta criada com sucesso! Redirecionando para o painel...')
+        setTimeout(() => {
+          saveSessionAndNavigate(data)
+        }, 1500)
+      })
+      .catch(error => {
+        console.error('Erro ao registrar:', error)
+        if (error.response && error.response.data && error.response.data.error) {
+          setErro(`Erro no cadastro: ${error.response.data.error}`)
+        } else {
+          setErro('Erro ao se conectar ao servidor.')
+        }
+        setLoading(false)
+      })
+  }
+
+  const handleGoogleMock = () => {
+    setLoading(true)
+    setErro('')
+    setSucesso('')
+    const mockEmail = `mock_google_${regLogin || login || 'usuario_google'}@gmail.com`
+    loginComGoogle(mockEmail)
+      .then(res => {
+        const data = res.data
+        setSucesso('Login do Google simulado com sucesso!')
+        setTimeout(() => {
+          saveSessionAndNavigate(data)
+        }, 800)
+      })
+      .catch(err => {
+        setErro('Erro no login simulado: ' + (err.response?.data?.error || err.message))
         setLoading(false)
       })
   }
@@ -52,34 +145,182 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-card fade-in-up">
         <div className="login-brand">
-          <div className="logo">✂️</div>
-          <h1>RuivoBarber</h1>
+          <div className="logo" style={{ fontSize: '3rem', textShadow: '0 0 10px rgba(233,69,96,0.5)' }}>✂️</div>
+          <h1 style={{ background: 'linear-gradient(90deg, #e94560, #f5a623)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 800 }}>RuivoBarber</h1>
           <p>Sistema de Gestão com Gamificação RPG</p>
         </div>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label">Perfil de Acesso</label>
-            <select className="form-input" value={cargo} onChange={e => setCargo(e.target.value)}>
-              <option value="Adm">🛡️ Administrador</option>
-              <option value="Barbeiro">💈 Barbeiro</option>
-              <option value="Cliente">👤 Cliente</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Login</label>
-            <input type="text" className="form-input" value={login}
-              onChange={e => setLogin(e.target.value)} placeholder="Digite seu login" required />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Senha</label>
-            <input type="password" className="form-input" value={senha}
-              onChange={e => setSenha(e.target.value)} placeholder="Digite sua senha" required />
-          </div>
-          {erro && <p style={{ color: 'var(--red)', fontSize: '0.85rem', marginBottom: '1rem', textAlign: 'center' }}>{erro}</p>}
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? '⏳ Entrando...' : '🔐 Entrar no Sistema'}
+
+        {/* Alternar Abas */}
+        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '1.5rem' }}>
+          <button 
+            type="button" 
+            onClick={() => { setIsRegistering(false); setErro(''); setSucesso(''); }}
+            style={{
+              flex: 1,
+              padding: '0.8rem',
+              background: 'none',
+              border: 'none',
+              color: !isRegistering ? '#fff' : 'var(--text-muted)',
+              borderBottom: !isRegistering ? '2px solid #e94560' : 'none',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: '0.95rem'
+            }}
+          >
+            Entrar
           </button>
-        </form>
+          <button 
+            type="button" 
+            onClick={() => { setIsRegistering(true); setErro(''); setSucesso(''); }}
+            style={{
+              flex: 1,
+              padding: '0.8rem',
+              background: 'none',
+              border: 'none',
+              color: isRegistering ? '#fff' : 'var(--text-muted)',
+              borderBottom: isRegistering ? '2px solid #e94560' : 'none',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: '0.95rem'
+            }}
+          >
+            Criar Conta
+          </button>
+        </div>
+
+        {erro && <div className="banner error" style={{ padding: '0.8rem', marginBottom: '1rem', fontSize: '0.85rem' }}>{erro}</div>}
+        {sucesso && <div className="banner success" style={{ padding: '0.8rem', marginBottom: '1rem', fontSize: '0.85rem', color: '#4caf50' }}>{sucesso}</div>}
+
+        {!isRegistering ? (
+          /* Formulário de Login */
+          <form onSubmit={handleLoginSubmit}>
+            <div className="form-group">
+              <label className="form-label">Perfil de Acesso</label>
+              <select className="form-input" value={cargo} onChange={e => setCargo(e.target.value)}>
+                <option value="Cliente">👤 Cliente</option>
+                <option value="Barbeiro">💈 Barbeiro</option>
+                <option value="Adm">🛡️ Administrador</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Login</label>
+              <input 
+                type="text" 
+                className="form-input" 
+                value={login}
+                onChange={e => setLogin(e.target.value)} 
+                placeholder="Digite seu login" 
+                required 
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Senha</label>
+              <input 
+                type="password" 
+                className="form-input" 
+                value={senha}
+                onChange={e => setSenha(e.target.value)} 
+                placeholder="Digite sua senha" 
+                required 
+              />
+            </div>
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.8rem' }} disabled={loading}>
+              {loading ? '⏳ Entrando...' : '🔐 Entrar no Sistema'}
+            </button>
+          </form>
+        ) : (
+          /* Formulário de Cadastro */
+          <form onSubmit={handleRegisterSubmit}>
+            <div className="form-group">
+              <label className="form-label">Nome Completo</label>
+              <input 
+                type="text" 
+                className="form-input" 
+                value={regNome}
+                onChange={e => setRegNome(e.target.value)} 
+                placeholder="Digite seu nome completo" 
+                required 
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Login (Nome de usuário)</label>
+              <input 
+                type="text" 
+                className="form-input" 
+                value={regLogin}
+                onChange={e => setRegLogin(e.target.value)} 
+                placeholder="Digite o login desejado" 
+                required 
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Senha</label>
+              <input 
+                type="password" 
+                className="form-input" 
+                value={regSenha}
+                onChange={e => setRegSenha(e.target.value)} 
+                placeholder="Crie uma senha segura" 
+                required 
+              />
+            </div>
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.8rem' }} disabled={loading}>
+              {loading ? '⏳ Cadastrando...' : '🚀 Criar Minha Conta'}
+            </button>
+          </form>
+        )}
+
+        {/* Divisor Social */}
+        <div style={{ display: 'flex', alignItems: 'center', margin: '1.5rem 0', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
+          <span style={{ padding: '0 0.8rem' }}>ou continue com</span>
+          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
+        </div>
+
+        {/* Container do Google One Tap / Sign In */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', alignItems: 'center', justifyContent: 'center' }}>
+          <div 
+            id="g_id_onload"
+            data-client_id="8910239102-dummyclientid.apps.googleusercontent.com" // Placeholder que ativa One-tap caso queiram configurar no futuro
+            data-context="signin"
+            data-ux_mode="popup"
+            data-callback="handleCredentialResponse"
+            data-auto_select="false"
+          />
+          
+          {/* Botão de login do Google Simulado com visual de alta fidelidade */}
+          <button 
+            type="button" 
+            onClick={handleGoogleMock}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.8rem',
+              padding: '0.8rem',
+              borderRadius: '8px',
+              border: '1px solid rgba(255,255,255,0.15)',
+              background: 'rgba(255,255,255,0.05)',
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M17.64 9.20455C17.64 8.56636 17.5827 7.95273 17.4764 7.36364H9V10.845H13.8436C13.635 11.97 13.0009 12.9232 12.0477 13.5614V15.8195H14.9564C16.6582 14.2527 17.64 11.9455 17.64 9.20455Z" fill="#4285F4"/>
+              <path d="M9 18C11.43 18 13.4673 17.1941 14.9577 15.8195L12.0491 13.5614C11.2418 14.1027 10.2109 14.4205 9 14.4205C6.65591 14.4205 4.67182 12.8373 3.96409 10.71H0.957275V13.0418C2.43818 15.9832 5.48182 18 9 18Z" fill="#34A853"/>
+              <path d="M3.96409 10.71C3.78409 10.17 3.68182 9.59318 3.68182 9C3.68182 8.40682 3.78409 7.83 3.96409 7.29V4.95818H0.957275C0.347727 6.17318 0 7.54773 0 9C0 10.4523 0.347727 11.8268 0.957275 13.0418L3.96409 10.71Z" fill="#FBBC05"/>
+              <path d="M9 3.57955C10.3214 3.57955 11.5077 4.03364 12.4405 4.92545L15.0218 2.34409C13.4632 0.891818 11.4259 0 9 0C5.48182 0 2.43818 2.01682 0.957275 4.95818L3.96409 7.29C4.67182 5.16273 6.65591 3.57955 9 3.57955Z" fill="#EA4335"/>
+            </svg>
+            Entrar com o Google
+          </button>
+        </div>
+
         <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
           Demos: <strong style={{ color: 'var(--text-secondary)' }}>admin/admin</strong> | <strong style={{ color: 'var(--text-secondary)' }}>cliente/cliente</strong>
         </p>

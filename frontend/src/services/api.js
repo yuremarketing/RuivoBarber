@@ -40,6 +40,8 @@ api.interceptors.response.use(
 )
 
 export const login = (login, senha) => api.post('/auth/login', { login, senha })
+export const registrarPublico = (nome, login, senha) => api.post('/auth/register', { nome, login, senha })
+export const loginComGoogle = (idToken) => api.post('/auth/google', { id_token: idToken })
 export const listarClientes = () => api.get('/clientes')
 export const cadastrarCliente = (nome, login, senha) => api.post('/clientes', { nome, login, senha })
 export const buscarCliente = (id) => api.get(`/clientes/${id}`)

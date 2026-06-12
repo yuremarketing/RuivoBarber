@@ -551,3 +551,54 @@ func (s *ClienteService) resolverFunctionCall(apiKey string, clienteID int, reqB
 	// Fazer a segunda chamada de acompanhamento para gerar o texto final
 	return s.executarChamadaGeminiStream(apiKey, clienteID, reqBody, writeChunk)
 }
+
+func (s *ClienteService) GoogleLogin(email, nome string) (*domain.Cliente, string, error) {
+	cliente, _, err := s.repo.FindByLogin(email)
+	if err != nil {
+		// Usuário não existe, vamos cadastrá-lo automaticamente
+		novoCliente := &domain.Cliente{
+			Nome:  nome,
+			Login: email,
+			Cargo: "Cliente",
+		}
+		
+		// Gerar um hash de senha aleatório para cumprir o schema
+		dummyPass := fmt.Sprintf("google_oauth_%d", time.Now().UnixNano())
+		hashedBytes, err := bcrypt.GenerateFromPassword([]byte(dummyPass), bcrypt.DefaultCost)
+		if err != nil {
+			return nil, "", err
+		}
+
+		err = s.repo.Save(novoCliente, string(hashedBytes))
+		if err != nil {
+			return nil, "", err
+		}
+
+		// Buscar o cliente recém criado para obter o ID preenchido pelo banco
+		cliente, _, err = s.repo.FindByLogin(email)
+		if err != nil {
+			return nil, "", err
+		}
+	}
+
+	// Criar token JWT para o login do Google
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":    cliente.ID,
+		"nome":  cliente.Nome,
+		"cargo": cliente.Cargo,
+		"exp":   time.Now().Add(time.Hour * 72).Unix(),
+	})
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "ruivobarber_secret_token"
+	}
+
+	tokenString, err := token.SignedString([]byte(jwtSecret))
+	if err != nil {
+		return nil, "", err
+	}
+
+	return cliente, tokenString, nil
+}
+
