@@ -85,3 +85,6 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
   - [x] Definir o modelo de relatório técnico de fechamento para inserção automática via API do GitHub.
 - [x] [Auto-Migration] Auto-inicialização do banco de dados no Render (Task 31)
   - [x] Embutir esquema SQL via go:embed no binário Go e executar migração se o banco estiver vazio.
+- [x] [Integrar Google Sign-In] Configurar Google Client ID Real (Task 32)
+  - [x] Integrar ID de cliente real fornecido pelo usuário e renderizar botão de login oficial do Google.
+

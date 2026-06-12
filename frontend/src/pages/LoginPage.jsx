@@ -278,17 +278,29 @@ export default function LoginPage() {
         </div>
 
         {/* Container do Google One Tap / Sign In */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
           <div 
             id="g_id_onload"
-            data-client_id="8910239102-dummyclientid.apps.googleusercontent.com" // Placeholder que ativa One-tap caso queiram configurar no futuro
+            data-client_id="875304695392-ps6bpdh818gs2dirgd7eqea3omvrggdb.apps.googleusercontent.com" // ID de cliente do Google real configurado
             data-context="signin"
             data-ux_mode="popup"
             data-callback="handleCredentialResponse"
             data-auto_select="false"
           />
           
-          {/* Botão de login do Google Simulado com visual de alta fidelidade */}
+          {/* Botão de login oficial do Google */}
+          <div 
+            className="g_id_signin"
+            data-type="standard"
+            data-shape="rectangular"
+            data-theme="filled_blue"
+            data-text="signin_with"
+            data-size="large"
+            data-logo_alignment="left"
+            style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+          />
+
+          {/* Botão de login do Google Simulado com visual de alta fidelidade para desenvolvimento local */}
           <button 
             type="button" 
             onClick={handleGoogleMock}
@@ -317,7 +329,7 @@ export default function LoginPage() {
               <path d="M3.96409 10.71C3.78409 10.17 3.68182 9.59318 3.68182 9C3.68182 8.40682 3.78409 7.83 3.96409 7.29V4.95818H0.957275C0.347727 6.17318 0 7.54773 0 9C0 10.4523 0.347727 11.8268 0.957275 13.0418L3.96409 10.71Z" fill="#FBBC05"/>
               <path d="M9 3.57955C10.3214 3.57955 11.5077 4.03364 12.4405 4.92545L15.0218 2.34409C13.4632 0.891818 11.4259 0 9 0C5.48182 0 2.43818 2.01682 0.957275 4.95818L3.96409 7.29C4.67182 5.16273 6.65591 3.57955 9 3.57955Z" fill="#EA4335"/>
             </svg>
-            Entrar com o Google
+            Entrar com o Google (Demonstração / Mock)
           </button>
         </div>
 
