@@ -74,3 +74,10 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 ## 🚀 6. Deploy e Produção (Render Blueprints)
 - [x] Conectar repositório GitHub ao Render e criar grupo de serviços através do blueprint `render.yaml`
 - [x] Configurar conexão segura do banco de dados e homologar deploys automáticos
+
+---
+
+## 🤖 7. Engenharia de IA (Próximos Passos)
+- [ ] Adicionar Chat/Assistente Inteligente de Agendamento (Function Calling + SSE)
+  - [ ] Mapear as funções locais de criação de agendamento e checagem de horários no Go (Function Calling).
+  - [ ] Implementar streaming de tokens (SSE) no backend e no frontend React.
