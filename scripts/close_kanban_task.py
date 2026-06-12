@@ -74,7 +74,7 @@ def update_draft_issue_body(draft_id, new_body, token):
 
 def move_item_to_done(item_id, token):
     mutation = """
-    mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: ID!) {
+    mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
       updateProjectV2ItemFieldValue(input: {
         projectId: $projectId,
         itemId: $itemId,
