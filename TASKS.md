@@ -78,8 +78,8 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 ---
 
 ## 🤖 7. Engenharia de IA (Próximos Passos)
-- [ ] Adicionar Chat/Assistente Inteligente de Agendamento (Function Calling + SSE)
-  - [ ] Mapear as funções locais de criação de agendamento e checagem de horários no Go (Function Calling).
-  - [ ] Implementar streaming de tokens (SSE) no backend e no frontend React.
+- [x] Adicionar Chat/Assistente Inteligente de Agendamento (Function Calling + SSE)
+  - [x] Mapear as funções locais de criação de agendamento e checagem de horários no Go (Function Calling).
+  - [x] Implementar streaming de tokens (SSE) no backend e no frontend React.
 - [x] [AI Dev-Ops] Automatizar a descrição de encerramento nos cards do Kanban ao finalizar tarefas
   - [x] Definir o modelo de relatório técnico de fechamento para inserção automática via API do GitHub.

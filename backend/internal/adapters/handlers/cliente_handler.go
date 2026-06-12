@@ -1,10 +1,14 @@
 package handlers
 
 import (
+	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -106,6 +110,13 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
 	// Rotas de Cupons (Protegidas)
 	api.Post("/cupons/resgatar", JWTMiddleware, RequireCargo("Cliente"), h.ResgatarCupom)
 	api.Post("/cupons/validar", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.ValidarCupom)
+
+	// Rotas de Chat de IA e Agendamentos Dinâmicos
+	api.Post("/chat/stream", JWTMiddleware, h.ChatStream)
+	api.Get("/servicos", h.ListarServicos)
+	api.Get("/barbeiros", JWTMiddleware, h.ListarBarbeiros)
+	api.Get("/agendamentos", JWTMiddleware, h.ListarAgendamentos)
+	api.Post("/agendamentos", JWTMiddleware, h.CriarAgendamento)
 }
 
 func (h *ClienteHandler) Login(c *fiber.Ctx) error {
@@ -295,4 +306,115 @@ func (h *ClienteHandler) CadastrarCliente(c *fiber.Ctx) error {
 
 	return c.Status(201).JSON(cliente)
 }
+
+func (h *ClienteHandler) ListarServicos(c *fiber.Ctx) error {
+	servicos, err := h.service.ListarServicos()
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(servicos)
+}
+
+func (h *ClienteHandler) ListarBarbeiros(c *fiber.Ctx) error {
+	barbeiros, err := h.service.ListarBarbeiros()
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(barbeiros)
+}
+
+func (h *ClienteHandler) ListarAgendamentos(c *fiber.Ctx) error {
+	userCargo := c.Locals("userCargo").(string)
+	userId := c.Locals("userId").(int)
+	
+	// Se for cliente, lista apenas os seus agendamentos
+	if userCargo == "Cliente" {
+		agendamentos, err := h.service.ListarAgendamentosDoCliente(userId)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(agendamentos)
+	}
+
+	// Senão, lista por data (se fornecida, ou assume a de hoje)
+	data := c.Query("data")
+	if data == "" {
+		data = time.Now().Format("2006-01-02")
+	}
+	agendamentos, err := h.service.ListarAgendamentos(data)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(agendamentos)
+}
+
+func (h *ClienteHandler) CriarAgendamento(c *fiber.Ctx) error {
+	userId := c.Locals("userId").(int)
+	
+	var req struct {
+		BarbeiroID int    `json:"barbeiro_id"`
+		ServicoID  int    `json:"servico_id"`
+		DataHora   string `json:"data_hora"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "corpo inválido"})
+	}
+
+	parsedTime, err := time.ParseInLocation("2006-01-02 15:04", req.DataHora, time.Local)
+	if err != nil {
+		parsedTime, err = time.Parse(time.RFC3339, req.DataHora)
+	}
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "formato de data/hora inválido. Use YYYY-MM-DD HH:MM ou RFC3339"})
+	}
+
+	id, err := h.service.CriarAgendamento(userId, req.BarbeiroID, req.ServicoID, parsedTime)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(201).JSON(fiber.Map{"id": id, "status": "Pendente"})
+}
+
+func (h *ClienteHandler) ChatStream(c *fiber.Ctx) error {
+	userId := c.Locals("userId").(int)
+	userNome := c.Locals("userNome").(string)
+
+	var req struct {
+		Message string                   `json:"message"`
+		History []services.GeminiContent `json:"history"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "corpo inválido"})
+	}
+
+	c.Set("Content-Type", "text/event-stream")
+	c.Set("Cache-Control", "no-cache")
+	c.Set("Connection", "keep-alive")
+	c.Set("Transfer-Encoding", "chunked")
+
+	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+		writeChunk := func(text string) {
+			payload := fiber.Map{"text": text}
+			jsonData, _ := json.Marshal(payload)
+			fmt.Fprintf(w, "data: %s\n\n", string(jsonData))
+			w.Flush()
+		}
+
+		err := h.service.ProcessarChatStream(userId, userNome, req.Message, req.History, writeChunk)
+		if err != nil {
+			log.Printf("[CHAT] Erro ao processar chat stream: %v", err)
+			payload := fiber.Map{"error": err.Error()}
+			jsonData, _ := json.Marshal(payload)
+			fmt.Fprintf(w, "data: %s\n\n", string(jsonData))
+			w.Flush()
+		}
+		
+		fmt.Fprintf(w, "data: [DONE]\n\n")
+		w.Flush()
+	})
+
+	return nil
+}
+
 

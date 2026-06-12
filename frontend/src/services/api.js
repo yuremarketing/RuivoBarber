@@ -49,5 +49,80 @@ export const validarCupom = (codigo) => api.post('/cupons/validar', { codigo })
 export const concluirAtendimento = (agendamentoId) => api.post('/atendimentos/concluir', { agendamento_id: Number(agendamentoId) })
 export const registrarFalta = (agendamentoId) => api.post('/atendimentos/falta', { agendamento_id: Number(agendamentoId) })
 
+export const fetchServicos = () => api.get('/servicos')
+export const fetchBarbeiros = () => api.get('/barbeiros')
+export const fetchAgendamentos = () => api.get('/agendamentos')
+export const criarAgendamento = (barbeiroId, servicoId, dataHora) => api.post('/agendamentos', {
+  barbeiro_id: Number(barbeiroId),
+  servico_id: Number(servicoId),
+  data_hora: dataHora
+})
+
+export const streamChat = async (message, history, onChunk, onError, onDone) => {
+  try {
+    const userSessionStr = localStorage.getItem('ruivobarber_user')
+    const headers = {
+      'Content-Type': 'application/json'
+    }
+    if (userSessionStr) {
+      const userSession = JSON.parse(userSessionStr)
+      if (userSession && userSession.token) {
+        headers['Authorization'] = `Bearer ${userSession.token}`
+      }
+    }
+
+    const baseURL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? 'http://localhost:8080/api/v1'
+      : '/api/v1')
+
+    const response = await fetch(`${baseURL}/chat/stream`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ message, history })
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    while (true) {
+      const { value, done } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop()
+
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (trimmed.startsWith('data:')) {
+          const dataStr = trimmed.slice(5).trim()
+          if (dataStr === '[DONE]') {
+            onDone()
+            return
+          }
+          try {
+            const parsed = JSON.parse(dataStr)
+            if (parsed.error) {
+              onError(parsed.error)
+            } else if (parsed.text) {
+              onChunk(parsed.text)
+            }
+          } catch (e) {
+            console.error('Failed to parse SSE data:', e)
+          }
+        }
+      }
+    }
+  } catch (e) {
+    onError(e.message || e)
+  }
+}
+
 export default api
+
 

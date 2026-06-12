@@ -529,6 +529,113 @@ func (r *ClientePgRepository) ValidarCupom(codigo string) (*domain.Cupom, error)
         return nil, err
     }
 
-    c.Usado = true
-    return &c, nil
+	c.Usado = true
+	return &c, nil
 }
+
+func (r *ClientePgRepository) ListarServicos() ([]domain.Servico, error) {
+	query := `SELECT id, nome, preco, xprecompensa, duracaominutos FROM Servicos ORDER BY id ASC`
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var servicos []domain.Servico
+	for rows.Next() {
+		var s domain.Servico
+		if err := rows.Scan(&s.ID, &s.Nome, &s.Preco, &s.XpRecompensa, &s.DuracaoMinutos); err != nil {
+			return nil, err
+		}
+		servicos = append(servicos, s)
+	}
+	return servicos, nil
+}
+
+func (r *ClientePgRepository) ListarBarbeiros() ([]domain.Barbeiro, error) {
+	query := `SELECT id, nome FROM Usuarios WHERE cargo IN ('Barbeiro', 'Adm') ORDER BY nome ASC`
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var barbeiros []domain.Barbeiro
+	for rows.Next() {
+		var b domain.Barbeiro
+		if err := rows.Scan(&b.ID, &b.Nome); err != nil {
+			return nil, err
+		}
+		barbeiros = append(barbeiros, b)
+	}
+	return barbeiros, nil
+}
+
+func (r *ClientePgRepository) ListarAgendamentos(data string) ([]domain.Agendamento, error) {
+	query := `
+		SELECT a.id, a.clienteid, u.nome, a.barbeiroid, b.nome, a.servicoid, s.nome, a.datahora, a.status
+		FROM Agendamentos a
+		JOIN Usuarios u ON a.clienteid = u.id
+		JOIN Usuarios b ON a.barbeiroid = b.id
+		JOIN Servicos s ON a.servicoid = s.id
+		WHERE CAST(a.datahora AS DATE) = $1 AND a.status != 'Cancelado'
+		ORDER BY a.datahora ASC
+	`
+	rows, err := r.db.Query(query, data)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var agendamentos []domain.Agendamento
+	for rows.Next() {
+		var a domain.Agendamento
+		if err := rows.Scan(&a.ID, &a.ClienteID, &a.ClienteNome, &a.BarbeiroID, &a.BarbeiroNome, &a.ServicoID, &a.ServicoNome, &a.DataHora, &a.Status); err != nil {
+			return nil, err
+		}
+		agendamentos = append(agendamentos, a)
+	}
+	return agendamentos, nil
+}
+
+func (r *ClientePgRepository) CriarAgendamento(clienteID, barbeiroID, servicoID int, dataHora time.Time) (int, error) {
+	query := `
+		INSERT INTO Agendamentos (clienteid, barbeiroid, servicoid, datahora, status)
+		VALUES ($1, $2, $3, $4, 'Pendente')
+		RETURNING id
+	`
+	var id int
+	err := r.db.QueryRow(query, clienteID, barbeiroID, servicoID, dataHora).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
+func (r *ClientePgRepository) ListarAgendamentosDoCliente(clienteID int) ([]domain.Agendamento, error) {
+	query := `
+		SELECT a.id, a.clienteid, u.nome, a.barbeiroid, b.nome, a.servicoid, s.nome, a.datahora, a.status
+		FROM Agendamentos a
+		JOIN Usuarios u ON a.clienteid = u.id
+		JOIN Usuarios b ON a.barbeiroid = b.id
+		JOIN Servicos s ON a.servicoid = s.id
+		WHERE a.clienteid = $1
+		ORDER BY a.datahora DESC
+	`
+	rows, err := r.db.Query(query, clienteID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var agendamentos []domain.Agendamento
+	for rows.Next() {
+		var a domain.Agendamento
+		if err := rows.Scan(&a.ID, &a.ClienteID, &a.ClienteNome, &a.BarbeiroID, &a.BarbeiroNome, &a.ServicoID, &a.ServicoNome, &a.DataHora, &a.Status); err != nil {
+			return nil, err
+		}
+		agendamentos = append(agendamentos, a)
+	}
+	return agendamentos, nil
+}
+
