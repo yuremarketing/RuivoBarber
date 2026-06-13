@@ -20,7 +20,11 @@ func NewClientePgRepository(db *sql.DB) *ClientePgRepository {
 
 func (r *ClientePgRepository) FindAll() ([]domain.Cliente, error) {
     query := `
-        SELECT u.id, u.nome, u.login, u.cargo, COALESCE(p.xpatual, 0) as xp, COALESCE(n.nomedonivel, 'Corte Iniciante') as nivel
+        SELECT u.id, u.nome, u.login, u.cargo, 
+               COALESCE(p.xpatual, 0) as xp, 
+               COALESCE(p.nivelatual, 1) as nivel, 
+               COALESCE(p.barrapercentual, 0.0) as barra_percentual, 
+               COALESCE(n.nomedonivel, 'Corte Iniciante') as nome_do_nivel
         FROM Usuarios u
         LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
         LEFT JOIN Niveis n ON p.nivelatual = n.id
@@ -34,7 +38,7 @@ func (r *ClientePgRepository) FindAll() ([]domain.Cliente, error) {
     var clientes []domain.Cliente
     for rows.Next() {
         var c domain.Cliente
-        err := rows.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel)
+        err := rows.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel)
         if err != nil {
             return nil, err
         }
@@ -49,36 +53,53 @@ func (r *ClientePgRepository) FindAll() ([]domain.Cliente, error) {
 func (r *ClientePgRepository) FindByID(id int) (*domain.Cliente, error) {
     var c domain.Cliente
     query := `
-        SELECT u.id, u.nome, u.login, u.cargo, COALESCE(p.xpatual, 0) as xp, COALESCE(n.nomedonivel, 'Corte Iniciante') as nivel
+        SELECT u.id, u.nome, u.login, u.cargo, 
+               COALESCE(p.xpatual, 0) as xp, 
+               COALESCE(p.nivelatual, 1) as nivel, 
+               COALESCE(p.barrapercentual, 0.0) as barra_percentual, 
+               COALESCE(n.nomedonivel, 'Corte Iniciante') as nome_do_nivel
         FROM Usuarios u
         LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
         LEFT JOIN Niveis n ON p.nivelatual = n.id
         WHERE u.id = $1
     `
     row := r.db.QueryRow(query, id)
-    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel)
+    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel)
     if err != nil {
         return nil, err
     }
     return &c, nil
 }
 
-func (r *ClientePgRepository) FindByLogin(login string) (*domain.Cliente, string, error) {
+func (r *ClientePgRepository) FindByLogin(login string) (*domain.Cliente, error) {
     var c domain.Cliente
-    var senha string
     query := `
-        SELECT u.id, u.nome, u.login, u.cargo, u.senha, COALESCE(p.xpatual, 0) as xp, COALESCE(n.nomedonivel, 'Corte Iniciante') as nivel
+        SELECT u.id, u.nome, u.login, u.cargo, 
+               COALESCE(p.xpatual, 0) as xp, 
+               COALESCE(p.nivelatual, 1) as nivel, 
+               COALESCE(p.barrapercentual, 0.0) as barra_percentual, 
+               COALESCE(n.nomedonivel, 'Corte Iniciante') as nome_do_nivel
         FROM Usuarios u
         LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
         LEFT JOIN Niveis n ON p.nivelatual = n.id
         WHERE u.login = $1
     `
     row := r.db.QueryRow(query, login)
-    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &senha, &c.XP, &c.Nivel)
+    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel)
     if err != nil {
-        return nil, "", err
+        return nil, err
     }
-    return &c, senha, nil
+    return &c, nil
+}
+
+func (r *ClientePgRepository) GetPasswordHashByLogin(login string) (string, error) {
+    var senha string
+    query := "SELECT senha FROM Usuarios WHERE login = $1"
+    err := r.db.QueryRow(query, login).Scan(&senha)
+    if err != nil {
+        return "", err
+    }
+    return senha, nil
 }
 
 func (r *ClientePgRepository) Save(c *domain.Cliente, hashedSenha string) error {
@@ -107,6 +128,17 @@ func (r *ClientePgRepository) Save(c *domain.Cliente, hashedSenha string) error 
     }
 
     return tx.Commit()
+}
+
+func (r *ClientePgRepository) Update(c *domain.Cliente, hashedSenha string) error {
+    if hashedSenha != "" {
+        query := "UPDATE Usuarios SET nome = $1, login = $2, senha = $3 WHERE id = $4"
+        _, err := r.db.Exec(query, c.Nome, c.Login, hashedSenha, c.ID)
+        return err
+    }
+    query := "UPDATE Usuarios SET nome = $1, login = $2 WHERE id = $3"
+    _, err := r.db.Exec(query, c.Nome, c.Login, c.ID)
+    return err
 }
 
 func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) (*ports.NotificationEvent, error) {

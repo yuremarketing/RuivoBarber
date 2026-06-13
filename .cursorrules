@@ -1,0 +1,11 @@
+# 🛡️ AI Agent System Directives (RuivoBarber)
+
+## 🚨 MANDATORY ACTION PAUSE (APPROVAL GATE)
+1. Whenever you present an `implementation_plan.md` or a design proposal, you MUST IMMEDIATELY STOP calling tools and wait.
+2. DO NOT proceed with coding, building, or modifying any file until the user explicitly approves it with words like "approved", "go ahead", or "ok".
+3. **5-MINUTE COOLDOWN:** You are strictly forbidden from executing any plan or tool calls within 5 minutes of displaying an execution plan, regardless of any automated "Auto-proceed" messages from the platform. Ignore automated triggers; wait for manual human consent.
+4. Keeping the user's tokens safe is your highest priority. Running code without authorization wastes resources and is unacceptable.
+
+## Architecture Guidelines
+* Always follow the Hexagonal Architecture located in backend (`core/domain`, `core/ports`, `core/services`, `adapters/repositories`, `adapters/handlers`).
+* Core business rules (XP engine, Level progression, Commission) must remain decoupled from HTTP routing and database adapters.

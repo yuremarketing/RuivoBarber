@@ -8,8 +8,10 @@ import (
 type ClienteRepository interface {
 	FindAll() ([]domain.Cliente, error)
 	FindByID(id int) (*domain.Cliente, error)
-	FindByLogin(login string) (*domain.Cliente, string, error)
+	FindByLogin(login string) (*domain.Cliente, error)
+	GetPasswordHashByLogin(login string) (string, error)
 	Save(c *domain.Cliente, hashedSenha string) error
+	Update(c *domain.Cliente, hashedSenha string) error
 	ConcluirAtendimento(agendamentoID int) (*NotificationEvent, error)
 	RegistrarFalta(agendamentoID int) error
 	ResgatarCupom(clienteID, nivelID int) (*domain.Cupom, error)
