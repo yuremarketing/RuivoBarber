@@ -90,4 +90,7 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
   - [x] Embutir esquema SQL via go:embed no binário Go e executar migração se o banco estiver vazio.
 - [x] [Integrar Google Sign-In] Configurar Google Client ID Real (Task 32)
   - [x] Integrar ID de cliente real fornecido pelo usuário e renderizar botão de login oficial do Google.
+- [x] [Segurança] Restrições de Login Social e Contas Fictícias (Task 34)
+  - [x] Restringir login do Google exclusivamente ao cargo Cliente e sementar contas fictícias com hashes bcrypt para testes.
+
 

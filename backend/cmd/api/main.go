@@ -109,6 +109,58 @@ func main() {
         }
     }
 
+    // Semeando as três novas contas fictícias da Task 34
+    // 1. Administrador Fictício
+    var fAdminCount int
+    err = db.QueryRow("SELECT COUNT(*) FROM Usuarios WHERE Login = 'admin_ruivo'").Scan(&fAdminCount)
+    if err == nil && fAdminCount == 0 {
+        log.Println("🌱 Semeando Administrador Fictício...")
+        hashedBytes, err := bcrypt.GenerateFromPassword([]byte("RuivoAdmin123!"), bcrypt.DefaultCost)
+        if err == nil {
+            _, err = db.Exec("INSERT INTO Usuarios (Nome, Cargo, Login, Senha) VALUES ($1, $2, $3, $4)", "Administrador Fictício", "Adm", "admin_ruivo", string(hashedBytes))
+            if err != nil {
+                log.Printf("[SEED] Erro ao semear Administrador Fictício: %v", err)
+            }
+        }
+    }
+
+    // 2. Barbeiro Fictício
+    var fBarberCount int
+    err = db.QueryRow("SELECT COUNT(*) FROM Usuarios WHERE Login = 'barbeiro_ruivo'").Scan(&fBarberCount)
+    if err == nil && fBarberCount == 0 {
+        log.Println("🌱 Semeando Barbeiro Fictício...")
+        hashedBytes, err := bcrypt.GenerateFromPassword([]byte("RuivoBarbeiro123!"), bcrypt.DefaultCost)
+        if err == nil {
+            _, err = db.Exec("INSERT INTO Usuarios (Nome, Cargo, Login, Senha) VALUES ($1, $2, $3, $4)", "Barbeiro Fictício", "Barbeiro", "barbeiro_ruivo", string(hashedBytes))
+            if err != nil {
+                log.Printf("[SEED] Erro ao semear Barbeiro Fictício: %v", err)
+            }
+        }
+    }
+
+    // 3. Cliente Fictício
+    var fClientCount int
+    err = db.QueryRow("SELECT COUNT(*) FROM Usuarios WHERE Login = 'cliente_ruivo'").Scan(&fClientCount)
+    if err == nil && fClientCount == 0 {
+        log.Println("🌱 Semeando Cliente Fictício...")
+        hashedBytes, err := bcrypt.GenerateFromPassword([]byte("RuivoCliente123!"), bcrypt.DefaultCost)
+        if err == nil {
+            _, err = db.Exec("INSERT INTO Usuarios (Nome, Cargo, Login, Senha) VALUES ($1, $2, $3, $4)", "Cliente Fictício", "Cliente", "cliente_ruivo", string(hashedBytes))
+            if err != nil {
+                log.Printf("[SEED] Erro ao semear Cliente Fictício: %v", err)
+            } else {
+                var cID int
+                err = db.QueryRow("SELECT ID FROM Usuarios WHERE Login = 'cliente_ruivo'").Scan(&cID)
+                if err == nil {
+                    _, err = db.Exec("INSERT INTO ProgressoCliente (ClienteID, XPAtual, NivelAtual, BarraPercentual) VALUES ($1, $2, $3, $4)", cID, 150, 2, 50.0)
+                    if err != nil {
+                        log.Printf("[SEED] Erro ao criar progresso para Cliente Fictício: %v", err)
+                    }
+                }
+            }
+        }
+    }
+
     notificationService := services.NewNotificationService()
     notificationService.StartWorker()
 

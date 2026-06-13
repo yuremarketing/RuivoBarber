@@ -556,7 +556,11 @@ func (s *ClienteService) resolverFunctionCall(apiKey string, clienteID int, reqB
 
 func (s *ClienteService) GoogleLogin(email, nome string) (*domain.Cliente, string, error) {
 	cliente, _, err := s.repo.FindByLogin(email)
-	if err != nil {
+	if err == nil {
+		if cliente.Cargo != "Cliente" {
+			return nil, "", errors.New("login social permitido apenas para clientes")
+		}
+	} else {
 		// Usuário não existe, vamos cadastrá-lo automaticamente
 		novoCliente := &domain.Cliente{
 			Nome:  nome,
