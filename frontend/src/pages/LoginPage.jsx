@@ -5,6 +5,7 @@ import { login as loginService, registrarPublico, loginComGoogle } from '../serv
 export default function LoginPage() {
   const navigate = useNavigate()
   const [isRegistering, setIsRegistering] = useState(false)
+  const [devMode, setDevMode] = useState(false)
   
   // Login fields
   const [login, setLogin] = useState('')
@@ -118,6 +119,25 @@ export default function LoginPage() {
         } else {
           setErro('Erro ao se conectar ao servidor.')
         }
+        setLoading(false)
+      })
+  }
+
+  const handleGoogleMock = () => {
+    setLoading(true)
+    setErro('')
+    setSucesso('')
+    const mockEmail = `mock_google_${regLogin || login || 'usuario_google'}@gmail.com`
+    loginComGoogle(mockEmail)
+      .then(res => {
+        const data = res.data
+        setSucesso('Login do Google simulado com sucesso!')
+        setTimeout(() => {
+          saveSessionAndNavigate(data)
+        }, 800)
+      })
+      .catch(err => {
+        setErro('Erro no login simulado: ' + (err.response?.data?.error || err.message))
         setLoading(false)
       })
   }
@@ -280,11 +300,77 @@ export default function LoginPage() {
             data-logo_alignment="left"
             style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
           />
+
+          {devMode && (
+            <>
+              {/* Separador Visual Dev */}
+              <div style={{ display: 'flex', alignItems: 'center', width: '100%', margin: '0.5rem 0', color: '#e94560', fontSize: '0.72rem', fontWeight: 600, opacity: 0.6 }}>
+                <div style={{ flex: 1, height: '1px', background: 'rgba(233,69,96,0.3)', marginRight: '0.5rem' }} />
+                <span>MODO DESENVOLVEDOR</span>
+                <div style={{ flex: 1, height: '1px', background: 'rgba(233,69,96,0.3)', marginLeft: '0.5rem' }} />
+              </div>
+
+              {/* Botão de login do Google Simulado com visual de alta fidelidade para desenvolvimento local */}
+              <button 
+                type="button" 
+                onClick={handleGoogleMock}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.8rem',
+                  padding: '0.8rem',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(233,69,96,0.3)',
+                  background: 'rgba(233,69,96,0.05)',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(233,69,96,0.15)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(233,69,96,0.05)'}
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M17.64 9.20455C17.64 8.56636 17.5827 7.95273 17.4764 7.36364H9V10.845H13.8436C13.635 11.97 13.0009 12.9232 12.0477 13.5614V15.8195H14.9564C16.6582 14.2527 17.64 11.9455 17.64 9.20455Z" fill="#4285F4"/>
+                  <path d="M9 18C11.43 18 13.4673 17.1941 14.9577 15.8195L12.0491 13.5614C11.2418 14.1027 10.2109 14.4205 9 14.4205C6.65591 14.4205 4.67182 12.8373 3.96409 10.71H0.957275V13.0418C2.43818 15.9832 5.48182 18 9 18Z" fill="#34A853"/>
+                  <path d="M3.96409 10.71C3.78409 10.17 3.68182 9.59318 3.68182 9C3.68182 8.40682 3.78409 7.83 3.96409 7.29V4.95818H0.957275C0.347727 6.17318 0 7.54773 0 9C0 10.4523 0.347727 11.8268 0.957275 13.0418L3.96409 10.71Z" fill="#FBBC05"/>
+                  <path d="M9 3.57955C10.3214 3.57955 11.5077 4.03364 12.4405 4.92545L15.0218 2.34409C13.4632 0.891818 11.4259 0 9 0C5.48182 0 2.43818 2.01682 0.957275 4.95818L3.96409 7.29C4.67182 5.16273 6.65591 3.57955 9 3.57955Z" fill="#EA4335"/>
+                </svg>
+                Entrar com o Google (Mock / Simulado)
+              </button>
+            </>
+          )}
         </div>
 
-        <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-          Demos: <strong style={{ color: 'var(--text-secondary)' }}>admin/admin</strong> | <strong style={{ color: 'var(--text-secondary)' }}>cliente/cliente</strong>
-        </p>
+        <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+          {devMode ? (
+            <>
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                Demos: <strong style={{ color: 'var(--text-secondary)' }}>admin/admin</strong> | <strong style={{ color: 'var(--text-secondary)' }}>cliente/cliente</strong>
+              </p>
+              <button 
+                type="button" 
+                onClick={() => setDevMode(false)}
+                style={{ background: 'none', border: 'none', color: '#e94560', fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                Voltar para o Modo Produção 🔒
+              </button>
+            </>
+          ) : (
+            <button 
+              type="button" 
+              onClick={() => setDevMode(true)}
+              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', fontSize: '0.72rem', cursor: 'pointer', transition: 'color 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.2)'}
+            >
+              🛠️ Modo de Desenvolvimento
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )

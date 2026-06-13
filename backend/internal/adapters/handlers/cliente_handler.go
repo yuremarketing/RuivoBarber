@@ -485,6 +485,9 @@ func (h *ClienteHandler) GoogleLogin(c *fiber.Ctx) error {
 
 	// Suporte a Simulação Local para testes simplificados
 	if strings.HasPrefix(idToken, "mock_google_") {
+		if os.Getenv("APP_ENV") == "production" {
+			return c.Status(401).JSON(fiber.Map{"error": "tokens mockados não são permitidos em produção"})
+		}
 		email = strings.TrimPrefix(idToken, "mock_google_")
 		nome = "Google Client Test"
 	} else {

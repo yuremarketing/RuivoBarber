@@ -13,6 +13,7 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 
+	"golang.org/x/crypto/bcrypt"
 	"ruivobarber-api/internal/adapters/handlers"
 	"ruivobarber-api/internal/adapters/repositories"
 	"ruivobarber-api/internal/core/services"
@@ -67,28 +68,43 @@ func main() {
 		log.Println("✅ Banco de dados inicializado com sucesso!")
 	}
 
-    // Atualizar senha do admin se for o placeholder para permitir login
-    _, err = db.Exec("UPDATE Usuarios SET Senha = 'admin' WHERE Login = 'admin' AND Senha = '$2a$10$placeholder_hash_trocar'")
-    if err != nil {
-        log.Printf("[SEED] Erro ao atualizar senha do admin: %v", err)
+    // Atualizar senha do admin se for o placeholder ou plain-text legado para permitir login seguro com bcrypt
+    var adminCount int
+    err = db.QueryRow("SELECT COUNT(*) FROM Usuarios WHERE Login = 'admin'").Scan(&adminCount)
+    if err == nil && adminCount > 0 {
+        var currentSenha string
+        err = db.QueryRow("SELECT Senha FROM Usuarios WHERE Login = 'admin'").Scan(&currentSenha)
+        if err == nil && (currentSenha == "$2a$10$placeholder_hash_trocar" || currentSenha == "admin" || !strings.HasPrefix(currentSenha, "$2a$")) {
+            log.Println("🔑 Atualizando senha do admin para hash bcrypt seguro...")
+            hashedBytes, err := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
+            if err == nil {
+                _, err = db.Exec("UPDATE Usuarios SET Senha = $1 WHERE Login = 'admin'", string(hashedBytes))
+                if err != nil {
+                    log.Printf("[SEED] Erro ao atualizar senha do admin: %v", err)
+                }
+            }
+        }
     }
 
-    // Criar cliente de demonstração se não existir
+    // Criar cliente de demonstração se não existir com senha criptografada
     var clientCount int
     err = db.QueryRow("SELECT COUNT(*) FROM Usuarios WHERE Login = 'cliente'").Scan(&clientCount)
     if err == nil && clientCount == 0 {
-        log.Println("🌱 Semeando cliente de demonstração...")
-        _, err = db.Exec("INSERT INTO Usuarios (Nome, Cargo, Login, Senha) VALUES ($1, $2, $3, $4)", "Cliente Demo", "Cliente", "cliente", "cliente")
-        if err != nil {
-            log.Printf("[SEED] Erro ao semear cliente: %v", err)
-        }
-        
-        var clienteID int
-        err = db.QueryRow("SELECT ID FROM Usuarios WHERE Login = 'cliente'").Scan(&clienteID)
+        log.Println("🌱 Semeando cliente de demonstração com senha segura...")
+        hashedBytes, err := bcrypt.GenerateFromPassword([]byte("cliente"), bcrypt.DefaultCost)
         if err == nil {
-            _, err = db.Exec("INSERT INTO ProgressoCliente (ClienteID, XPAtual, NivelAtual, BarraPercentual) VALUES ($1, $2, $3, $4)", clienteID, 120, 2, 40.0)
+            _, err = db.Exec("INSERT INTO Usuarios (Nome, Cargo, Login, Senha) VALUES ($1, $2, $3, $4)", "Cliente Demo", "Cliente", "cliente", string(hashedBytes))
             if err != nil {
-                log.Printf("[SEED] Erro ao criar progresso para cliente: %v", err)
+                log.Printf("[SEED] Erro ao semear cliente: %v", err)
+            }
+            
+            var clienteID int
+            err = db.QueryRow("SELECT ID FROM Usuarios WHERE Login = 'cliente'").Scan(&clienteID)
+            if err == nil {
+                _, err = db.Exec("INSERT INTO ProgressoCliente (ClienteID, XPAtual, NivelAtual, BarraPercentual) VALUES ($1, $2, $3, $4)", clienteID, 120, 2, 40.0)
+                if err != nil {
+                    log.Printf("[SEED] Erro ao criar progresso para cliente: %v", err)
+                }
             }
         }
     }

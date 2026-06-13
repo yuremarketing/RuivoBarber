@@ -61,10 +61,12 @@ func (s *ClienteService) Login(login, senha string) (*domain.Cliente, string, er
 		return nil, "", errors.New("usuário ou senha incorretos")
 	}
 
-	// Suporta senha direta caso o banco não use hash para dados legados de teste
+	// Suporta senha direta caso o banco não use hash para dados legados de teste (desativado em produção)
 	err = bcrypt.CompareHashAndPassword([]byte(hashedSenha), []byte(senha))
-	if err != nil && hashedSenha != senha {
-		return nil, "", errors.New("usuário ou senha incorretos")
+	if err != nil {
+		if os.Getenv("APP_ENV") == "production" || hashedSenha != senha {
+			return nil, "", errors.New("usuário ou senha incorretos")
+		}
 	}
 
 	// Criar token JWT
