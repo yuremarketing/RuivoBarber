@@ -42,6 +42,11 @@ def get_item_content_id(item_id, token):
               title
               body
             }
+            ... on Issue {
+              id
+              title
+              body
+            }
           }
         }
       }
@@ -71,6 +76,18 @@ def update_draft_issue_body(draft_id, new_body, token):
     }
     """
     run_query(mutation, {"draftId": draft_id, "body": new_body}, token)
+
+def update_issue_body(issue_id, new_body, token):
+    mutation = """
+    mutation($issueId: ID!, $body: String!) {
+      updateIssue(input: { id: $issueId, body: $body }) {
+        issue {
+          id
+        }
+      }
+    }
+    """
+    run_query(mutation, {"issueId": issue_id, "body": new_body}, token)
 
 def move_item_to_done(item_id, token):
     mutation = """
@@ -131,10 +148,13 @@ def main():
         
     updated_body = current_body + closure_report
     
-    # 3. Se for DraftIssue, atualizar a descrição (body)
+    # 3. Se for DraftIssue ou Issue, atualizar a descrição (body)
     if typename == "DraftIssue":
         print("[+] Atualizando a descrição do DraftIssue com o relatório técnico...")
         update_draft_issue_body(content_id, updated_body, token)
+    elif typename == "Issue":
+        print("[+] Atualizando a descrição da Issue com o relatório técnico...")
+        update_issue_body(content_id, updated_body, token)
     else:
         print(f"[*] Tipo de conteúdo '{typename}' não suporta atualização direta de body via ProjectV2. Pulando.")
         

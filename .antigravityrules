@@ -6,6 +6,8 @@
     <rule>In case of HTTP 429 errors, pause for 15 seconds before retrying.</rule>
     <rule>Prioritize sequential operations over parallel ones when accessing external cloud resources.</rule>
     <rule>Diretriz de Orquestração: O agente deve sempre verificar o estado do processo antes de iniciar um docker compose. Nunca execute múltiplos docker compose up simultâneos. Se um comando estiver rodando, o agente deve esperar ou sugerir o encerramento do processo anterior antes de iniciar o próximo.</rule>
+    <rule>Fluxo de Planejamento (Aprovação Estrita): O agente DEVE aguardar a revisão e aprovação explícita do Engenheiro Humano após apresentar o plano de execução (implementation_plan.md). Caso o plano não seja aprovado, o agente deve reformulá-lo de acordo com o feedback recebido, apresentando a versão atualizada para nova análise. Nenhuma alteração no código do projeto é permitida antes da aprovação final.</rule>
+    <rule>Qualidade de Descrição das Tasks (Kanban): Toda task criada ou gerenciada pelo agente no GitHub Projects V2 deve conter uma descrição (body) clara e detalhada desde sua concepção. O processo de encerramento deve atualizar a descrição (tanto para DraftIssue quanto para Issue regular) contendo o relatório técnico final sem sobrescrever ou apagar a descrição inicial.</rule>
     <rule>Fluxo de Fechamento do Kanban: Ao concluir qualquer tarefa de desenvolvimento, o agente de IA deve obrigatoriamente executar o script local "scripts/close_kanban_task.py" passando o ID do item da tarefa no Projects V2, documentando os commits realizados, testes executados e os resultados obtidos antes de mover o card para "Done".</rule>
   </execution_flow>
   <coding_standards>

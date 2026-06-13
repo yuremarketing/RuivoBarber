@@ -37,6 +37,7 @@ O Google Gemini possui limites de:
 
 ### D. Rastreamento e Alinhamento do Agente
 Para evitar que o agente de IA se desvie do objetivo durante tarefas longas, o Engenheiro monitora três arquivos locais gerados na pasta de dados do aplicativo (`.gemini/antigravity/brain/...`):
-*   `implementation_plan.md`: O plano de design arquitetural sugerido pela IA e aprovado pelo Engenheiro antes da escrita de código.
-*   `task.md`: O checklist dinâmico de tarefas ativas e concluídas.
+*   `implementation_plan.md`: O plano de design arquitetural sugerido pela IA. O agente deve apresentá-lo e aguardar a análise e aprovação formal do Engenheiro Humano. Se houver objeções ou correções, o plano é reformulado e apresentado novamente até ser aprovado. Nenhuma codificação ocorre antes desta aprovação.
+*   `task.md`: O checklist dinâmico de tarefas ativas e concluídas criado após a aprovação do plano.
 *   `walkthrough.md`: O relatório técnico pós-execução detalhando o que foi testado e os resultados.
+
