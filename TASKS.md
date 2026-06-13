@@ -50,6 +50,9 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
   - [x] Renderizar texto de conquistas (ex: "Faltam X cortes para a sua próxima recompensa").
 - [x] Desenvolver componente `RedeemCouponManager.jsx`.
   - [x] Lógica visual: o botão "Resgatar Cupom" só deve ser clicável/visível quando o nível é atingido.
+- [ ] Configuração de usuário da tela de cliente (Task 33)
+  - [ ] Implementar formulário/tela para alteração de dados cadastrais (nome, login, senha) diretamente no painel do cliente.
+
 
 ### 🛡️ Dashboard Administrativo
 - [x] Desenvolver componente `AdminValidationPanel.jsx`.
