@@ -56,7 +56,12 @@ func (s *ClienteService) ValidarCupom(codigo string) (*domain.Cupom, error) {
 }
 
 func (s *ClienteService) Login(login, senha string) (*domain.Cliente, string, error) {
-	cliente, hashedSenha, err := s.repo.FindByLogin(login)
+	hashedSenha, err := s.repo.GetPasswordHashByLogin(login)
+	if err != nil {
+		return nil, "", errors.New("usuário ou senha incorretos")
+	}
+
+	cliente, err := s.repo.FindByLogin(login)
 	if err != nil {
 		return nil, "", errors.New("usuário ou senha incorretos")
 	}
@@ -91,7 +96,7 @@ func (s *ClienteService) Login(login, senha string) (*domain.Cliente, string, er
 }
 
 func (s *ClienteService) CadastrarCliente(cliente *domain.Cliente, password string) error {
-	_, _, err := s.repo.FindByLogin(cliente.Login)
+	_, err := s.repo.FindByLogin(cliente.Login)
 	if err == nil {
 		return errors.New("login já cadastrado no sistema")
 	}
@@ -103,6 +108,38 @@ func (s *ClienteService) CadastrarCliente(cliente *domain.Cliente, password stri
 
 	cliente.Cargo = "Cliente"
 	return s.repo.Save(cliente, string(hashedBytes))
+}
+
+func (s *ClienteService) AtualizarPerfil(id int, nome, login, senha string) error {
+	if login != "" {
+		cExistente, err := s.repo.FindByLogin(login)
+		if err == nil && cExistente.ID != id {
+			return errors.New("login já cadastrado no sistema")
+		}
+	}
+
+	cliente, err := s.repo.FindByID(id)
+	if err != nil {
+		return err
+	}
+
+	if nome != "" {
+		cliente.Nome = nome
+	}
+	if login != "" {
+		cliente.Login = login
+	}
+
+	var hashedSenha string
+	if senha != "" {
+		hashedBytes, err := bcrypt.GenerateFromPassword([]byte(senha), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		hashedSenha = string(hashedBytes)
+	}
+
+	return s.repo.Update(cliente, hashedSenha)
 }
 
 func (s *ClienteService) ListarServicos() ([]domain.Servico, error) {
@@ -555,7 +592,7 @@ func (s *ClienteService) resolverFunctionCall(apiKey string, clienteID int, reqB
 }
 
 func (s *ClienteService) GoogleLogin(email, nome string) (*domain.Cliente, string, error) {
-	cliente, _, err := s.repo.FindByLogin(email)
+	cliente, err := s.repo.FindByLogin(email)
 	if err == nil {
 		if cliente.Cargo != "Cliente" {
 			return nil, "", errors.New("login social permitido apenas para clientes")
@@ -581,7 +618,7 @@ func (s *ClienteService) GoogleLogin(email, nome string) (*domain.Cliente, strin
 		}
 
 		// Buscar o cliente recém criado para obter o ID preenchido pelo banco
-		cliente, _, err = s.repo.FindByLogin(email)
+		cliente, err = s.repo.FindByLogin(email)
 		if err != nil {
 			return nil, "", err
 		}

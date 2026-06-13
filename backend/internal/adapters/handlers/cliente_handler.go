@@ -106,6 +106,7 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
 	api.Get("/clientes", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.ListarClientes)
 	api.Post("/clientes", JWTMiddleware, RequireCargo("Adm"), h.CadastrarCliente)
 	api.Get("/clientes/:id", JWTMiddleware, h.BuscarCliente)
+	api.Put("/clientes/:id/perfil", JWTMiddleware, h.AtualizarPerfil)
 
 	// Rotas de Atendimentos (Protegidas)
 	api.Post("/atendimentos/concluir", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.ConcluirAtendimento)
@@ -530,6 +531,52 @@ func (h *ClienteHandler) GoogleLogin(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"token": token,
+		"user": fiber.Map{
+			"id":    cliente.ID,
+			"nome":  cliente.Nome,
+			"login": cliente.Login,
+			"cargo": cliente.Cargo,
+			"xp":    cliente.XP,
+			"nivel": cliente.Nivel,
+		},
+	})
+}
+
+func (h *ClienteHandler) AtualizarPerfil(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "ID inválido"})
+	}
+
+	userCargo := c.Locals("userCargo").(string)
+	userId := c.Locals("userId").(int)
+
+	if userCargo != "Adm" && userId != id {
+		return c.Status(403).JSON(fiber.Map{"error": "Acesso não autorizado para esta conta"})
+	}
+
+	var req struct {
+		Nome  string `json:"nome"`
+		Login string `json:"login"`
+		Senha string `json:"senha"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "corpo da requisição inválido"})
+	}
+
+	err = h.service.AtualizarPerfil(id, req.Nome, req.Login, req.Senha)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	cliente, err := h.service.BuscarCliente(id)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "erro ao recuperar dados atualizados"})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Perfil atualizado com sucesso!",
 		"user": fiber.Map{
 			"id":    cliente.ID,
 			"nome":  cliente.Nome,

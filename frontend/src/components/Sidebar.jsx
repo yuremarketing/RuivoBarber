@@ -17,6 +17,7 @@ export default function Sidebar() {
         { section: 'RPG de Fidelidade' },
         { path: '/dashboard', icon: '⚔️', label: 'Meu RPG' },
         { path: '/cupons', icon: '🎟️', label: 'Meus Cupons' },
+        { path: '/configuracoes', icon: '⚙️', label: 'Minha Conta' },
       ]
     }
     

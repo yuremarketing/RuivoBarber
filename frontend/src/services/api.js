@@ -50,6 +50,7 @@ export const resgatarCupom = (clienteId, nivelId) => api.post('/cupons/resgatar'
 export const validarCupom = (codigo) => api.post('/cupons/validar', { codigo })
 export const concluirAtendimento = (agendamentoId) => api.post('/atendimentos/concluir', { agendamento_id: Number(agendamentoId) })
 export const registrarFalta = (agendamentoId) => api.post('/atendimentos/falta', { agendamento_id: Number(agendamentoId) })
+export const atualizarPerfil = (id, dados) => api.put(`/clientes/${id}/perfil`, dados)
 
 export const fetchServicos = () => api.get('/servicos')
 export const fetchBarbeiros = () => api.get('/barbeiros')

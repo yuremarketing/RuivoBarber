@@ -40,7 +40,7 @@ export default function CuponsPage() {
           <div className="card">
             <div className="table-container">
               <table className="data-table">
-                <thead><tr><th>Código</th><th>Descrição</th><th>Desconto</th><th>Cliente</th><th>Validade</th><th>Status</th><th>Ações</th></tr></thead>
+                <thead><tr><th>Código</th><th>Descrição</th><th>Desconto</th><th>Cliente</th><th>Validade</th><th>Status</th>{isAdmin && <th>Ações</th>}</tr></thead>
                 <tbody>
                   {mockCupons.map(c => {
                     const expirado = c.validade < hoje
@@ -54,10 +54,12 @@ export default function CuponsPage() {
                         <td>{c.cliente}</td>
                         <td>{new Date(c.validade + 'T00:00').toLocaleDateString('pt-BR')}</td>
                         <td><span className={`badge ${statusClass}`}>{statusLabel}</span></td>
-                        <td>
-                          <button className="btn btn-ghost btn-sm" title="Editar">✏️</button>
-                          <button className="btn btn-ghost btn-sm" title="Remover">🗑️</button>
-                        </td>
+                        {isAdmin && (
+                          <td>
+                            <button className="btn btn-ghost btn-sm" title="Editar">✏️</button>
+                            <button className="btn btn-ghost btn-sm" title="Remover">🗑️</button>
+                          </td>
+                        )}
                       </tr>
                     )
                   })}
