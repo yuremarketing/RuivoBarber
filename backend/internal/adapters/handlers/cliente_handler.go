@@ -122,7 +122,14 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
 	api.Get("/barbeiros", JWTMiddleware, h.ListarBarbeiros)
 	api.Get("/agendamentos", JWTMiddleware, h.ListarAgendamentos)
 	api.Post("/agendamentos", JWTMiddleware, h.CriarAgendamento)
+
+	// Rotas de Temporadas
+	api.Get("/temporadas", JWTMiddleware, h.ListarTemporadas)
+	api.Get("/temporadas/ativa", JWTMiddleware, h.ObterTemporadaAtiva)
+	api.Post("/temporadas", JWTMiddleware, RequireCargo("Adm"), h.CriarTemporada)
+	api.Put("/temporadas/:id", JWTMiddleware, RequireCargo("Adm"), h.AtualizarTemporada)
 }
+
 
 func (h *ClienteHandler) Login(c *fiber.Ctx) error {
 	var req LoginRequest
@@ -587,6 +594,103 @@ func (h *ClienteHandler) AtualizarPerfil(c *fiber.Ctx) error {
 		},
 	})
 }
+
+func (h *ClienteHandler) ListarTemporadas(c *fiber.Ctx) error {
+	temporadas, err := h.service.ListarTemporadas()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(temporadas)
+}
+
+func (h *ClienteHandler) ObterTemporadaAtiva(c *fiber.Ctx) error {
+	t, err := h.service.ObterTemporadaAtiva()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	if t == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Nenhuma temporada ativa encontrada"})
+	}
+	return c.JSON(t)
+}
+
+func (h *ClienteHandler) CriarTemporada(c *fiber.Ctx) error {
+	var req struct {
+		Nome       string `json:"nome"`
+		DataInicio string `json:"dataInicio"`
+		DataFim    string `json:"dataFim"`
+		Ativa      bool   `json:"ativa"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "corpo de requisição inválido"})
+	}
+
+	inicio, err := parseDateTime(req.DataInicio)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	fim, err := parseDateTime(req.DataFim)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	t, err := h.service.CriarTemporada(req.Nome, inicio, fim, req.Ativa)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(t)
+}
+
+func (h *ClienteHandler) AtualizarTemporada(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "ID inválido"})
+	}
+
+	var req struct {
+		Nome       string `json:"nome"`
+		DataInicio string `json:"dataInicio"`
+		DataFim    string `json:"dataFim"`
+		Ativa      bool   `json:"ativa"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "corpo de requisição inválido"})
+	}
+
+	inicio, err := parseDateTime(req.DataInicio)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	fim, err := parseDateTime(req.DataFim)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	t, err := h.service.AtualizarTemporada(id, req.Nome, inicio, fim, req.Ativa)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(t)
+}
+
+func parseDateTime(s string) (time.Time, error) {
+	formats := []string{
+		time.RFC3339,
+		"2006-01-02T15:04:05Z07:00",
+		"2006-01-02T15:04:05",
+		"2006-01-02",
+	}
+	for _, f := range formats {
+		t, err := time.Parse(f, s)
+		if err == nil {
+			return t, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("formato de data inválido: %s", s)
+}
+
 
 
 

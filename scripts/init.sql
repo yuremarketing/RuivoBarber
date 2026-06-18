@@ -90,3 +90,13 @@ CREATE TABLE ServicoProdutos (
     PRIMARY KEY (ServicoID, ProdutoID)
 );
 
+CREATE TABLE Temporadas (
+    ID SERIAL PRIMARY KEY,
+    Nome VARCHAR(100) NOT NULL,
+    DataInicio TIMESTAMP NOT NULL,
+    DataFim TIMESTAMP NOT NULL,
+    Ativa BOOLEAN DEFAULT FALSE,
+    CriadaEm TIMESTAMP DEFAULT NOW()
+);
+
+

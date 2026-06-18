@@ -52,7 +52,13 @@ export const concluirAtendimento = (agendamentoId) => api.post('/atendimentos/co
 export const registrarFalta = (agendamentoId) => api.post('/atendimentos/falta', { agendamento_id: Number(agendamentoId) })
 export const atualizarPerfil = (id, dados) => api.put(`/clientes/${id}/perfil`, dados)
 
+export const fetchTemporadas = () => api.get('/temporadas')
+export const fetchTemporadaAtiva = () => api.get('/temporadas/ativa')
+export const criarTemporada = (nome, dataInicio, dataFim, ativa) => api.post('/temporadas', { nome, dataInicio, dataFim, ativa })
+export const atualizarTemporada = (id, nome, dataInicio, dataFim, ativa) => api.put(`/temporadas/${id}`, { nome, dataInicio, dataFim, ativa })
+
 export const fetchServicos = () => api.get('/servicos')
+
 export const fetchBarbeiros = () => api.get('/barbeiros')
 export const fetchAgendamentos = () => api.get('/agendamentos')
 export const criarAgendamento = (barbeiroId, servicoId, dataHora) => api.post('/agendamentos', {

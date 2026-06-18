@@ -166,8 +166,10 @@ func main() {
     notificationService.StartWorker()
 
     clienteRepo := repositories.NewClientePgRepository(db)
-    clienteService := services.NewClienteService(clienteRepo, notificationService)
+    temporadaRepo := repositories.NewTemporadaPgRepository(db)
+    clienteService := services.NewClienteService(clienteRepo, notificationService, temporadaRepo)
     clienteHandler := handlers.NewClienteHandler(clienteService)
+
 
     app := fiber.New(fiber.Config{AppName: "RuivoBarber API v1.0"})
     app.Use(logger.New())

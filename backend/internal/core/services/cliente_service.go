@@ -18,13 +18,15 @@ import (
 )
 
 type ClienteService struct {
-	repo     ports.ClienteRepository
-	notifier ports.NotificationService
+	repo          ports.ClienteRepository
+	notifier      ports.NotificationService
+	temporadaRepo ports.TemporadaRepository
 }
 
-func NewClienteService(repo ports.ClienteRepository, notifier ports.NotificationService) *ClienteService {
-	return &ClienteService{repo: repo, notifier: notifier}
+func NewClienteService(repo ports.ClienteRepository, notifier ports.NotificationService, temporadaRepo ports.TemporadaRepository) *ClienteService {
+	return &ClienteService{repo: repo, notifier: notifier, temporadaRepo: temporadaRepo}
 }
+
 
 func (s *ClienteService) ListarClientes() ([]domain.Cliente, error) {
 	return s.repo.FindAll()
@@ -644,4 +646,72 @@ func (s *ClienteService) GoogleLogin(email, nome string) (*domain.Cliente, strin
 
 	return cliente, tokenString, nil
 }
+
+func (s *ClienteService) ListarTemporadas() ([]domain.Temporada, error) {
+	return s.temporadaRepo.FindAll()
+}
+
+func (s *ClienteService) ObterTemporadaAtiva() (*domain.Temporada, error) {
+	return s.temporadaRepo.FindActive()
+}
+
+func (s *ClienteService) CriarTemporada(nome string, dataInicio, dataFim time.Time, ativa bool) (*domain.Temporada, error) {
+	if dataInicio.After(dataFim) {
+		return nil, errors.New("a data de início deve ser anterior à data de término")
+	}
+
+	if ativa {
+		// Desativar todas as temporadas anteriores para manter apenas uma ativa
+		err := s.temporadaRepo.DeactivateAll()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	t := &domain.Temporada{
+		Nome:       nome,
+		DataInicio: dataInicio,
+		DataFim:    dataFim,
+		Ativa:      ativa,
+	}
+
+	err := s.temporadaRepo.Save(t)
+	if err != nil {
+		return nil, err
+	}
+
+	return t, nil
+}
+
+func (s *ClienteService) AtualizarTemporada(id int, nome string, dataInicio, dataFim time.Time, ativa bool) (*domain.Temporada, error) {
+	if dataInicio.After(dataFim) {
+		return nil, errors.New("a data de início deve ser anterior à data de término")
+	}
+
+	t, err := s.temporadaRepo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if ativa && !t.Ativa {
+		// Se estiver ativando esta temporada, desativar as outras
+		err = s.temporadaRepo.DeactivateAll()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	t.Nome = nome
+	t.DataInicio = dataInicio
+	t.DataFim = dataFim
+	t.Ativa = ativa
+
+	err = s.temporadaRepo.Update(t)
+	if err != nil {
+		return nil, err
+	}
+
+	return t, nil
+}
+
 

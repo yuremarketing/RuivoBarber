@@ -92,3 +92,13 @@ CREATE TABLE IF NOT EXISTS ServicoProdutos (
     QuantidadeNecessaria INT NOT NULL DEFAULT 1,
     PRIMARY KEY (ServicoID, ProdutoID)
 );
+
+CREATE TABLE IF NOT EXISTS Temporadas (
+    ID SERIAL PRIMARY KEY,
+    Nome VARCHAR(100) NOT NULL,
+    DataInicio TIMESTAMP NOT NULL,
+    DataFim TIMESTAMP NOT NULL,
+    Ativa BOOLEAN DEFAULT FALSE,
+    CriadaEm TIMESTAMP DEFAULT NOW()
+);
+

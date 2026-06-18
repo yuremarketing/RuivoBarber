@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react'
 import PlayerCard from '../components/PlayerCard.jsx'
 import RpgProgressBar from '../components/RpgProgressBar.jsx'
 import RedeemCouponManager from '../components/RedeemCouponManager.jsx'
-import { buscarCliente, listarClientes } from '../services/api.js'
+import { buscarCliente, listarClientes, fetchTemporadaAtiva } from '../services/api.js'
+
 
 const stats = [
   { icon: '👥', label: 'Total Clientes', value: '47', change: '+5 este mês' },
@@ -24,9 +25,11 @@ export default function DashboardPage() {
   const [clientData, setClientData] = useState(null)
   const [ranking, setRanking] = useState([])
   const [loading, setLoading] = useState(false)
+  const [temporadaAtiva, setTemporadaAtiva] = useState(null)
  
   const isClient = user.cargo === 'Cliente'
   const hoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+
  
   const loadRanking = async () => {
     try {
@@ -64,7 +67,16 @@ export default function DashboardPage() {
   useEffect(() => {
     loadRealTimeClientData()
     loadRanking()
+    
+    fetchTemporadaAtiva()
+      .then(res => {
+        setTemporadaAtiva(res.data)
+      })
+      .catch(err => {
+        console.log('Sem temporada ativa cadastrada ou erro:', err)
+      })
   }, [])
+
 
   // ── Render do Dashboard do Cliente (Gamificado) ──
   if (isClient) {
@@ -105,8 +117,41 @@ export default function DashboardPage() {
                 loadRealTimeClientData()
               }}
             />
+
+            {temporadaAtiva ? (
+              <div style={{ 
+                padding: '1rem', 
+                borderRadius: '8px', 
+                background: 'linear-gradient(135deg, rgba(233,69,96,0.1), rgba(245,166,35,0.1))', 
+                border: '1px solid rgba(233,69,96,0.3)',
+                marginTop: '1rem'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h4 style={{ color: '#f5a623', margin: 0, fontSize: '0.95rem' }}>⏳ Temporada Ativa: {temporadaAtiva.nome}</h4>
+                  <span style={{ fontSize: '0.72rem', color: '#e94560', fontWeight: 'bold' }}>
+                    Término: {new Date(temporadaAtiva.dataFim).toLocaleDateString('pt-BR')}
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem', marginBottom: 0 }}>
+                  Ganhe o máximo de XP possível até o fim da temporada para obter recompensas adicionais exclusivas!
+                </p>
+              </div>
+            ) : (
+              <div style={{ 
+                padding: '1rem', 
+                borderRadius: '8px', 
+                background: 'rgba(255,255,255,0.02)', 
+                border: '1px solid rgba(255,255,255,0.05)',
+                marginTop: '1rem',
+                fontSize: '0.8rem',
+                color: 'var(--text-muted)'
+              }}>
+                ℹ️ Nenhuma temporada ativa no momento. Aproveite para subir de nível e acumular XP base!
+              </div>
+            )}
           </div>
         </div>
+
 
         <div className="card" style={{ marginTop: '2.5rem' }}>
           <div className="card-header">

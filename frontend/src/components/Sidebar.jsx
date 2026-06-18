@@ -17,6 +17,7 @@ export default function Sidebar() {
         { section: 'RPG de Fidelidade' },
         { path: '/dashboard', icon: '⚔️', label: 'Meu RPG' },
         { path: '/cupons', icon: '🎟️', label: 'Meus Cupons' },
+        { path: '/temporadas', icon: '⏳', label: 'Temporadas RPG' },
         { path: '/configuracoes', icon: '⚙️', label: 'Minha Conta' },
       ]
     }
@@ -41,9 +42,11 @@ export default function Sidebar() {
       { path: '/cupons', icon: '🎟️', label: 'Cupons' },
       { section: 'Sistema' },
       { path: '/niveis', icon: '⚔️', label: 'Níveis RPG' },
+      { path: '/temporadas', icon: '⏳', label: 'Temporadas RPG' },
       { path: '/configuracoes', icon: '⚙️', label: 'Configurações' },
     ]
   }
+
 
   const menuItems = getMenuItems()
   const iniciais = (user.nome || 'AD')

@@ -10,6 +10,8 @@ import ServicosPage from './pages/ServicosPage.jsx'
 import CuponsPage from './pages/CuponsPage.jsx'
 import NiveisPage from './pages/NiveisPage.jsx'
 import ConfiguracoesPage from './pages/ConfiguracoesPage.jsx'
+import TemporadasPage from './pages/TemporadasPage.jsx'
+
 
 export default function App() {
   const location = useLocation()
@@ -28,6 +30,7 @@ export default function App() {
           <Route path="/cupons" element={<CuponsPage />} />
           <Route path="/niveis" element={<NiveisPage />} />
           <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+          <Route path="/temporadas" element={<TemporadasPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </main>
