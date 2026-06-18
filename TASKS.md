@@ -111,6 +111,10 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 - [ ] [Lives] Task 41: Integração com Transmissões de Lives ao Vivo
   - [ ] Backend: Rota para salvar e ativar links de transmissões de lives (YouTube, Facebook, Twitch).
   - [ ] Frontend: Player de vídeo incorporado dinamicamente para os clientes assistirem a transmissões ao vivo.
+- [ ] [AI-Chatbot] Task 42: Integração de Inteligência Artificial e Chatbot com WhatsApp/Webhooks
+  - [ ] Backend: Criar receiver de webhook para mensagens de WhatsApp, repassar para IA com histórico e responder via API do WhatsApp.
+  - [ ] Frontend: Melhorar tela de Configurações no painel do Administrador para salvar/testar as credenciais da API do WhatsApp e a URL do Webhook.
+
 
 
 
