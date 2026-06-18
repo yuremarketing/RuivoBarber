@@ -6,6 +6,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const [isRegistering, setIsRegistering] = useState(false)
   const [devMode, setDevMode] = useState(false)
+  const [showTestButton, setShowTestButton] = useState(false)
   
   // Login fields
   const [login, setLogin] = useState('')
@@ -25,6 +26,18 @@ export default function LoginPage() {
   useEffect(() => {
     cargoRef.current = cargo
   }, [cargo])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (
+      params.get('dev') === 'true' || 
+      params.get('test') === 'true' || 
+      params.get('japa') === 'true' ||
+      params.get('admin') === 'true'
+    ) {
+      setShowTestButton(true)
+    }
+  }, [])
 
   // Efeito para configurar o Google Sign-In
   useEffect(() => {
@@ -278,27 +291,29 @@ export default function LoginPage() {
             <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.8rem' }} disabled={loading}>
               {loading ? '⏳ Entrando...' : '🔐 Entrar no Sistema'}
             </button>
-            <button 
-              type="button" 
-              onClick={handleTestLogin}
-              style={{ 
-                width: '100%', 
-                padding: '0.8rem', 
-                marginTop: '0.8rem', 
-                backgroundColor: '#39FF14', 
-                color: '#000', 
-                fontWeight: 'bold', 
-                border: 'none', 
-                borderRadius: '8px', 
-                cursor: 'pointer',
-                boxShadow: '0 0 10px #39FF14',
-                transition: 'transform 0.1s, box-shadow 0.2s'
-              }}
-              onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 20px #39FF14'}
-              onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 10px #39FF14'}
-            >
-              ⚡ ENTRAR MODO TESTE (MOCK)
-            </button>
+            {showTestButton && (
+              <button 
+                type="button" 
+                onClick={handleTestLogin}
+                style={{ 
+                  width: '100%', 
+                  padding: '0.8rem', 
+                  marginTop: '0.8rem', 
+                  backgroundColor: '#39FF14', 
+                  color: '#000', 
+                  fontWeight: 'bold', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  cursor: 'pointer',
+                  boxShadow: '0 0 10px #39FF14',
+                  transition: 'transform 0.1s, box-shadow 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 20px #39FF14'}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 10px #39FF14'}
+              >
+                ⚡ ENTRAR MODO TESTE (MOCK)
+              </button>
+            )}
           </form>
         ) : (
           /* Formulário de Cadastro */
