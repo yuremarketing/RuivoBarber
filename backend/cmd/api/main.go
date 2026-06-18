@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -157,6 +158,43 @@ func main() {
                     if err != nil {
                         log.Printf("[SEED] Erro ao criar progresso para Cliente Fictício: %v", err)
                     }
+                }
+            }
+        }
+    }
+
+    // Semeando alguns agendamentos de teste (Mocks) para o Barbeiro Fictício se não houver nenhum agendamento cadastrado
+    var agCount int
+    err = db.QueryRow("SELECT COUNT(*) FROM Agendamentos").Scan(&agCount)
+    if err == nil && agCount == 0 {
+        log.Println("🌱 Semeando agendamentos de teste (mocks) para o Barbeiro Fictício...")
+        var bID, cID int
+        errB := db.QueryRow("SELECT ID FROM Usuarios WHERE Login = 'barbeiro_ruivo'").Scan(&bID)
+        errC := db.QueryRow("SELECT ID FROM Usuarios WHERE Login = 'cliente_ruivo'").Scan(&cID)
+        if errB == nil && errC == nil {
+            // Seed a few appointments for 2026-06-18, 2026-06-19, and 2026-06-20
+            dates := []string{
+                "2026-06-18 10:00:00", // 10:00 - 10:30 (Corte Simples)
+                "2026-06-18 14:00:00", // 14:00 - 15:00 (Corte + Barba)
+                "2026-06-19 11:30:00", // 11:30 - 12:00
+                "2026-06-19 16:00:00", // 16:00 - 17:00
+                "2026-06-20 09:30:00", // 09:30 - 10:30
+                "2026-06-20 15:00:00", // 15:00 - 15:30
+            }
+            
+            // Servicos: 1 (Corte Simples - 30m), 2 (Corte + Barba - 60m)
+            servIds := []int{1, 2, 1, 2, 2, 1}
+            
+            // Utilizando o time package para fazer parse dos horários locais
+            for i, dStr := range dates {
+                pTime, parseErr := time.ParseInLocation("2006-01-02 15:04:05", dStr, time.Local)
+                if parseErr == nil {
+                    _, err = db.Exec("INSERT INTO Agendamentos (ClienteID, BarbeiroID, ServicoID, DataHora, Status) VALUES ($1, $2, $3, $4, 'Confirmado')", cID, bID, servIds[i], pTime)
+                    if err != nil {
+                        log.Printf("[SEED] Erro ao semear agendamento de teste: %v", err)
+                    }
+                } else {
+                    log.Printf("[SEED] Erro de parse de data mock: %v", parseErr)
                 }
             }
         }

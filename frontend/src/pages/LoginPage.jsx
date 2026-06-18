@@ -350,6 +350,8 @@ export default function LoginPage() {
         </div>
 
         {/* Container do Google One Tap / Sign In (oculto para administradores e barbeiros via CSS display) */}
+        {/* Container do Google One Tap / Sign In (Desativado temporariamente por segurança. Será reativado apenas na última task do projeto.) */}
+        {/*
         <div style={{ display: cargo === 'Cliente' ? 'flex' : 'none', flexDirection: 'column', gap: '0.8rem', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
           <div 
             id="g_id_onload"
@@ -360,7 +362,6 @@ export default function LoginPage() {
             data-auto_select="false"
           />
           
-          {/* Botão de login oficial do Google */}
           <div 
             className="g_id_signin"
             data-type="standard"
@@ -374,14 +375,12 @@ export default function LoginPage() {
 
           {devMode && (
             <>
-              {/* Separador Visual Dev */}
               <div style={{ display: 'flex', alignItems: 'center', width: '100%', margin: '0.5rem 0', color: '#e94560', fontSize: '0.72rem', fontWeight: 600, opacity: 0.6 }}>
                 <div style={{ flex: 1, height: '1px', background: 'rgba(233,69,96,0.3)', marginRight: '0.5rem' }} />
                 <span>MODO DESENVOLVEDOR</span>
                 <div style={{ flex: 1, height: '1px', background: 'rgba(233,69,96,0.3)', marginLeft: '0.5rem' }} />
               </div>
 
-              {/* Botão de login do Google Simulado com visual de alta fidelidade para desenvolvimento local */}
               <button 
                 type="button" 
                 onClick={handleGoogleMock}
@@ -415,6 +414,7 @@ export default function LoginPage() {
             </>
           )}
         </div>
+        */}
 
         <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
           {devMode ? (
