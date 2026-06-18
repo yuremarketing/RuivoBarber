@@ -93,4 +93,24 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 - [x] [Segurança] Restrições de Login Social e Contas Fictícias (Task 34)
   - [x] Restringir login do Google exclusivamente ao cargo Cliente e sementar contas fictícias com hashes bcrypt para testes.
 
+---
+
+## 🎮 8. Novos Recursos de Engajamento e Gestão (Próximos Passos)
+- [x] [Seasons] Task 37: Sistema de Temporadas RPG (Seasons)
+  - [x] Backend: Domínio, repositório, serviço e endpoints para Temporadas.
+  - [x] Frontend: Painel de controle no Adm, Alerta de temporada inativa e widget no painel do Cliente.
+- [ ] [Agenda] Task 38: Agenda de Barbeiros e Marcação Avançada
+  - [ ] Backend: API para leitura e bloqueio de horários baseados no barbeiro escolhido.
+  - [ ] Frontend: Seleção de barbeiro com calendário de horários disponíveis no agendamento.
+- [ ] [Rewards] Task 39: Painel de Conquistas e Histórico "Último Corte"
+  - [ ] Backend: Buscar dados e estatísticas do último atendimento finalizado do cliente.
+  - [ ] Frontend: Exibição da árvore de patentes RPG e card "Último Corte" no portal do cliente.
+- [ ] [Queue] Task 40: Controle de Presença (Check-in/Check-out) e Tempo Médio
+  - [ ] Backend: Gerenciamento do status "Em Cadeira" e cálculo automático de tempo médio do corte.
+  - [ ] Frontend: Painel operacional administrativo para controle físico da fila da barbearia.
+- [ ] [Lives] Task 41: Integração com Transmissões de Lives ao Vivo
+  - [ ] Backend: Rota para salvar e ativar links de transmissões de lives (YouTube, Facebook, Twitch).
+  - [ ] Frontend: Player de vídeo incorporado dinamicamente para os clientes assistirem a transmissões ao vivo.
+
+
 
