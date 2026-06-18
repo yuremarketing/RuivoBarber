@@ -17,8 +17,10 @@ type ClienteRepository interface {
 	ResgatarCupom(clienteID, nivelID int) (*domain.Cupom, error)
 	ValidarCupom(codigo string) (*domain.Cupom, error)
 	ListarServicos() ([]domain.Servico, error)
+	BuscarServico(id int) (*domain.Servico, error)
 	ListarBarbeiros() ([]domain.Barbeiro, error)
 	ListarAgendamentos(data string) ([]domain.Agendamento, error)
+	ListarAgendamentosDoBarbeiro(barbeiroID int, data string) ([]domain.Agendamento, error)
 	CriarAgendamento(clienteID, barbeiroID, servicoID int, dataHora time.Time) (int, error)
 	ListarAgendamentosDoCliente(clienteID int) ([]domain.Agendamento, error)
 }

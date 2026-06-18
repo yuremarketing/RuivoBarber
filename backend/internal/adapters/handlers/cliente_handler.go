@@ -120,6 +120,7 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
 	api.Post("/chat/stream", JWTMiddleware, h.ChatStream)
 	api.Get("/servicos", h.ListarServicos)
 	api.Get("/barbeiros", JWTMiddleware, h.ListarBarbeiros)
+	api.Get("/barbeiros/:id/agenda", JWTMiddleware, h.ObterAgendaBarbeiro)
 	api.Get("/agendamentos", JWTMiddleware, h.ListarAgendamentos)
 	api.Post("/agendamentos", JWTMiddleware, h.CriarAgendamento)
 
@@ -382,10 +383,40 @@ func (h *ClienteHandler) CriarAgendamento(c *fiber.Ctx) error {
 
 	id, err := h.service.CriarAgendamento(userId, req.BarbeiroID, req.ServicoID, parsedTime)
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		status := 400
+		if strings.Contains(err.Error(), "conflito") {
+			status = 409
+		}
+		return c.Status(status).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	return c.Status(201).JSON(fiber.Map{"id": id, "status": "Pendente"})
+}
+
+func (h *ClienteHandler) ObterAgendaBarbeiro(c *fiber.Ctx) error {
+	idStr := c.Params("id")
+	barbeiroID, err := strconv.Atoi(idStr)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "id do barbeiro inválido"})
+	}
+
+	dataStr := c.Query("data")
+	if dataStr == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "parâmetro 'data' é obrigatório (formato YYYY-MM-DD)"})
+	}
+
+	servicoIDStr := c.Query("servico_id")
+	servicoID := 0
+	if servicoIDStr != "" {
+		servicoID, _ = strconv.Atoi(servicoIDStr)
+	}
+
+	slots, err := h.service.ObterAgendaBarbeiro(barbeiroID, dataStr, servicoID)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(slots)
 }
 
 func (h *ClienteHandler) ChatStream(c *fiber.Ctx) error {
