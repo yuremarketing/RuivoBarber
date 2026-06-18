@@ -60,6 +60,13 @@ export const atualizarTemporada = (id, nome, dataInicio, dataFim, ativa) => api.
 export const fetchServicos = () => api.get('/servicos')
 
 export const fetchBarbeiros = () => api.get('/barbeiros')
+export const fetchAgendaBarbeiro = (barbeiroId, data, servicoId) => {
+  let url = `/barbeiros/${barbeiroId}/agenda?data=${data}`
+  if (servicoId) {
+    url += `&servico_id=${servicoId}`
+  }
+  return api.get(url)
+}
 export const fetchAgendamentos = () => api.get('/agendamentos')
 export const criarAgendamento = (barbeiroId, servicoId, dataHora) => api.post('/agendamentos', {
   barbeiro_id: Number(barbeiroId),

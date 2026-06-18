@@ -161,7 +161,124 @@ func (s *ClienteService) ListarAgendamentosDoCliente(clienteID int) ([]domain.Ag
 }
 
 func (s *ClienteService) CriarAgendamento(clienteID, barbeiroID, servicoID int, dataHora time.Time) (int, error) {
+	// 1. Fetch service to get its duration
+	servico, err := s.repo.BuscarServico(servicoID)
+	if err != nil {
+		return 0, errors.New("serviço não encontrado")
+	}
+
+	// 2. Validate work hours
+	startHourStr := os.Getenv("WORK_START_HOUR")
+	if startHourStr == "" {
+		startHourStr = "09:00"
+	}
+	endHourStr := os.Getenv("WORK_END_HOUR")
+	if endHourStr == "" {
+		endHourStr = "19:00"
+	}
+
+	var startHour, startMin, endHour, endMin int
+	fmt.Sscanf(startHourStr, "%d:%d", &startHour, &startMin)
+	fmt.Sscanf(endHourStr, "%d:%d", &endHour, &endMin)
+
+	workStart := time.Date(dataHora.Year(), dataHora.Month(), dataHora.Day(), startHour, startMin, 0, 0, time.Local)
+	workEnd := time.Date(dataHora.Year(), dataHora.Month(), dataHora.Day(), endHour, endMin, 0, 0, time.Local)
+
+	newStart := dataHora
+	newEnd := dataHora.Add(time.Duration(servico.DuracaoMinutos) * time.Minute)
+
+	if newStart.Before(workStart) || newEnd.After(workEnd) {
+		return 0, errors.New("horário escolhido está fora da jornada de trabalho do barbeiro")
+	}
+
+	// 3. Fetch existing appointments to prevent conflict
+	dateStr := dataHora.Format("2006-01-02")
+	existingAgendamentos, err := s.repo.ListarAgendamentosDoBarbeiro(barbeiroID, dateStr)
+	if err != nil {
+		return 0, err
+	}
+
+	// 4. Validate conflict using formula: newStart < existingEnd AND newEnd > existingStart
+	for _, existing := range existingAgendamentos {
+		existingStart := existing.DataHora
+		existingEnd := existingStart.Add(time.Duration(existing.DuracaoMinutos) * time.Minute)
+		if newStart.Before(existingEnd) && newEnd.After(existingStart) {
+			return 0, errors.New("conflito de horário: este barbeiro já possui um agendamento neste período")
+		}
+	}
+
 	return s.repo.CriarAgendamento(clienteID, barbeiroID, servicoID, dataHora)
+}
+
+func (s *ClienteService) ObterAgendaBarbeiro(barbeiroID int, dataStr string, servicoID int) ([]domain.AgendaSlot, error) {
+	// 1. Fetch service to get its duration
+	duracao := 30
+	if servicoID > 0 {
+		servico, err := s.repo.BuscarServico(servicoID)
+		if err == nil && servico != nil {
+			duracao = servico.DuracaoMinutos
+		}
+	}
+
+	// 2. Fetch existing appointments
+	agendamentos, err := s.repo.ListarAgendamentosDoBarbeiro(barbeiroID, dataStr)
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. Define work hours
+	startHourStr := os.Getenv("WORK_START_HOUR")
+	if startHourStr == "" {
+		startHourStr = "09:00"
+	}
+	endHourStr := os.Getenv("WORK_END_HOUR")
+	if endHourStr == "" {
+		endHourStr = "19:00"
+	}
+
+	var startHour, startMin, endHour, endMin int
+	fmt.Sscanf(startHourStr, "%d:%d", &startHour, &startMin)
+	fmt.Sscanf(endHourStr, "%d:%d", &endHour, &endMin)
+
+	// 4. Parse the date in local location
+	parsedDate, err := time.ParseInLocation("2006-01-02", dataStr, time.Local)
+	if err != nil {
+		return nil, errors.New("formato de data inválido. Use YYYY-MM-DD")
+	}
+
+	workStart := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), startHour, startMin, 0, 0, time.Local)
+	workEnd := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), endHour, endMin, 0, 0, time.Local)
+
+	var slots []domain.AgendaSlot
+
+	// Generate 30-minute interval slots
+	for currentSlot := workStart; currentSlot.Before(workEnd); currentSlot = currentSlot.Add(30 * time.Minute) {
+		slotEnd := currentSlot.Add(time.Duration(duracao) * time.Minute)
+		
+		available := true
+		// Check if it exceeds the working hours
+		if slotEnd.After(workEnd) {
+			available = false
+		} else {
+			// Check conflict with existing appointments using formula:
+			// newStart < existingEnd AND newEnd > existingStart
+			for _, existing := range agendamentos {
+				existingStart := existing.DataHora
+				existingEnd := existingStart.Add(time.Duration(existing.DuracaoMinutos) * time.Minute)
+				if currentSlot.Before(existingEnd) && slotEnd.After(existingStart) {
+					available = false
+					break
+				}
+			}
+		}
+
+		slots = append(slots, domain.AgendaSlot{
+			Time:      currentSlot.Format("15:04"),
+			Available: available,
+		})
+	}
+
+	return slots, nil
 }
 
 // Structs auxiliares para chamadas ao Gemini
