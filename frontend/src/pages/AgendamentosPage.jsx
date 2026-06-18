@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { fetchServicos, fetchBarbeiros, fetchAgendamentos, criarAgendamento, concluirAtendimento, registrarFalta } from '../services/api.js'
+import { fetchServicos, fetchBarbeiros, fetchAgendamentos, fetchAgendaBarbeiro, criarAgendamento, concluirAtendimento, registrarFalta } from '../services/api.js'
 
 export default function AgendamentosPage() {
   const [agendamentos, setAgendamentos] = useState([])
@@ -16,6 +16,8 @@ export default function AgendamentosPage() {
   const [selectedBarbeiro, setSelectedBarbeiro] = useState('')
   const [selectedData, setSelectedData] = useState('')
   const [selectedHora, setSelectedHora] = useState('')
+  const [availableSlots, setAvailableSlots] = useState([])
+  const [loadingSlots, setLoadingSlots] = useState(false)
 
   const userSessionStr = localStorage.getItem('ruivobarber_user')
   const user = userSessionStr ? JSON.parse(userSessionStr).user : null
@@ -56,6 +58,28 @@ export default function AgendamentosPage() {
   useEffect(() => {
     loadData()
   }, [])
+
+  useEffect(() => {
+    if (!selectedBarbeiro || !selectedData || !selectedServico) {
+      setAvailableSlots([])
+      return
+    }
+
+    const fetchSlots = async () => {
+      setLoadingSlots(true)
+      try {
+        const res = await fetchAgendaBarbeiro(selectedBarbeiro, selectedData, selectedServico)
+        setAvailableSlots(res.data || [])
+      } catch (err) {
+        console.error(err)
+        setAvailableSlots([])
+      } finally {
+        setLoadingSlots(false)
+      }
+    }
+
+    fetchSlots()
+  }, [selectedBarbeiro, selectedData, selectedServico])
 
   const handleCreateAgendamento = async (e) => {
     e.preventDefault()
@@ -116,7 +140,12 @@ export default function AgendamentosPage() {
             <h2>📅 Agendamentos</h2>
             <p>{isClient ? 'Seus horários marcados' : 'Gestão de horários e serviços'}</p>
           </div>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>+ Novo Agendamento</button>
+          <button className="btn btn-primary" onClick={() => {
+            setSelectedData('')
+            setSelectedHora('')
+            setAvailableSlots([])
+            setShowModal(true)
+          }}>+ Novo Agendamento</button>
         </div>
       </div>
 
@@ -222,13 +251,78 @@ export default function AgendamentosPage() {
                 </div>
               </div>
               <div className="form-row">
-                <div className="form-group">
+                <div className="form-group" style={{ gridColumn: 'span 2' }}>
                   <label className="form-label">Data</label>
-                  <input type="date" className="form-input" value={selectedData} onChange={e => setSelectedData(e.target.value)} required />
+                  <input type="date" className="form-input" value={selectedData} onChange={e => {
+                    setSelectedData(e.target.value)
+                    setSelectedHora('')
+                  }} required />
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Hora</label>
-                  <input type="time" className="form-input" value={selectedHora} onChange={e => setSelectedHora(e.target.value)} required />
+              </div>
+              <div className="form-row">
+                <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                  <label className="form-label">Horários Disponíveis (Sessão de 30 min)</label>
+                  {!selectedData ? (
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Selecione uma data para consultar os horários.</p>
+                  ) : loadingSlots ? (
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Carregando horários...</p>
+                  ) : availableSlots.length === 0 ? (
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Nenhum slot disponível.</p>
+                  ) : (
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(75px, 1fr))',
+                      gap: '0.5rem',
+                      marginTop: '0.5rem',
+                      maxHeight: '180px',
+                      overflowY: 'auto',
+                      padding: '0.25rem',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(0, 0, 0, 0.2)'
+                    }}>
+                      {availableSlots.map(slot => (
+                        <button
+                          key={slot.time}
+                          type="button"
+                          disabled={!slot.available}
+                          onClick={() => setSelectedHora(slot.time)}
+                          style={{
+                            padding: '0.5rem 0.25rem',
+                            borderRadius: '6px',
+                            border: '1px solid',
+                            borderColor: selectedHora === slot.time
+                              ? 'var(--primary-color, #e07a5f)'
+                              : slot.available
+                                ? 'rgba(255, 255, 255, 0.15)'
+                                : 'transparent',
+                            backgroundColor: selectedHora === slot.time
+                              ? 'var(--primary-color, #e07a5f)'
+                              : slot.available
+                                ? 'rgba(255, 255, 255, 0.05)'
+                                : 'rgba(255, 255, 255, 0.02)',
+                            color: selectedHora === slot.time
+                              ? '#fff'
+                              : slot.available
+                                ? 'var(--text-color, #f4f1de)'
+                                : 'rgba(255, 255, 255, 0.2)',
+                            cursor: slot.available ? 'pointer' : 'not-allowed',
+                            fontSize: '0.85rem',
+                            fontWeight: '600',
+                            textDecoration: slot.available ? 'none' : 'line-through',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          {slot.time}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {selectedHora && (
+                    <div style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: 'var(--primary-color, #e07a5f)', fontWeight: 600 }}>
+                      Horário Selecionado: {selectedHora}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="modal-footer">
