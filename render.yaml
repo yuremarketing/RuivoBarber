@@ -3,6 +3,7 @@ services:
   - type: web
     name: ruivobarber-backend
     runtime: docker
+    autoDeploy: false
     rootDir: backend
     dockerfilePath: Dockerfile
     dockerContext: .
@@ -39,6 +40,7 @@ services:
   - type: web
     name: ruivobarber-frontend
     runtime: static
+    autoDeploy: false
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
