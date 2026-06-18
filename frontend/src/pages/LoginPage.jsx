@@ -151,6 +151,47 @@ export default function LoginPage() {
       })
   }
 
+  const handleTestLogin = () => {
+    setLoading(true)
+    setErro('')
+    setSucesso('Modo de Teste: Autenticando com dados simulados...')
+    
+    let mockUser = {
+      id: 999,
+      nome: `Demo ${cargo}`,
+      cargo: cargo,
+      login: cargo.toLowerCase() + '_ruivo',
+      xp: 450,
+      nivel: 'Barba de Respeito'
+    }
+    
+    if (cargo === 'Cliente') {
+      mockUser.nome = 'Cliente Fictício'
+      mockUser.login = 'cliente_ruivo'
+      mockUser.xp = 120
+      mockUser.nivel = 'Corte Iniciante'
+    } else if (cargo === 'Barbeiro') {
+      mockUser.nome = 'Barbeiro Fictício'
+      mockUser.login = 'barbeiro_ruivo'
+      mockUser.xp = 0
+      mockUser.nivel = '-'
+    } else {
+      mockUser.nome = 'Administrador Fictício'
+      mockUser.login = 'admin_ruivo'
+      mockUser.xp = 999
+      mockUser.nivel = 'Rei da Cadeira'
+    }
+
+    const mockData = {
+      user: mockUser,
+      token: "mocked_jwt_token_for_testing"
+    }
+
+    setTimeout(() => {
+      saveSessionAndNavigate(mockData)
+    }, 1000)
+  }
+
   return (
     <div className="login-page">
       <div className="login-card fade-in-up">
@@ -236,6 +277,27 @@ export default function LoginPage() {
             </div>
             <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.8rem' }} disabled={loading}>
               {loading ? '⏳ Entrando...' : '🔐 Entrar no Sistema'}
+            </button>
+            <button 
+              type="button" 
+              onClick={handleTestLogin}
+              style={{ 
+                width: '100%', 
+                padding: '0.8rem', 
+                marginTop: '0.8rem', 
+                backgroundColor: '#39FF14', 
+                color: '#000', 
+                fontWeight: 'bold', 
+                border: 'none', 
+                borderRadius: '8px', 
+                cursor: 'pointer',
+                boxShadow: '0 0 10px #39FF14',
+                transition: 'transform 0.1s, box-shadow 0.2s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 20px #39FF14'}
+              onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 10px #39FF14'}
+            >
+              ⚡ ENTRAR MODO TESTE (MOCK)
             </button>
           </form>
         ) : (
