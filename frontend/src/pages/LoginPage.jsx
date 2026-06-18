@@ -29,7 +29,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     if (
+      isLocalhost ||
       params.get('dev') === 'true' || 
       params.get('test') === 'true' || 
       params.get('japa') === 'true' ||
