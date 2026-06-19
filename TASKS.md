@@ -99,12 +99,12 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 - [x] [Seasons] Task 37: Sistema de Temporadas RPG (Seasons)
   - [x] Backend: Domínio, repositório, serviço e endpoints para Temporadas.
   - [x] Frontend: Painel de controle no Adm, Alerta de temporada inativa e widget no painel do Cliente.
-- [ ] [Agenda] Task 38: Agenda de Barbeiros e Marcação Avançada
-  - [ ] Backend: API para leitura e bloqueio de horários baseados no barbeiro escolhido.
-  - [ ] Frontend: Seleção de barbeiro com calendário de horários disponíveis no agendamento.
-- [ ] [AI-Chatbot] Task 39: Integração de Inteligência Artificial e Chatbot com WhatsApp/Webhooks
-  - [ ] Backend: Criar receiver de webhook para mensagens de WhatsApp, repassar para IA com histórico e responder via API do WhatsApp.
-  - [ ] Frontend: Melhorar tela de Configurações no painel do Administrador para salvar/testar as credenciais da API do WhatsApp e a URL do Webhook.
+- [x] [Agenda] Task 38: Agenda de Barbeiros e Marcação Avançada
+  - [x] Backend: API para leitura e bloqueio de horários baseados no barbeiro escolhido.
+  - [x] Frontend: Seleção de barbeiro com calendário de horários disponíveis no agendamento.
+- [x] [AI-Chatbot] Task 39: Integração de Inteligência Artificial e Chatbot com WhatsApp/Webhooks
+  - [x] Backend: Criar receiver de webhook para mensagens de WhatsApp, repassar para IA com histórico e responder via API do WhatsApp.
+  - [x] Frontend: Melhorar tela de Configurações no painel do Administrador para salvar/testar as credenciais da API do WhatsApp e a URL do Webhook.
 - [ ] [Rewards] Task 40: Painel de Conquistas e Histórico "Último Corte"
   - [ ] Backend: Buscar dados e estatísticas do último atendimento finalizado do cliente.
   - [ ] Frontend: Exibição da árvore de patentes RPG e card "Último Corte" no portal do cliente.

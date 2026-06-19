@@ -70,7 +70,13 @@ CREATE TABLE Cupons (
 CREATE TABLE Configuracoes (
     ID SERIAL PRIMARY KEY,
     ChaveAPIWhatsApp VARCHAR(255),
-    UrlWebhook VARCHAR(255)
+    UrlWebhook VARCHAR(255),
+    TokenValidacao VARCHAR(255)
+);
+
+CREATE TABLE MensagensProcessadas (
+    MessageID VARCHAR(255) PRIMARY KEY,
+    ProcessadoEm TIMESTAMP DEFAULT NOW()
 );
 
 -- Utilizador admin inicial (trocar senha em produção)

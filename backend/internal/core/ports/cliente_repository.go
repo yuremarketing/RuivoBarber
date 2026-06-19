@@ -23,5 +23,9 @@ type ClienteRepository interface {
 	ListarAgendamentosDoBarbeiro(barbeiroID int, data string) ([]domain.Agendamento, error)
 	CriarAgendamento(clienteID, barbeiroID, servicoID int, dataHora time.Time) (int, error)
 	ListarAgendamentosDoCliente(clienteID int) ([]domain.Agendamento, error)
+	ObterConfiguracoes() (*domain.Configuracoes, error)
+	SalvarConfiguracoes(cfg *domain.Configuracoes) error
+	BuscarClientePorTelefone(telefone string) (*domain.Cliente, error)
+	RegistrarMensagemProcessada(messageID string) (bool, error)
 }
 

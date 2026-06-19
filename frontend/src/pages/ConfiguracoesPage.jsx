@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { buscarCliente, atualizarPerfil } from '../services/api.js'
+import { buscarCliente, atualizarPerfil, fetchConfiguracoes, salvarConfiguracoes } from '../services/api.js'
 import PlayerCard from '../components/PlayerCard.jsx'
 
 export default function ConfiguracoesPage() {
@@ -9,6 +9,7 @@ export default function ConfiguracoesPage() {
   // Admin states
   const [whatsappKey, setWhatsappKey] = useState('')
   const [webhookUrl, setWebhookUrl] = useState('')
+  const [tokenValidacao, setTokenValidacao] = useState('')
   const [nomeEmpresa, setNomeEmpresa] = useState('RuivoBarber')
   const [toast, setToast] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
@@ -39,14 +40,39 @@ export default function ConfiguracoesPage() {
     }
   }
 
+  const loadConfiguracoes = async () => {
+    if (!isAdmin) return
+    try {
+      const res = await fetchConfiguracoes()
+      if (res && res.data) {
+        setWhatsappKey(res.data.chaveApiWhatsapp || '')
+        setWebhookUrl(res.data.urlWebhook || '')
+        setTokenValidacao(res.data.tokenValidacao || '')
+      }
+    } catch (err) {
+      console.error('Erro ao carregar configurações:', err)
+    }
+  }
+
   useEffect(() => {
     loadClientInfo()
+    loadConfiguracoes()
   }, [])
 
-  const salvarAdmin = () => {
-    setToastMsg('✅ Configurações salvas com sucesso!')
-    setToast(true)
-    setTimeout(() => setToast(false), 3000)
+  const salvarAdmin = async () => {
+    try {
+      await salvarConfiguracoes({
+        chaveApiWhatsapp: whatsappKey,
+        urlWebhook: webhookUrl,
+        tokenValidacao: tokenValidacao
+      })
+      setToastMsg('✅ Configurações salvas com sucesso!')
+      setToast(true)
+      setTimeout(() => setToast(false), 3000)
+    } catch (err) {
+      console.error('Erro ao salvar configurações:', err)
+      alert('Erro ao salvar as configurações: ' + (err.response?.data?.error || err.message))
+    }
   }
 
   const salvarCliente = async (e) => {
@@ -248,6 +274,10 @@ export default function ConfiguracoesPage() {
           <div className="form-group">
             <label className="form-label">URL do Webhook</label>
             <input type="url" className="form-input" value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} placeholder="https://webhook.example.com" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Token de Validação Webhook</label>
+            <input type="text" className="form-input" value={tokenValidacao} onChange={e => setTokenValidacao(e.target.value)} placeholder="Token de segurança do webhook" />
           </div>
           <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
             🔒 As credenciais são armazenadas de forma segura no servidor.

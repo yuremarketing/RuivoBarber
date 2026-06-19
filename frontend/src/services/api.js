@@ -51,6 +51,8 @@ export const validarCupom = (codigo) => api.post('/cupons/validar', { codigo })
 export const concluirAtendimento = (agendamentoId) => api.post('/atendimentos/concluir', { agendamento_id: Number(agendamentoId) })
 export const registrarFalta = (agendamentoId) => api.post('/atendimentos/falta', { agendamento_id: Number(agendamentoId) })
 export const atualizarPerfil = (id, dados) => api.put(`/clientes/${id}/perfil`, dados)
+export const fetchConfiguracoes = () => api.get('/configuracoes')
+export const salvarConfiguracoes = (dados) => api.post('/configuracoes', dados)
 
 export const fetchTemporadas = () => api.get('/temporadas')
 export const fetchTemporadaAtiva = () => api.get('/temporadas/ativa')

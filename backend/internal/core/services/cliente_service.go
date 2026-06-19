@@ -3,10 +3,12 @@ package services
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -829,6 +831,277 @@ func (s *ClienteService) AtualizarTemporada(id int, nome string, dataInicio, dat
 	}
 
 	return t, nil
+}
+
+func (s *ClienteService) ObterConfiguracoes() (*domain.Configuracoes, error) {
+	return s.repo.ObterConfiguracoes()
+}
+
+func (s *ClienteService) SalvarConfiguracoes(cfg *domain.Configuracoes) error {
+	return s.repo.SalvarConfiguracoes(cfg)
+}
+
+func (s *ClienteService) RegistrarMensagemProcessada(messageID string) (bool, error) {
+	return s.repo.RegistrarMensagemProcessada(messageID)
+}
+
+func (s *ClienteService) simularChatSincrono(clienteID int, clienteNome string, userMsg string) (string, error) {
+	var responseText string
+	writeChunk := func(text string) {
+		responseText += text
+	}
+	err := s.simularChat(clienteID, clienteNome, userMsg, writeChunk)
+	return responseText, err
+}
+
+func (s *ClienteService) ProcessarChatWhatsApp(sender string, message string) (string, error) {
+	clienteID := 0
+	clienteNome := "Visitante"
+	c, err := s.repo.BuscarClientePorTelefone(sender)
+	if err == nil && c != nil {
+		clienteID = c.ID
+		clienteNome = c.Nome
+	}
+
+	apiKey := os.Getenv("GEMINI_API_KEY")
+	if apiKey == "" {
+		return s.simularChatSincrono(clienteID, clienteNome, message)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	tools := []GeminiTool{
+		{
+			FunctionDeclarations: []GeminiFunctionDeclaration{
+				{
+					Name:        "listar_servicos",
+					Description: "Lista todos os serviços oferecidos pela barbearia com seus preços e bônus de XP.",
+				},
+				{
+					Name:        "listar_barbeiros",
+					Description: "Lista todos os barbeiros profissionais disponíveis para agendamento.",
+				},
+				{
+					Name:        "consultar_horarios",
+					Description: "Consulta os agendamentos existentes para um dia específico (formato YYYY-MM-DD) para verificar horários ocupados.",
+					Parameters: &GeminiParameters{
+						Type: "OBJECT",
+						Properties: map[string]GeminiProperty{
+							"data": {
+								Type:        "STRING",
+								Description: "A data no formato YYYY-MM-DD",
+							},
+						},
+						Required: []string{"data"},
+					},
+				},
+				{
+					Name:        "criar_agendamento",
+					Description: "Cria um novo agendamento na barbearia para o cliente conectado.",
+					Parameters: &GeminiParameters{
+						Type: "OBJECT",
+						Properties: map[string]GeminiProperty{
+							"barbeiro_id": {
+								Type:        "INTEGER",
+								Description: "ID do barbeiro escolhido",
+							},
+							"servico_id": {
+								Type:        "INTEGER",
+								Description: "ID do serviço escolhido",
+							},
+							"data_hora": {
+								Type:        "STRING",
+								Description: "Data e hora no formato YYYY-MM-DD HH:MM (ex: 2026-06-15 14:30)",
+							},
+						},
+						Required: []string{"barbeiro_id", "servico_id", "data_hora"},
+					},
+				},
+			},
+		},
+	}
+
+	systemInst := &GeminiInstruction{
+		Parts: []GeminiPart{
+			{
+				Text: fmt.Sprintf("Você é o assistente virtual inteligente da barbearia RuivoBarber. Seu objetivo é ajudar o cliente conectado (Nome: %s, ID: %d) a consultar serviços, consultar barbeiros e agendar horários. Seja extremamente cortês, amigável e focado em fechar o agendamento.", clienteNome, clienteID),
+			},
+		},
+	}
+
+	contents := []GeminiContent{
+		{
+			Role:  "user",
+			Parts: []GeminiPart{{Text: message}},
+		},
+	}
+
+	reqBody := GeminiRequest{
+		Contents:          contents,
+		Tools:             tools,
+		SystemInstruction: systemInst,
+	}
+
+	respText, functionToCall, err := s.chamarGeminiAPI(ctx, apiKey, reqBody)
+	if err != nil {
+		log.Printf("[WEBHOOK AI FAIL] Erro de comunicação com Gemini: %v", err)
+		return "Olá! No momento estou com uma oscilação temporária em meu sistema de inteligência artificial. Se desejar, você pode entrar em contato conosco pelo telefone da barbearia ou tentar novamente em instantes!", nil
+	}
+
+	if functionToCall != nil {
+		resultText, err := s.resolverFunctionCallSincrono(ctx, apiKey, clienteID, reqBody, functionToCall)
+		if err != nil {
+			log.Printf("[WEBHOOK AI FAIL] Erro ao resolver function call: %v", err)
+			return "Olá! No momento estou com uma oscilação temporária em meu sistema de inteligência artificial. Se desejar, você pode entrar em contato conosco pelo telefone da barbearia ou tentar novamente em instantes!", nil
+		}
+		return resultText, nil
+	}
+
+	return respText, nil
+}
+
+func (s *ClienteService) chamarGeminiAPI(ctx context.Context, apiKey string, reqBody GeminiRequest) (string, *GeminiFunctionCall, error) {
+	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return "", nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return "", nil, fmt.Errorf("API Gemini status %d: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	var geminiResp struct {
+		Candidates []struct {
+			Content struct {
+				Parts []struct {
+					Text         string              `json:"text"`
+					FunctionCall *GeminiFunctionCall `json:"functionCall"`
+				} `json:"parts"`
+			} `json:"content"`
+		} `json:"candidates"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&geminiResp); err != nil {
+		return "", nil, err
+	}
+
+	if len(geminiResp.Candidates) > 0 && len(geminiResp.Candidates[0].Content.Parts) > 0 {
+		part := geminiResp.Candidates[0].Content.Parts[0]
+		if part.FunctionCall != nil {
+			return "", part.FunctionCall, nil
+		}
+		return part.Text, nil, nil
+	}
+
+	return "", nil, errors.New("resposta vazia do Gemini")
+}
+
+func (s *ClienteService) resolverFunctionCallSincrono(ctx context.Context, apiKey string, clienteID int, reqBody GeminiRequest, fc *GeminiFunctionCall) (string, error) {
+	var functionResult map[string]interface{}
+
+	switch fc.Name {
+	case "listar_servicos":
+		servicos, dbErr := s.ListarServicos()
+		if dbErr != nil {
+			functionResult = map[string]interface{}{"erro": dbErr.Error()}
+		} else {
+			functionResult = map[string]interface{}{"servicos": servicos}
+		}
+	case "listar_barbeiros":
+		barbeiros, dbErr := s.ListarBarbeiros()
+		if dbErr != nil {
+			functionResult = map[string]interface{}{"erro": dbErr.Error()}
+		} else {
+			functionResult = map[string]interface{}{"barbeiros": barbeiros}
+		}
+	case "consultar_horarios":
+		data, ok := fc.Args["data"].(string)
+		if !ok {
+			functionResult = map[string]interface{}{"erro": "parâmetro 'data' é obrigatório"}
+		} else {
+			agendamentos, dbErr := s.ListarAgendamentos(data)
+			if dbErr != nil {
+				functionResult = map[string]interface{}{"erro": dbErr.Error()}
+			} else {
+				functionResult = map[string]interface{}{"agendamentos": agendamentos}
+			}
+		}
+	case "criar_agendamento":
+		barbeiroIDFloat, ok1 := fc.Args["barbeiro_id"].(float64)
+		servicoIDFloat, ok2 := fc.Args["servico_id"].(float64)
+		dataHoraStr, ok3 := fc.Args["data_hora"].(string)
+
+		if !ok1 || !ok2 || !ok3 {
+			functionResult = map[string]interface{}{"erro": "parâmetros 'barbeiro_id', 'servico_id' e 'data_hora' são obrigatórios"}
+		} else if clienteID <= 0 {
+			functionResult = map[string]interface{}{"erro": "você precisa estar cadastrado com este número de telefone na barbearia para poder agendar"}
+		} else {
+			parsedTime, parseErr := time.ParseInLocation("2006-01-02 15:04", dataHoraStr, time.Local)
+			if parseErr != nil {
+				parsedTime, parseErr = time.Parse(time.RFC3339, dataHoraStr)
+			}
+
+			if parseErr != nil {
+				functionResult = map[string]interface{}{"erro": fmt.Sprintf("formato de data inválido: %v. Use 'YYYY-MM-DD HH:MM'", parseErr)}
+			} else {
+				id, dbErr := s.CriarAgendamento(clienteID, int(barbeiroIDFloat), int(servicoIDFloat), parsedTime)
+				if dbErr != nil {
+					functionResult = map[string]interface{}{"erro": dbErr.Error()}
+				} else {
+					functionResult = map[string]interface{}{"status": "sucesso", "agendamento_id": id, "mensagem": "Agendamento criado com sucesso!"}
+				}
+			}
+		}
+	default:
+		functionResult = map[string]interface{}{"erro": "função desconhecida"}
+	}
+
+	reqBody.Contents = append(reqBody.Contents, GeminiContent{
+		Role: "model",
+		Parts: []GeminiPart{
+			{
+				FunctionCall: fc,
+			},
+		},
+	})
+
+	var parts []GeminiPart
+	respJSON, _ := json.Marshal(functionResult)
+	parts = append(parts, GeminiPart{
+		FunctionResponse: &GeminiFunctionResponse{
+			Name:     fc.Name,
+			Response: map[string]interface{}{"name": fc.Name, "content": string(respJSON)},
+		},
+	})
+
+	reqBody.Contents = append(reqBody.Contents, GeminiContent{
+		Role:  "function",
+		Parts: parts,
+	})
+
+	finalText, _, err := s.chamarGeminiAPI(ctx, apiKey, reqBody)
+	if err != nil {
+		return "", err
+	}
+
+	return finalText, nil
 }
 
 

@@ -123,6 +123,11 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
 	api.Get("/agendamentos", JWTMiddleware, h.ListarAgendamentos)
 	api.Post("/agendamentos", JWTMiddleware, h.CriarAgendamento)
 
+	api.Get("/configuracoes", JWTMiddleware, RequireCargo("Adm"), h.ObterConfiguracoes)
+	api.Post("/configuracoes", JWTMiddleware, RequireCargo("Adm"), h.SalvarConfiguracoes)
+	api.Get("/webhook/whatsapp", h.WebhookWhatsAppVerification)
+	api.Post("/webhook/whatsapp", h.WebhookWhatsApp)
+
 	// Rotas de Temporadas
 	api.Get("/temporadas", JWTMiddleware, h.ListarTemporadas)
 	api.Get("/temporadas/ativa", JWTMiddleware, h.ObterTemporadaAtiva)
@@ -647,6 +652,103 @@ func parseDateTime(s string) (time.Time, error) {
 		}
 	}
 	return time.Time{}, fmt.Errorf("formato de data inválido: %s", s)
+}
+
+func (h *ClienteHandler) ObterConfiguracoes(c *fiber.Ctx) error {
+	cfg, err := h.service.ObterConfiguracoes()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(cfg)
+}
+
+func (h *ClienteHandler) SalvarConfiguracoes(c *fiber.Ctx) error {
+	var req struct {
+		ChaveAPIWhatsApp string `json:"chaveApiWhatsapp"`
+		UrlWebhook       string `json:"urlWebhook"`
+		TokenValidacao   string `json:"tokenValidacao"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "corpo inválido"})
+	}
+
+	cfg := &domain.Configuracoes{
+		ChaveAPIWhatsApp: req.ChaveAPIWhatsApp,
+		UrlWebhook:       req.UrlWebhook,
+		TokenValidacao:   req.TokenValidacao,
+	}
+
+	err := h.service.SalvarConfiguracoes(cfg)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(cfg)
+}
+
+func (h *ClienteHandler) WebhookWhatsAppVerification(c *fiber.Ctx) error {
+	mode := c.Query("hub.mode")
+	challenge := c.Query("hub.challenge")
+	verifyToken := c.Query("hub.verify_token")
+
+	cfg, err := h.service.ObterConfiguracoes()
+	if err != nil {
+		return c.Status(500).SendString("Erro no servidor")
+	}
+
+	if mode == "subscribe" && verifyToken == cfg.TokenValidacao && cfg.TokenValidacao != "" {
+		return c.SendString(challenge)
+	}
+
+	return c.Status(403).SendString("Token de verificação inválido")
+}
+
+func (h *ClienteHandler) WebhookWhatsApp(c *fiber.Ctx) error {
+	var req struct {
+		MessageID string `json:"message_id"`
+		Sender    string `json:"sender"`
+		Message   string `json:"message"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "corpo inválido"})
+	}
+
+	if req.MessageID == "" || req.Sender == "" || req.Message == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "message_id, sender e message são obrigatórios"})
+	}
+
+	cfg, err := h.service.ObterConfiguracoes()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "erro interno"})
+	}
+
+	tokenHeader := c.Get("X-WhatsApp-Token")
+	if tokenHeader == "" {
+		tokenHeader = c.Query("token")
+	}
+	if cfg.TokenValidacao != "" && tokenHeader != cfg.TokenValidacao {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Token de autenticação inválido"})
+	}
+
+	inserted, err := h.service.RegistrarMensagemProcessada(req.MessageID)
+	if err != nil {
+		log.Printf("[WEBHOOK] Erro ao registrar message_id: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "erro interno"})
+	}
+	if !inserted {
+		log.Printf("[WEBHOOK] Mensagem duplicada ignorada: %s", req.MessageID)
+		return c.JSON(fiber.Map{"status": "duplicada_ignorada"})
+	}
+
+	response, err := h.service.ProcessarChatWhatsApp(req.Sender, req.Message)
+	if err != nil {
+		log.Printf("[WEBHOOK] Erro ao processar mensagem do chat: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	log.Printf("\n📱 [WHATSAPP OUTGOING WEBHOOK] Enviando mensagem de volta para %s:\n\"%s\"\n", req.Sender, response)
+
+	return c.JSON(fiber.Map{"status": "sucesso", "resposta": response})
 }
 
 

@@ -708,3 +708,80 @@ func (r *ClientePgRepository) ListarAgendamentosDoCliente(clienteID int) ([]doma
 	return agendamentos, nil
 }
 
+func (r *ClientePgRepository) ObterConfiguracoes() (*domain.Configuracoes, error) {
+	var cfg domain.Configuracoes
+	query := "SELECT id, COALESCE(ChaveAPIWhatsApp, ''), COALESCE(UrlWebhook, ''), COALESCE(TokenValidacao, '') FROM Configuracoes ORDER BY id ASC LIMIT 1"
+	err := r.db.QueryRow(query).Scan(&cfg.ID, &cfg.ChaveAPIWhatsApp, &cfg.UrlWebhook, &cfg.TokenValidacao)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			insertQuery := "INSERT INTO Configuracoes (ChaveAPIWhatsApp, UrlWebhook, TokenValidacao) VALUES ('', '', '') RETURNING id"
+			err = r.db.QueryRow(insertQuery).Scan(&cfg.ID)
+			if err != nil {
+				return nil, err
+			}
+			cfg.ChaveAPIWhatsApp = ""
+			cfg.UrlWebhook = ""
+			cfg.TokenValidacao = ""
+			return &cfg, nil
+		}
+		return nil, err
+	}
+	return &cfg, nil
+}
+
+func (r *ClientePgRepository) SalvarConfiguracoes(cfg *domain.Configuracoes) error {
+	var count int
+	err := r.db.QueryRow("SELECT COUNT(*) FROM Configuracoes").Scan(&count)
+	if err != nil {
+		return err
+	}
+
+	if count == 0 {
+		query := "INSERT INTO Configuracoes (ChaveAPIWhatsApp, UrlWebhook, TokenValidacao) VALUES ($1, $2, $3)"
+		_, err = r.db.Exec(query, cfg.ChaveAPIWhatsApp, cfg.UrlWebhook, cfg.TokenValidacao)
+	} else {
+		query := "UPDATE Configuracoes SET ChaveAPIWhatsApp = $1, UrlWebhook = $2, TokenValidacao = $3 WHERE id = (SELECT id FROM Configuracoes ORDER BY id ASC LIMIT 1)"
+		_, err = r.db.Exec(query, cfg.ChaveAPIWhatsApp, cfg.UrlWebhook, cfg.TokenValidacao)
+	}
+	return err
+}
+
+func (r *ClientePgRepository) BuscarClientePorTelefone(telefone string) (*domain.Cliente, error) {
+	cleanPhone := telefone
+	if len(cleanPhone) > 0 && cleanPhone[0] == '+' {
+		cleanPhone = cleanPhone[1:]
+	}
+
+	var c domain.Cliente
+	query := `
+		SELECT u.id, u.nome, u.login, u.cargo, 
+		       COALESCE(p.xpatual, 0) as xp, 
+		       COALESCE(p.nivelatual, 1) as nivel, 
+		       COALESCE(p.barrapercentual, 0.0) as barra_percentual, 
+		       COALESCE(n.nomedonivel, 'Corte Iniciante') as nome_do_nivel
+		FROM Usuarios u
+		LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
+		LEFT JOIN Niveis n ON p.nivelatual = n.id
+		WHERE (u.login = $1 OR u.login = $2) AND u.cargo = 'Cliente'
+		LIMIT 1
+	`
+	err := r.db.QueryRow(query, telefone, cleanPhone).Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel)
+	if err != nil {
+		return nil, err
+	}
+	return &c, nil
+}
+
+func (r *ClientePgRepository) RegistrarMensagemProcessada(messageID string) (bool, error) {
+	query := `INSERT INTO MensagensProcessadas (MessageID) VALUES ($1) ON CONFLICT DO NOTHING`
+	res, err := r.db.Exec(query, messageID)
+	if err != nil {
+		return false, err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return rowsAffected > 0, nil
+}
+
