@@ -3,7 +3,6 @@
 - [ ] [TASK-040] [Rewards] Painel de Conquistas e Histórico "Último Corte"
 - [ ] [TASK-041] [Queue] Controle de Presença (Check-in/Check-out) e Tempo Médio
 - [ ] [TASK-042] [Lives] Integração com Transmissões de Lives ao Vivo
-- [ ] [TASK-043] [Guilds] Modelagem e Tabelas de Clãs/Guildas
 - [ ] [TASK-044] [Guilds] Rota de Criação e Convite para Clãs
 - [ ] [TASK-045] [Guilds] Lógica de Subida de Nível de Clãs (XP Coletivo)
 - [ ] [TASK-046] [Guilds] Mural de Recados do Clã (Chat Interno)

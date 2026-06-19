@@ -105,4 +105,28 @@ CREATE TABLE Temporadas (
     CriadaEm TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE Clas (
+    ID SERIAL PRIMARY KEY,
+    Nome VARCHAR(100) UNIQUE NOT NULL,
+    Descricao VARCHAR(255),
+    XPColetivo INT DEFAULT 0,
+    NivelAtual INT DEFAULT 1,
+    LiderID INT NOT NULL REFERENCES Usuarios(ID) ON DELETE CASCADE,
+    CriadoEm TIMESTAMP DEFAULT NOW()
+);
+
+-- Índice para busca rápida de clãs por líder
+CREATE INDEX idx_clas_lider ON Clas(LiderID);
+
+CREATE TABLE ClaMembros (
+    UsuarioID INT PRIMARY KEY REFERENCES Usuarios(ID) ON DELETE CASCADE,
+    ClaID INT NOT NULL REFERENCES Clas(ID) ON DELETE CASCADE,
+    Cargo VARCHAR(20) DEFAULT 'Membro' CHECK (Cargo IN ('Lider', 'ViceLider', 'Membro')),
+    DataEntrada TIMESTAMP DEFAULT NOW()
+);
+
+-- Índice para busca rápida de membros pertencentes a um clã específico
+CREATE INDEX idx_cla_membros_cla ON ClaMembros(ClaID);
+
+
 
