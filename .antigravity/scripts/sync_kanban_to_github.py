@@ -9,8 +9,8 @@ import socket
 import sys
 
 TOKEN = os.getenv("GITHUB_TOKEN", "").strip()
-PROJECT_ID = "PVT_kwHOAEqFx84Baw1O"
-STATUS_FIELD_ID = "PVTSSF_lAHOAEqFx84Baw1OzhVmDmc"
+PROJECT_ID = "PVT_kwHOAEqFx84BaAE4"
+STATUS_FIELD_ID = "PVTSSF_lAHOAEqFx84BaAE4zhU6sss"
 LOCK_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sync_kanban.lock")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
