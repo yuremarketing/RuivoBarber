@@ -9,3 +9,4 @@ Tarefas finalizadas e prontas para validação:
 - [x] [TASK-037] [Seasons] Sistema de Temporadas RPG (Seasons)
 - [x] [TASK-038] [Agenda] Agenda de Barbeiros e Marcação Avançada
 - [x] [TASK-039] [AI-Chatbot] Integração de Inteligência Artificial e Chatbot com WhatsApp/Webhooks
+- [x] [TASK-059] [IA-Ops] Auditoria, Isolamento de Contexto e Correção de Regras de IA

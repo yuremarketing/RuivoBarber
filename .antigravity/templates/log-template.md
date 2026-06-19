@@ -8,15 +8,16 @@
 Descreva de forma sucinta o que foi alterado/adicionado no código.
 
 ## Arquivos Modificados/Criados
-- [MOD] [nome_do_arquivo](file:///home/mark/Dev/petwork/caminho/para/arquivo)
-- [NEW] [nome_do_arquivo](file:///home/mark/Dev/petwork/caminho/para/arquivo)
+- [MOD] [nome_do_arquivo](file:///home/mark/Dev/ruivobarber/caminho/para/arquivo)
+- [NEW] [nome_do_arquivo](file:///home/mark/Dev/ruivobarber/caminho/para/arquivo)
 
 ## Como Validar / Testar
-Passo a passo detalhado para que a LLM do Gustavo (ou ele próprio) possa validar a entrega:
+Passo a passo detalhado para que o Engenheiro de IA (ou ele próprio) possa validar a entrega:
 1. ...
 2. ...
 
 ## Verificação dos Requisitos (.antigravityrules)
-- [ ] Isolamento por `organizationId` validado nas Server Actions e consultas?
-- [ ] Objetos `Decimal` convertidos para `Number` e `DateTime` para `string ISO` antes de retornar ao client?
-- [ ] Componentes utilizados são estritamente do Shadcn UI?
+- [ ] Lógica de negócio isolada em `internal/core/services` no backend?
+- [ ] Interfaces/ports criadas ou atualizadas antes da implementação de adaptadores?
+- [ ] Uso de `bcrypt` para hash seguro de senhas se houver criação/edição de usuários?
+- [ ] Nomenclatura em português e rotas REST em letras minúsculas?

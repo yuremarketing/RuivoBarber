@@ -1,47 +1,29 @@
-Arquivo .antigravityrules
-
-# DIRETIVA DE AGENTE: PETWORK SAAS (ANTIGRAVITY RULES)
-# Papel: Tech Lead / Desenvolvedor Full-Stack Senior
-
-## 1. CONTEXTO DO PROJETO E STACK
-Você está atuando no código-fonte do "Petwork", um SaaS multi-tenant para pet shops.
-- Frontend: Next.js 16 (App Router), React 19, Tailwind CSS v4, Shadcn UI.
-- Backend: Next.js Server Actions, Prisma ORM v7.3, PostgreSQL.
-- Autenticação: Better Auth v1.4.17 + Organization Plugin.
-
-## 2. REGRAS DE EXECUÇÃO E LIMITES DE TAXA (GOOGLE AI PRO)
-Para evitar bloqueios por Rate Limits (RPM, TPM, RPD) da API Gemini:
-- Leitura Fracionada: Ingira e analise arquivos em blocos. Nunca leia todos os diretórios simultaneamente.
-- Solicitações por Minuto (RPM): Evite disparar múltiplas buscas ou refatorações curtas em um intervalo menor que 60 segundos. O sistema acionará um erro se o limite de RPM ou TPM for excedido [9].
-- Foco Direcional: Concentre as buscas nas pastas `/app/actions/`, `/app/dashboard/`, `/components/`, e no arquivo `/prisma/schema.prisma` para economizar tokens diários (RPD), que são zerados apenas à meia-noite (Horário do Pacífico) [10].
-- **Aprovação de Tasks para Execução**: Todas as execuções e alterações de código no sistema PetWork só devem ser iniciadas após a apresentação das tarefas (tasks) e a aprovação explícita e manual do usuário no chat, garantindo que o agente não inicie a execução automaticamente (pelo modo full machine/auto-approve) enquanto o usuário revisa a proposta.
-
-
-## 3. DIRETRIZES ARQUITETURAIS E DE CÓDIGO
-Sempre que for gerar, editar ou analisar código, siga estas regras rígidas de implementação:
-
-### Autenticação e Multi-Tenancy (SaaS)
-- Toda operação de banco de dados e interface deve ser isolada por `organizationId` (Tenant) [6].
-- Nas Server Actions, sempre utilize a função `getTenantId()` baseada na sessão do Better Auth para filtrar dados [11].
-- O cadastro externo está desabilitado (`disableSignup: true`). O acesso ocorre via `/sign-in` e validações de licença ativa/expirada ocorrem via `middleware.ts` e `app/dashboard/layout.tsx` [6, 12, 13].
-
-### Fluxo de Dados (Server Actions vs API Routes)
-- Não crie rotas de API convencionais (ex: `api/...`) para CRUD. Toda interação com o Prisma deve ocorrer via **Server Actions** em `app/actions/` e chamadas a partir de Client Components [5].
-- Após operações de mutação (Create, Update, Delete), utilize `revalidatePath` para atualizar a UI correspondente [5, 14].
-
-### Banco de Dados (Prisma ORM)
-- Mantenha a integridade das entidades: `User`, `Organization`, `Member`, `Client`, `Pet`, `Appointment`, `Product`, `Sale` [12, 15].
-- Regra de Serialização Obrigatória: O Next.js não suporta passagem de objetos Decimal nativos do Prisma do servidor para o cliente. Sempre converta `Decimal` para `Number` e `DateTime` para `string ISO` dentro das Server Actions [7, 8].
-- Use Prisma Transactions (ex: `$transaction`) para garantir atomicidade em criações compostas, como criar agendamento ou clientes com pets [6, 14].
-
-### Interface (UI Components)
-- Utilize estritamente os componentes base do Shadcn UI localizados em `components/ui/` (ex: Button, Card, Dialog) [3, 8].
-- Formulários devem usar os padrões do Shadcn + React Hook Form + Zod, caso seja necessário validar dados de entrada antes da chamada à Server Action.
-
-### Módulo de IA (TASK-10 em diante)
-- PROIBIDO criar arquivos em app/api/ para streaming — use createStreamableValue do Vercel AI SDK em Server Actions
-- getTenantId() deve ser importado exclusivamente de lib/auth-helper.ts (nunca de outros actions)
-- Queries pgvector devem usar $queryRaw com filtro organizationId obrigatório
-- Ingestão de embeddings deve ser fire-and-forget (não bloquear a Server Action principal)
-- Modelo de embedding: text-embedding-004 (768 dimensões)
-
+<system_constraints>
+  <directive>DIRETRIZ DE AGENTE: RUIVOBARBER PROJECT (ROOT CONTEXT)</directive>
+  <context_boundary>
+    <rule>Isolamento Absoluto: Este projeto (RuivoBarber) é a raiz do contexto. Desconsidere e ignore qualquer diretriz, regra, variável de ambiente ou arquivo herdado de diretórios superiores ou de caminhos externos como '/home/mark/Dev/petwork'.</rule>
+    <rule>Foco de Varredura: Limite o escopo de leitura e pesquisa estritamente a '/home/mark/Dev/ruivobarber/'. Não acesse ou referencie arquivos fora deste caminho.</rule>
+    <rule>Prioridade de Memória: Sempre priorizar regras locais do RuivoBarber sobre qualquer memória anterior da sessão ou contexto previamente carregado.</rule>
+  </context_boundary>
+  <execution_flow>
+    <rule>Pausa de Ação Obrigatória: Pare imediatamente após apresentar um plano de implementação (implementation_plan.md) e aguarde aprovação explícita e manual do usuário no chat para prosseguir. Respeite o cooldown de 5 minutos antes de qualquer execução.</rule>
+    <rule>Controle de Sub-agentes: Não inicie mais de 3 sub-agentes simultâneos. Prefira processamento sequencial.</rule>
+    <rule>Tratamento de Rate Limit: Pause por 15 segundos em caso de erro HTTP 429.</rule>
+  </execution_flow>
+  <coding_standards>
+    <architecture>
+      <rule>Backend (Go): Siga estritamente a Arquitetura Hexagonal (Ports e Adapters). Lógicas de negócio (XP, comissões, level up) devem residir apenas em 'backend/internal/core/services'. Handlers jamais devem conter código SQL direto.</rule>
+      <rule>Frontend (React/Vite): Isole regras de negócio em services ou hooks customizados. Sem chamadas diretas de requisição (Axios) misturadas em arquivos JSX.</rule>
+      <rule>Segurança: Criptografia e hashing seguro de senhas via bcrypt no backend Go. Nunca trafegue ou salve senhas em texto puro.</rule>
+    </architecture>
+    <style>
+      <rule>Nomenclatura: Variáveis, funções e arquivos devem ser nomeados em português (ex: listarClientes, cliente_service.go). Rotas da API REST devem ser inteiramente em minúsculo.</rule>
+    </style>
+  </coding_standards>
+  <resource_management>
+    <defense_rules>
+      <rule>Directory Shield: NUNCA leia ou faça buscas em 'frontend/node_modules/', 'frontend/dist/' ou no executável binário 'backend/main'.</rule>
+      <rule>Context Economy: Não leia a pasta 'docs/' proativamente; acesse-a somente quando solicitado pelo usuário.</rule>
+    </defense_rules>
+  </resource_management>
+</system_constraints>
