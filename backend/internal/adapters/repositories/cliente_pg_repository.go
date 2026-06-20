@@ -24,7 +24,8 @@ func (r *ClientePgRepository) FindAll() ([]domain.Cliente, error) {
                COALESCE(p.xpatual, 0) as xp, 
                COALESCE(p.nivelatual, 1) as nivel, 
                COALESCE(p.barrapercentual, 0.0) as barra_percentual, 
-               COALESCE(n.nomedonivel, 'Corte Iniciante') as nome_do_nivel
+               COALESCE(n.nomedonivel, 'Corte Iniciante') as nome_do_nivel,
+               COALESCE(u.avatar_url, '') as avatar_url
         FROM Usuarios u
         LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
         LEFT JOIN Niveis n ON p.nivelatual = n.id
@@ -38,7 +39,7 @@ func (r *ClientePgRepository) FindAll() ([]domain.Cliente, error) {
     var clientes []domain.Cliente
     for rows.Next() {
         var c domain.Cliente
-        err := rows.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel)
+        err := rows.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL)
         if err != nil {
             return nil, err
         }
@@ -57,14 +58,15 @@ func (r *ClientePgRepository) FindByID(id int) (*domain.Cliente, error) {
                COALESCE(p.xpatual, 0) as xp, 
                COALESCE(p.nivelatual, 1) as nivel, 
                COALESCE(p.barrapercentual, 0.0) as barra_percentual, 
-               COALESCE(n.nomedonivel, 'Corte Iniciante') as nome_do_nivel
+               COALESCE(n.nomedonivel, 'Corte Iniciante') as nome_do_nivel,
+               COALESCE(u.avatar_url, '') as avatar_url
         FROM Usuarios u
         LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
         LEFT JOIN Niveis n ON p.nivelatual = n.id
         WHERE u.id = $1
     `
     row := r.db.QueryRow(query, id)
-    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel)
+    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL)
     if err != nil {
         return nil, err
     }
@@ -78,14 +80,15 @@ func (r *ClientePgRepository) FindByLogin(login string) (*domain.Cliente, error)
                COALESCE(p.xpatual, 0) as xp, 
                COALESCE(p.nivelatual, 1) as nivel, 
                COALESCE(p.barrapercentual, 0.0) as barra_percentual, 
-               COALESCE(n.nomedonivel, 'Corte Iniciante') as nome_do_nivel
+               COALESCE(n.nomedonivel, 'Corte Iniciante') as nome_do_nivel,
+               COALESCE(u.avatar_url, '') as avatar_url
         FROM Usuarios u
         LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
         LEFT JOIN Niveis n ON p.nivelatual = n.id
         WHERE u.login = $1
     `
     row := r.db.QueryRow(query, login)
-    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel)
+    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL)
     if err != nil {
         return nil, err
     }
@@ -111,8 +114,8 @@ func (r *ClientePgRepository) Save(c *domain.Cliente, hashedSenha string) error 
     defer tx.Rollback()
 
     var id int
-    queryUser := "INSERT INTO Usuarios (nome, login, senha, cargo) VALUES ($1, $2, $3, $4) RETURNING id"
-    err = tx.QueryRowContext(ctx, queryUser, c.Nome, c.Login, hashedSenha, c.Cargo).Scan(&id)
+    queryUser := "INSERT INTO Usuarios (nome, login, senha, cargo, avatar_url) VALUES ($1, $2, $3, $4, $5) RETURNING id"
+    err = tx.QueryRowContext(ctx, queryUser, c.Nome, c.Login, hashedSenha, c.Cargo, c.AvatarURL).Scan(&id)
     if err != nil {
         return err
     }
@@ -132,12 +135,12 @@ func (r *ClientePgRepository) Save(c *domain.Cliente, hashedSenha string) error 
 
 func (r *ClientePgRepository) Update(c *domain.Cliente, hashedSenha string) error {
     if hashedSenha != "" {
-        query := "UPDATE Usuarios SET nome = $1, login = $2, senha = $3 WHERE id = $4"
-        _, err := r.db.Exec(query, c.Nome, c.Login, hashedSenha, c.ID)
+        query := "UPDATE Usuarios SET nome = $1, login = $2, senha = $3, avatar_url = $4 WHERE id = $5"
+        _, err := r.db.Exec(query, c.Nome, c.Login, hashedSenha, c.AvatarURL, c.ID)
         return err
     }
-    query := "UPDATE Usuarios SET nome = $1, login = $2 WHERE id = $3"
-    _, err := r.db.Exec(query, c.Nome, c.Login, c.ID)
+    query := "UPDATE Usuarios SET nome = $1, login = $2, avatar_url = $3 WHERE id = $4"
+    _, err := r.db.Exec(query, c.Nome, c.Login, c.AvatarURL, c.ID)
     return err
 }
 

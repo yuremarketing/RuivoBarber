@@ -154,12 +154,13 @@ func (h *ClienteHandler) Login(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"token": token,
 		"user": fiber.Map{
-			"id":    cliente.ID,
-			"nome":  cliente.Nome,
-			"login": cliente.Login,
-			"cargo": cliente.Cargo,
-			"xp":    cliente.XP,
-			"nivel": cliente.Nivel,
+			"id":        cliente.ID,
+			"nome":      cliente.Nome,
+			"login":     cliente.Login,
+			"cargo":     cliente.Cargo,
+			"xp":        cliente.XP,
+			"nivel":     cliente.Nivel,
+			"avatarUrl": cliente.AvatarURL,
 		},
 	})
 }
@@ -496,12 +497,13 @@ func (h *ClienteHandler) RegisterPublico(c *fiber.Ctx) error {
 	return c.Status(201).JSON(fiber.Map{
 		"token": token,
 		"user": fiber.Map{
-			"id":    loggedCliente.ID,
-			"nome":  loggedCliente.Nome,
-			"login": loggedCliente.Login,
-			"cargo": loggedCliente.Cargo,
-			"xp":    loggedCliente.XP,
-			"nivel": loggedCliente.Nivel,
+			"id":        loggedCliente.ID,
+			"nome":      loggedCliente.Nome,
+			"login":     loggedCliente.Login,
+			"cargo":     loggedCliente.Cargo,
+			"xp":        loggedCliente.XP,
+			"nivel":     loggedCliente.Nivel,
+			"avatarUrl": loggedCliente.AvatarURL,
 		},
 	})
 }
@@ -526,16 +528,17 @@ func (h *ClienteHandler) AtualizarPerfil(c *fiber.Ctx) error {
 	}
 
 	var req struct {
-		Nome  string `json:"nome"`
-		Login string `json:"login"`
-		Senha string `json:"senha"`
+		Nome      string `json:"nome"`
+		Login     string `json:"login"`
+		Senha     string `json:"senha"`
+		AvatarURL string `json:"avatarUrl"`
 	}
 
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "corpo da requisição inválido"})
 	}
 
-	err = h.service.AtualizarPerfil(id, req.Nome, req.Login, req.Senha)
+	err = h.service.AtualizarPerfil(id, req.Nome, req.Login, req.Senha, req.AvatarURL)
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -546,14 +549,15 @@ func (h *ClienteHandler) AtualizarPerfil(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"message": "Perfil atualizado com sucesso!",
+		"message": "Perfil updated com sucesso!",
 		"user": fiber.Map{
-			"id":    cliente.ID,
-			"nome":  cliente.Nome,
-			"login": cliente.Login,
-			"cargo": cliente.Cargo,
-			"xp":    cliente.XP,
-			"nivel": cliente.Nivel,
+			"id":        cliente.ID,
+			"nome":      cliente.Nome,
+			"login":     cliente.Login,
+			"cargo":     cliente.Cargo,
+			"xp":        cliente.XP,
+			"nivel":     cliente.Nivel,
+			"avatarUrl": cliente.AvatarURL,
 		},
 	})
 }

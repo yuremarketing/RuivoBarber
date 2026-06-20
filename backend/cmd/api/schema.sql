@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS Usuarios (
     Cargo VARCHAR(20) CHECK (Cargo IN ('Adm', 'Barbeiro', 'Cliente')),
     Login VARCHAR(50) UNIQUE NOT NULL,
     Senha VARCHAR(255) NOT NULL,
-    Comissao DECIMAL(5,2)
+    Comissao DECIMAL(5,2),
+    AvatarURL TEXT DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS Niveis (

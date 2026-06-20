@@ -9,6 +9,7 @@ type Cliente struct {
 	Nivel           int     `json:"nivel"`
 	BarraPercentual float64 `json:"barraPercentual"`
 	NomeDoNivel     string  `json:"nomeDoNivel"`
+	AvatarURL       string  `json:"avatarUrl"`
 }
 
 type Configuracoes struct {

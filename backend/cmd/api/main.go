@@ -70,6 +70,14 @@ func main() {
 		log.Println("✅ Banco de dados inicializado com sucesso!")
 	}
 
+	// Migração automática: Garantir coluna avatar_url na tabela Usuarios
+	_, err = db.Exec("ALTER TABLE Usuarios ADD COLUMN IF NOT EXISTS avatar_url TEXT DEFAULT ''")
+	if err != nil {
+		log.Printf("[DB] Erro ao executar migração automática (avatar_url): %v", err)
+	} else {
+		log.Println("✅ Migração automática: coluna avatar_url garantida na tabela Usuarios")
+	}
+
     // Atualizar senha do admin se for o placeholder ou plain-text legado para permitir login seguro com bcrypt
     var adminCount int
     err = db.QueryRow("SELECT COUNT(*) FROM Usuarios WHERE Login = 'admin'").Scan(&adminCount)
