@@ -107,15 +107,15 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
   - [x] Frontend: Melhorar tela de Configurações no painel do Administrador para salvar/testar as credenciais da API do WhatsApp e a URL do Webhook.
 - [x] [Guilds] Task 43: Modelagem e Tabelas de Clãs/Guildas
   - [x] Backend: Criar esquema SQL e tabelas de Guildas e membros associados no banco de dados.
+- [x] [Avatar] Task 58: Customização do Card de Jogador (Foto do Perfil, Upload de Imagem e Avatares RPG)
+  - [x] Frontend: Implementar compressão client-side (máx 50KB, .webp) usando API Canvas para foto de perfil do cliente.
+  - [x] Frontend/Backend: Disponibilizar biblioteca de avatares RPG pré-carregados (presets) leves e salvar apenas URL da imagem no banco de dados.
 
 ---
 
 ## 🛡️ 9. Backlog Reorganizado e Priorizado
 
 ### 🎨 UX (Experiência, Animações e Mídias)
-- [ ] [Avatar] Task 58: Customização do Card de Jogador (Foto do Perfil, Upload de Imagem e Avatares RPG)
-  - [ ] Frontend: Implementar compressão client-side (máx 50KB, .webp) usando API Canvas para foto de perfil do cliente.
-  - [ ] Frontend/Backend: Disponibilizar biblioteca de avatares RPG pré-carregados (presets) leves e salvar apenas URL da imagem no banco de dados.
 - [ ] [UX-Audio] Task 55: Efeitos Sonoros e Efeitos Visuais de Level Up no Frontend
   - [ ] Frontend: Integrar transições com sons arcade e confetes ao subir de nível ou resgatar cupons.
 

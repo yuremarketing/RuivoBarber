@@ -1,7 +1,6 @@
 # A Fazer (Backlog)
 
 ## 🎨 UX (Experiência e Mídias)
-- [ ] [TASK-058] [Avatar] Customização do Card de Jogador (Foto do Perfil, Upload de Imagem e Avatares RPG)
 - [ ] [TASK-055] [UX-Audio] Efeitos Sonoros e Efeitos Visuais de Level Up no Frontend
 
 ## 🖥️ Frontend (Telas React)
