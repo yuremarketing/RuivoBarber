@@ -18,3 +18,11 @@ type ClaMembro struct {
 	Cargo       string    `json:"cargo"` // "Lider", "ViceLider", "Membro"
 	DataEntrada time.Time `json:"dataEntrada"`
 }
+
+type ClaConviteDTO struct {
+	ID         int       `json:"id"`
+	ClaID      int       `json:"claId"`
+	NomeCla    string    `json:"nomeCla"`
+	EnviadoPor string    `json:"enviadoPor"`
+	CriadoEm   time.Time `json:"criadoEm"`
+}

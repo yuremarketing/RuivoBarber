@@ -129,5 +129,15 @@ CREATE TABLE ClaMembros (
 -- Índice para busca rápida de membros pertencentes a um clã específico
 CREATE INDEX idx_cla_membros_cla ON ClaMembros(ClaID);
 
+CREATE TABLE ClaConvites (
+    ID SERIAL PRIMARY KEY,
+    ClaID INT NOT NULL REFERENCES Clas(ID) ON DELETE CASCADE,
+    ConvidadoID INT NOT NULL REFERENCES Usuarios(ID) ON DELETE CASCADE,
+    EnviadoPor INT NOT NULL REFERENCES Usuarios(ID) ON DELETE CASCADE,
+    Status VARCHAR(20) DEFAULT 'Pendente' CHECK (Status IN ('Pendente', 'Aceito', 'Recusado')),
+    CriadoEm TIMESTAMP DEFAULT NOW(),
+    UNIQUE(ClaID, ConvidadoID)
+);
+
 
 

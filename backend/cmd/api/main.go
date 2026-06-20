@@ -78,6 +78,45 @@ func main() {
 		log.Println("✅ Migração automática: coluna avatar_url garantida na tabela Usuarios")
 	}
 
+	// Migração automática para Clãs
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS Clas (
+			ID SERIAL PRIMARY KEY,
+			Nome VARCHAR(100) UNIQUE NOT NULL,
+			Descricao VARCHAR(255),
+			XPColetivo INT DEFAULT 0,
+			NivelAtual INT DEFAULT 1,
+			LiderID INT NOT NULL REFERENCES Usuarios(ID) ON DELETE CASCADE,
+			CriadoEm TIMESTAMP DEFAULT NOW()
+		);
+
+		CREATE INDEX IF NOT EXISTS idx_clas_lider ON Clas(LiderID);
+
+		CREATE TABLE IF NOT EXISTS ClaMembros (
+			UsuarioID INT PRIMARY KEY REFERENCES Usuarios(ID) ON DELETE CASCADE,
+			ClaID INT NOT NULL REFERENCES Clas(ID) ON DELETE CASCADE,
+			Cargo VARCHAR(20) DEFAULT 'Membro' CHECK (Cargo IN ('Lider', 'ViceLider', 'Membro')),
+			DataEntrada TIMESTAMP DEFAULT NOW()
+		);
+
+		CREATE INDEX IF NOT EXISTS idx_cla_membros_cla ON ClaMembros(ClaID);
+
+		CREATE TABLE IF NOT EXISTS ClaConvites (
+			ID SERIAL PRIMARY KEY,
+			ClaID INT NOT NULL REFERENCES Clas(ID) ON DELETE CASCADE,
+			ConvidadoID INT NOT NULL REFERENCES Usuarios(ID) ON DELETE CASCADE,
+			EnviadoPor INT NOT NULL REFERENCES Usuarios(ID) ON DELETE CASCADE,
+			Status VARCHAR(20) DEFAULT 'Pendente' CHECK (Status IN ('Pendente', 'Aceito', 'Recusado')),
+			CriadoEm TIMESTAMP DEFAULT NOW(),
+			UNIQUE(ClaID, ConvidadoID)
+		);
+	`)
+	if err != nil {
+		log.Printf("[DB] Erro ao executar migração automática para Clãs: %v", err)
+	} else {
+		log.Println("✅ Migração automática: tabelas de Clãs (Clas, ClaMembros, ClaConvites) garantidas no banco")
+	}
+
     // Atualizar senha do admin se for o placeholder ou plain-text legado para permitir login seguro com bcrypt
     var adminCount int
     err = db.QueryRow("SELECT COUNT(*) FROM Usuarios WHERE Login = 'admin'").Scan(&adminCount)
@@ -216,6 +255,10 @@ func main() {
     clienteService := services.NewClienteService(clienteRepo, notificationService, temporadaRepo)
     clienteHandler := handlers.NewClienteHandler(clienteService)
 
+    claRepo := repositories.NewClaPgRepository(db)
+    claService := services.NewClaService(claRepo)
+    claHandler := handlers.NewClaHandler(claService)
+
 
     app := fiber.New(fiber.Config{AppName: "RuivoBarber API v1.0"})
     app.Use(logger.New())
@@ -230,6 +273,7 @@ func main() {
     })
 
     clienteHandler.RegisterRoutes(app)
+    claHandler.RegisterRoutes(app)
 
     port := os.Getenv("PORT")
     if port == "" {
