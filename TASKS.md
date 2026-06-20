@@ -110,6 +110,8 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 - [x] [Avatar] Task 58: Customização do Card de Jogador (Foto do Perfil, Upload de Imagem e Avatares RPG)
   - [x] Frontend: Implementar compressão client-side (máx 50KB, .webp) usando API Canvas para foto de perfil do cliente.
   - [x] Frontend/Backend: Disponibilizar biblioteca de avatares RPG pré-carregados (presets) leves e salvar apenas URL da imagem no banco de dados.
+- [x] [Guilds] Task 44: Rota de Criação e Convite para Clãs (Backend)
+  - [x] Backend: Implementar criação de clãs, relacionamentos de membros e rota de convite.
 
 ---
 
@@ -135,8 +137,6 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
   - [ ] Frontend: Página listando os maiores pontuadores históricos das temporadas passadas da barbearia.
 
 ### ⚙️ Backend (Lógica Go e Banco de Dados)
-- [ ] [Guilds] Task 44: Rota de Criação e Convite para Clãs
-  - [ ] Backend/Frontend: Fluxo para clientes criarem suas guildas e convidarem amigos do sistema.
 - [ ] [Guilds] Task 45: Lógica de Subida de Nível de Clãs (XP Coletivo)
   - [ ] Backend: Calcular o XP total do clã baseado nos cortes individuais de seus membros.
 - [ ] [Badges] Task 51: Sistema de Conquistas Individuais por Badges (Medalhas)
