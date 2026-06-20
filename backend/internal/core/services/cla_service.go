@@ -145,3 +145,32 @@ func (s *ClaService) ListarMembros(ctx context.Context, claID int) ([]domain.Cli
 func (s *ClaService) ObterMembroInfo(ctx context.Context, userID int) (*domain.ClaMembro, error) {
 	return s.repo.FindMember(ctx, userID)
 }
+
+func (s *ClaService) ObterClaPorID(ctx context.Context, id int) (*domain.Cla, error) {
+	cla, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if cla == nil {
+		return nil, errors.New("clã não encontrado")
+	}
+	return cla, nil
+}
+
+func (s *ClaService) ObterClaDoUsuario(ctx context.Context, userID int) (*domain.Cla, error) {
+	membro, err := s.repo.FindMember(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if membro == nil {
+		return nil, errors.New("você não pertence a nenhum clã")
+	}
+	cla, err := s.repo.FindByID(ctx, membro.ClaID)
+	if err != nil {
+		return nil, err
+	}
+	if cla == nil {
+		return nil, errors.New("clã não encontrado")
+	}
+	return cla, nil
+}

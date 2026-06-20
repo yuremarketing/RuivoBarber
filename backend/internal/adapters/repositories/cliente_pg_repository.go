@@ -291,6 +291,48 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) (*ports.Not
         return nil, err
     }
 
+    // Atualizar XP do Clã se o cliente pertencer a um clã
+    var claID int
+    err = tx.QueryRowContext(ctx, "SELECT claid FROM ClaMembros WHERE usuarioid = $1", clienteID).Scan(&claID)
+    if err == nil {
+        var xpColetivo, nivelAtual int
+        err = tx.QueryRowContext(ctx, "UPDATE Clas SET xpcoletivo = xpcoletivo + 1 WHERE id = $1 RETURNING xpcoletivo, nivelatual", claID).Scan(&xpColetivo, &nivelAtual)
+        if err != nil {
+            return nil, err
+        }
+
+        // Determinar o novo nível do clã
+        novoNivel := 1
+        if xpColetivo >= 100 {
+            novoNivel = 5
+            levelRequirement := 100
+            for lvl := 5; ; lvl++ {
+                nextReq := levelRequirement + (lvl * 25)
+                if xpColetivo >= nextReq {
+                    novoNivel = lvl + 1
+                    levelRequirement = nextReq
+                } else {
+                    break
+                }
+            }
+        } else if xpColetivo >= 60 {
+            novoNivel = 4
+        } else if xpColetivo >= 30 {
+            novoNivel = 3
+        } else if xpColetivo >= 10 {
+            novoNivel = 2
+        }
+
+        if novoNivel > nivelAtual {
+            _, err = tx.ExecContext(ctx, "UPDATE Clas SET nivelatual = $1 WHERE id = $2", novoNivel, claID)
+            if err != nil {
+                return nil, err
+            }
+        }
+    } else if !errors.Is(err, sql.ErrNoRows) {
+        return nil, err
+    }
+
     err = tx.Commit()
     if err != nil {
         return nil, err

@@ -12,7 +12,6 @@
 - [ ] [TASK-057] [Fame] Galeria Histórica de Lendários (Hall of Fame)
 
 ## ⚙️ Backend (Lógica Go e Banco de Dados)
-- [ ] [TASK-045] [Guilds] Lógica de Subida de Nível de Clãs (XP Coletivo)
 - [ ] [TASK-051] [Badges] Sistema de Conquistas Individuais por Badges (Medalhas)
 - [ ] [TASK-049] [Store] Loja de Itens Virtuais RPG (Troca de XP por itens do perfil)
 - [ ] [TASK-047] [Guilds] Sistema de Missões Semanais do Clã (Quests de Guilda)

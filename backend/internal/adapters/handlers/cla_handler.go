@@ -17,12 +17,13 @@ func NewClaHandler(service *services.ClaService) *ClaHandler {
 func (h *ClaHandler) RegisterRoutes(app *fiber.App) {
 	api := app.Group("/api/v1")
 
-	// Rotas de Clãs protegidas por JWT
 	api.Post("/clas", JWTMiddleware, h.CriarCla)
 	api.Post("/clas/convidar", JWTMiddleware, RequireCargo("Cliente"), h.ConvidarUsuario)
 	api.Get("/clas/convites", JWTMiddleware, RequireCargo("Cliente"), h.ListarConvites)
 	api.Post("/clas/convites/:id/aceitar", JWTMiddleware, RequireCargo("Cliente"), h.AceitarConvite)
 	api.Post("/clas/convites/:id/recusar", JWTMiddleware, RequireCargo("Cliente"), h.RecusarConvite)
+	api.Get("/clas/me", JWTMiddleware, h.ObterMeuCla)
+	api.Get("/clas/:id", JWTMiddleware, h.ObterClaPorID)
 	api.Get("/clas/:id/membros", JWTMiddleware, h.ListarMembros)
 }
 
@@ -126,4 +127,29 @@ func (h *ClaHandler) ListarMembros(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(membros)
+}
+
+func (h *ClaHandler) ObterMeuCla(c *fiber.Ctx) error {
+	userId := c.Locals("userId").(int)
+
+	cla, err := h.service.ObterClaDoUsuario(c.UserContext(), userId)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(cla)
+}
+
+func (h *ClaHandler) ObterClaPorID(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "ID do clã inválido"})
+	}
+
+	cla, err := h.service.ObterClaPorID(c.UserContext(), id)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(cla)
 }

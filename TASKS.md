@@ -112,6 +112,8 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
   - [x] Frontend/Backend: Disponibilizar biblioteca de avatares RPG pré-carregados (presets) leves e salvar apenas URL da imagem no banco de dados.
 - [x] [Guilds] Task 44: Rota de Criação e Convite para Clãs (Backend)
   - [x] Backend: Implementar criação de clãs, relacionamentos de membros e rota de convite.
+- [x] [Guilds] Task 45: Lógica de Subida de Nível de Clãs (XP Coletivo) (Backend)
+  - [x] Backend: Implementar acumulação de XP coletivo (+1 por corte) e subida de nível de clãs.
 
 ---
 
@@ -137,8 +139,6 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
   - [ ] Frontend: Página listando os maiores pontuadores históricos das temporadas passadas da barbearia.
 
 ### ⚙️ Backend (Lógica Go e Banco de Dados)
-- [ ] [Guilds] Task 45: Lógica de Subida de Nível de Clãs (XP Coletivo)
-  - [ ] Backend: Calcular o XP total do clã baseado nos cortes individuais de seus membros.
 - [ ] [Badges] Task 51: Sistema de Conquistas Individuais por Badges (Medalhas)
   - [ ] Backend: Triggers de conquistas específicas no banco (ex: "Fez barba 5 vezes no mês").
 - [ ] [Store] Task 49: Loja de Itens Virtuais RPG (Troca de XP por itens do perfil)
