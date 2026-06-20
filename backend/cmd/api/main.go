@@ -117,6 +117,46 @@ func main() {
 		log.Println("✅ Migração automática: tabelas de Clãs (Clas, ClaMembros, ClaConvites) garantidas no banco")
 	}
 
+	// Migração automática para Badges
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS Badges (
+			ID SERIAL PRIMARY KEY,
+			Nome VARCHAR(100) UNIQUE NOT NULL,
+			Descricao VARCHAR(255) NOT NULL,
+			IconeURL VARCHAR(255) DEFAULT '',
+			RequisitoTipo VARCHAR(50) NOT NULL,
+			RequisitoValor INT NOT NULL,
+			XpBonus INT DEFAULT 50,
+			CriadoEm TIMESTAMP DEFAULT NOW()
+		);
+
+		CREATE TABLE IF NOT EXISTS UsuarioBadges (
+			UsuarioID INT NOT NULL REFERENCES Usuarios(ID) ON DELETE CASCADE,
+			BadgeID INT NOT NULL REFERENCES Badges(ID) ON DELETE CASCADE,
+			DesbloqueadoEm TIMESTAMP DEFAULT NOW(),
+			PRIMARY KEY (UsuarioID, BadgeID)
+		);
+	`)
+	if err != nil {
+		log.Printf("[DB] Erro ao executar migração automática para Badges: %v", err)
+	} else {
+		// Executar seed inicial de Badges
+		_, err = db.Exec(`
+			INSERT INTO Badges (Nome, Descricao, RequisitoTipo, RequisitoValor, XpBonus) VALUES
+			('Primeiro Sangue', 'Concluiu o primeiro atendimento na barbearia', 'Cortes', 1, 50),
+			('Fiel da Navalha', 'Concluiu 5 atendimentos na barbearia', 'Cortes', 5, 50),
+			('Barba de Respeito', 'Alcançou o nível 2 de progresso', 'Nivel', 2, 50),
+			('Lenda Viva', 'Alcançou o nível 3 de progresso (patente máxima)', 'Nivel', 3, 50)
+			ON CONFLICT (Nome) DO NOTHING;
+		`)
+		if err != nil {
+			log.Printf("[DB] Erro ao executar seed inicial de Badges: %v", err)
+		} else {
+			log.Println("✅ Migração automática: tabelas de Badges e sementes iniciais garantidas no banco")
+		}
+	}
+
+
     // Atualizar senha do admin se for o placeholder ou plain-text legado para permitir login seguro com bcrypt
     var adminCount int
     err = db.QueryRow("SELECT COUNT(*) FROM Usuarios WHERE Login = 'admin'").Scan(&adminCount)
@@ -259,6 +299,9 @@ func main() {
     claService := services.NewClaService(claRepo)
     claHandler := handlers.NewClaHandler(claService)
 
+    badgeRepo := repositories.NewBadgePgRepository(db)
+    badgeService := services.NewBadgeService(badgeRepo)
+    badgeHandler := handlers.NewBadgeHandler(badgeService)
 
     app := fiber.New(fiber.Config{AppName: "RuivoBarber API v1.0"})
     app.Use(logger.New())
@@ -274,6 +317,7 @@ func main() {
 
     clienteHandler.RegisterRoutes(app)
     claHandler.RegisterRoutes(app)
+    badgeHandler.RegisterRoutes(app)
 
     port := os.Getenv("PORT")
     if port == "" {

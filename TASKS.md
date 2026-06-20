@@ -114,6 +114,8 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
   - [x] Backend: Implementar criação de clãs, relacionamentos de membros e rota de convite.
 - [x] [Guilds] Task 45: Lógica de Subida de Nível de Clãs (XP Coletivo) (Backend)
   - [x] Backend: Implementar acumulação de XP coletivo (+1 por corte) e subida de nível de clãs.
+- [x] [Badges] Task 51: Sistema de Conquistas Individuais por Badges (Medalhas) (Backend)
+  - [x] Backend: Triggers de conquistas e bônus de XP no banco para os primeiros marcos (cortes/nível).
 
 ---
 
@@ -139,8 +141,6 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
   - [ ] Frontend: Página listando os maiores pontuadores históricos das temporadas passadas da barbearia.
 
 ### ⚙️ Backend (Lógica Go e Banco de Dados)
-- [ ] [Badges] Task 51: Sistema de Conquistas Individuais por Badges (Medalhas)
-  - [ ] Backend: Triggers de conquistas específicas no banco (ex: "Fez barba 5 vezes no mês").
 - [ ] [Store] Task 49: Loja de Itens Virtuais RPG (Troca de XP por itens do perfil)
   - [ ] Backend/Frontend: Permitir resgatar cosméticos e molduras para o PlayerCard usando moedas/XP.
 - [ ] [Guilds] Task 47: Sistema de Missões Semanais do Clã (Quests de Guilda)

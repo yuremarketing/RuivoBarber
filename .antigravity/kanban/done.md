@@ -14,3 +14,4 @@ Tarefas finalizadas e prontas para validação:
 - [x] [TASK-058] [Avatar] Customização do Card de Jogador (Foto do Perfil, Upload de Imagem e Avatares RPG)
 - [x] [TASK-044] [Guilds] Rota de Criação e Convite para Clãs (Backend)
 - [x] [TASK-045] [Guilds] Lógica de Subida de Nível de Clãs (XP Coletivo) (Backend)
+- [x] [TASK-051] [Badges] Sistema de Conquistas Individuais por Badges (Medalhas) (Backend)

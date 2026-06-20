@@ -139,5 +139,32 @@ CREATE TABLE ClaConvites (
     UNIQUE(ClaID, ConvidadoID)
 );
 
+CREATE TABLE Badges (
+    ID SERIAL PRIMARY KEY,
+    Nome VARCHAR(100) UNIQUE NOT NULL,
+    Descricao VARCHAR(255) NOT NULL,
+    IconeURL VARCHAR(255) DEFAULT '',
+    RequisitoTipo VARCHAR(50) NOT NULL,
+    RequisitoValor INT NOT NULL,
+    XpBonus INT DEFAULT 50,
+    CriadoEm TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE UsuarioBadges (
+    UsuarioID INT NOT NULL REFERENCES Usuarios(ID) ON DELETE CASCADE,
+    BadgeID INT NOT NULL REFERENCES Badges(ID) ON DELETE CASCADE,
+    DesbloqueadoEm TIMESTAMP DEFAULT NOW(),
+    PRIMARY KEY (UsuarioID, BadgeID)
+);
+
+-- Inserir Badges iniciais
+INSERT INTO Badges (Nome, Descricao, RequisitoTipo, RequisitoValor, XpBonus) VALUES
+('Primeiro Sangue', 'Concluiu o primeiro atendimento na barbearia', 'Cortes', 1, 50),
+('Fiel da Navalha', 'Concluiu 5 atendimentos na barbearia', 'Cortes', 5, 50),
+('Barba de Respeito', 'Alcançou o nível 2 de progresso', 'Nivel', 2, 50),
+('Lenda Viva', 'Alcançou o nível 3 de progresso (patente máxima)', 'Nivel', 3, 50)
+ON CONFLICT (Nome) DO NOTHING;
+
+
 
 

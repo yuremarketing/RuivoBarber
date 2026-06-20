@@ -140,3 +140,22 @@ CREATE TABLE IF NOT EXISTS ClaConvites (
     UNIQUE(ClaID, ConvidadoID)
 );
 
+CREATE TABLE IF NOT EXISTS Badges (
+    ID SERIAL PRIMARY KEY,
+    Nome VARCHAR(100) UNIQUE NOT NULL,
+    Descricao VARCHAR(255) NOT NULL,
+    IconeURL VARCHAR(255) DEFAULT '',
+    RequisitoTipo VARCHAR(50) NOT NULL, -- 'Cortes', 'Nivel'
+    RequisitoValor INT NOT NULL,
+    XpBonus INT DEFAULT 50,
+    CriadoEm TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS UsuarioBadges (
+    UsuarioID INT NOT NULL REFERENCES Usuarios(ID) ON DELETE CASCADE,
+    BadgeID INT NOT NULL REFERENCES Badges(ID) ON DELETE CASCADE,
+    DesbloqueadoEm TIMESTAMP DEFAULT NOW(),
+    PRIMARY KEY (UsuarioID, BadgeID)
+);
+
+

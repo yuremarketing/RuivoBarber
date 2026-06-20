@@ -333,6 +333,105 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) (*ports.Not
         return nil, err
     }
 
+    // --- Início da Lógica de Badges (Cascading Unlocks) ---
+    for {
+        var totalCortes int
+        err = tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM Agendamentos WHERE clienteid = $1 AND status = 'Concluido'", clienteID).Scan(&totalCortes)
+        if err != nil {
+            return nil, err
+        }
+
+        var xpAtual, nivelAtual int
+        err = tx.QueryRowContext(ctx, "SELECT xpatual, nivelatual FROM ProgressoCliente WHERE clienteid = $1", clienteID).Scan(&xpAtual, &nivelAtual)
+        if err != nil {
+            return nil, err
+        }
+
+        type LockedBadge struct {
+            ID             int
+            RequisitoTipo  string
+            RequisitoValor int
+            XpBonus        int
+        }
+
+        rowsB, err := tx.QueryContext(ctx, "SELECT id, requisitotipo, requisitovalor, xpbonus FROM Badges WHERE id NOT IN (SELECT badgeid FROM UsuarioBadges WHERE usuarioid = $1)", clienteID)
+        if err != nil {
+            return nil, err
+        }
+
+        var lockedBadges []LockedBadge
+        for rowsB.Next() {
+            var lb LockedBadge
+            if err := rowsB.Scan(&lb.ID, &lb.RequisitoTipo, &lb.RequisitoValor, &lb.XpBonus); err != nil {
+                rowsB.Close()
+                return nil, err
+            }
+            lockedBadges = append(lockedBadges, lb)
+        }
+        rowsB.Close()
+
+        unlockedAny := false
+        for _, b := range lockedBadges {
+            met := false
+            if b.RequisitoTipo == "Cortes" && totalCortes >= b.RequisitoValor {
+                met = true
+            } else if b.RequisitoTipo == "Nivel" && nivelAtual >= b.RequisitoValor {
+                met = true
+            }
+
+            if met {
+                // 1. Inserir conquista
+                _, err = tx.ExecContext(ctx, "INSERT INTO UsuarioBadges (usuarioid, badgeid) VALUES ($1, $2)", clienteID, b.ID)
+                if err != nil {
+                    return nil, err
+                }
+
+                // 2. Adicionar XP bonus e atualizar ProgressoCliente
+                xpAtual += b.XpBonus
+
+                calculatedNivel := 1
+                for _, l := range niveis {
+                    if xpAtual >= l.XpNecessario {
+                        calculatedNivel = l.ID
+                    }
+                }
+
+                var nextXp int = 100
+                maxLevelReached := true
+                for _, l := range niveis {
+                    if xpAtual < l.XpNecessario {
+                        nextXp = l.XpNecessario
+                        maxLevelReached = false
+                        break
+                    }
+                }
+
+                var pct float64
+                if maxLevelReached {
+                    pct = 100.00
+                } else {
+                    pct = (float64(xpAtual) / float64(nextXp)) * 100.00
+                    if pct > 100.00 {
+                        pct = 100.00
+                    }
+                }
+
+                _, err = tx.ExecContext(ctx, "UPDATE ProgressoCliente SET xpatual = $1, nivelatual = $2, barrapercentual = $3, updatedat = NOW() WHERE clienteid = $4", xpAtual, calculatedNivel, pct, clienteID)
+                if err != nil {
+                    return nil, err
+                }
+
+                unlockedAny = true
+                break // Recomeçar laço para verificar novos requisitos com estatísticas atualizadas
+            }
+        }
+
+        if !unlockedAny {
+            break
+        }
+    }
+    // --- Fim da Lógica de Badges ---
+
     err = tx.Commit()
     if err != nil {
         return nil, err
