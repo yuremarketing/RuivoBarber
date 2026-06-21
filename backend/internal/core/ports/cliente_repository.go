@@ -30,5 +30,10 @@ type ClienteRepository interface {
 	SalvarConfiguracoes(cfg *domain.Configuracoes) error
 	BuscarClientePorTelefone(telefone string) (*domain.Cliente, error)
 	RegistrarMensagemProcessada(messageID string) (bool, error)
+	ObterDisponibilidadeBarbeiro(barbeiroID int) ([]domain.BarbeiroDisponibilidade, error)
+	SalvarDisponibilidadeBarbeiro(barbeiroID int, disps []domain.BarbeiroDisponibilidade) error
+	ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.BarbeiroBloqueio, error)
+	AdicionarBloqueioBarbeiro(barbeiroID int, data string, motivo string) error
+	RemoverBloqueioBarbeiro(barbeiroID int, data string) error
 }
 
