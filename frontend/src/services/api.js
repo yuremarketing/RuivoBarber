@@ -97,6 +97,13 @@ export const criarAgendamento = (barbeiroId, servicoId, dataHora) => api.post('/
   data_hora: dataHora
 })
 
+export const fetchDisponibilidadeBarbeiro = (barbeiroId) => api.get(`/barbeiros/${barbeiroId}/disponibilidade`)
+export const salvarDisponibilidadeBarbeiro = (barbeiroId, disps) => api.post(`/barbeiros/${barbeiroId}/disponibilidade`, disps)
+export const fetchBloqueiosBarbeiro = (barbeiroId) => api.get(`/barbeiros/${barbeiroId}/bloqueios`)
+export const adicionarBloqueioBarbeiro = (barbeiroId, data, motivo) => api.post(`/barbeiros/${barbeiroId}/bloqueios`, { data, motivo })
+export const removerBloqueioBarbeiro = (barbeiroId, data) => api.delete(`/barbeiros/${barbeiroId}/bloqueios/${data}`)
+
+
 export const streamChat = async (message, history, onChunk, onError, onDone) => {
   try {
     const userSessionStr = localStorage.getItem('ruivobarber_user')

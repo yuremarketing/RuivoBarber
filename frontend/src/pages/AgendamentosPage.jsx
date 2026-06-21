@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { fetchServicos, fetchBarbeiros, fetchAgendamentos, fetchAgendaBarbeiro, criarAgendamento, concluirAtendimento, registrarFalta } from '../services/api.js'
+import { fetchServicos, fetchBarbeiros, fetchAgendamentos, fetchAgendaBarbeiro, criarAgendamento, concluirAtendimento, registrarFalta, fetchDisponibilidadeBarbeiro, fetchBloqueiosBarbeiro } from '../services/api.js'
 
 const getServiceDetails = (nome) => {
   const n = nome.toLowerCase()
@@ -46,6 +46,8 @@ export default function AgendamentosPage() {
   const [selectedHora, setSelectedHora] = useState('')
   const [availableSlots, setAvailableSlots] = useState([])
   const [loadingSlots, setLoadingSlots] = useState(false)
+  const [barbeiroDisponibilidades, setBarbeiroDisponibilidades] = useState([])
+  const [barbeiroBloqueios, setBarbeiroBloqueios] = useState([])
 
   const userSessionStr = localStorage.getItem('ruivobarber_user')
   const user = userSessionStr ? JSON.parse(userSessionStr).user : null
@@ -93,6 +95,27 @@ export default function AgendamentosPage() {
   }, [])
 
   useEffect(() => {
+    if (!selectedBarbeiro) {
+      setBarbeiroDisponibilidades([])
+      setBarbeiroBloqueios([])
+      return
+    }
+    const loadBarberConfigs = async () => {
+      try {
+        const [resDisp, resBloq] = await Promise.all([
+          fetchDisponibilidadeBarbeiro(selectedBarbeiro).catch(() => ({ data: [] })),
+          fetchBloqueiosBarbeiro(selectedBarbeiro).catch(() => ({ data: [] }))
+        ])
+        setBarbeiroDisponibilidades(resDisp.data || [])
+        setBarbeiroBloqueios(resBloq.data || [])
+      } catch (err) {
+        console.error("Erro ao buscar configurações do barbeiro:", err)
+      }
+    }
+    loadBarberConfigs()
+  }, [selectedBarbeiro])
+
+  useEffect(() => {
     if (!selectedBarbeiro || !selectedData || !selectedServico) {
       setAvailableSlots([])
       return
@@ -113,6 +136,45 @@ export default function AgendamentosPage() {
 
     fetchSlots()
   }, [selectedBarbeiro, selectedData, selectedServico])
+
+  const handleDateChange = (dateVal) => {
+    if (!dateVal) {
+      setSelectedData('')
+      setSelectedHora('')
+      return
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0]
+    if (dateVal < todayStr) {
+      alert('Não é possível selecionar uma data no passado.')
+      setSelectedData('')
+      setSelectedHora('')
+      return
+    }
+
+    const [year, month, day] = dateVal.split('-').map(Number)
+    const dateObj = new Date(year, month - 1, day)
+    const weekday = dateObj.getDay()
+
+    const disp = barbeiroDisponibilidades.find(d => d.dia_semana === weekday)
+    if (disp && !disp.trabalha) {
+      alert('Este barbeiro não possui disponibilidade para este dia. Por favor, escolha outra data!')
+      setSelectedData('')
+      setSelectedHora('')
+      return
+    }
+
+    const isBlocked = barbeiroBloqueios.some(b => b.data_bloqueio === dateVal)
+    if (isBlocked) {
+      alert('Este barbeiro não possui disponibilidade para este dia. Por favor, escolha outra data!')
+      setSelectedData('')
+      setSelectedHora('')
+      return
+    }
+
+    setSelectedData(dateVal)
+    setSelectedHora('')
+  }
 
   const handleCreateAgendamento = async (e) => {
     e.preventDefault()
@@ -458,10 +520,14 @@ export default function AgendamentosPage() {
                   
                   <div className="form-group" style={{ marginBottom: '1rem', textAlign: 'left' }}>
                     <label className="form-label">Data do Agendamento</label>
-                    <input type="date" className="form-input" value={selectedData} onChange={e => {
-                      setSelectedData(e.target.value)
-                      setSelectedHora('')
-                    }} required />
+                    <input
+                      type="date"
+                      className="form-input"
+                      value={selectedData}
+                      min={new Date().toISOString().split('T')[0]}
+                      onChange={e => handleDateChange(e.target.value)}
+                      required
+                    />
                   </div>
 
                   <div className="form-group" style={{ textAlign: 'left' }}>
