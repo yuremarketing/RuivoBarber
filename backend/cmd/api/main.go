@@ -415,7 +415,26 @@ func main() {
 		log.Println("✅ Migração automática: tabelas e colunas de Gorjetas e Pix garantidas no banco")
 	}
 
+	// Migração automática para Avaliações Pós-Atendimento
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS Avaliacoes (
+			ID SERIAL PRIMARY KEY,
+			AgendamentoID INT REFERENCES Agendamentos(ID) ON DELETE CASCADE UNIQUE,
+			ClienteID INT REFERENCES Usuarios(ID) ON DELETE CASCADE,
+			BarbeiroID INT REFERENCES Usuarios(ID) ON DELETE CASCADE,
+			Nota INT NOT NULL CHECK (Nota >= 1 AND Nota <= 5),
+			Comentario TEXT,
+			CriadoEm TIMESTAMP DEFAULT NOW()
+		);
+	`)
+	if err != nil {
+		log.Printf("[DB] Erro ao executar migração automática para Avaliações: %v", err)
+	} else {
+		log.Println("✅ Migração automática: tabela de Avaliações garantida no banco")
+	}
+
     // Atualizar senha do admin se for o placeholder ou plain-text legado para permitir login seguro com bcrypt
+
     var adminCount int
     err = db.QueryRow("SELECT COUNT(*) FROM Usuarios WHERE Login = 'admin'").Scan(&adminCount)
     if err == nil && adminCount > 0 {

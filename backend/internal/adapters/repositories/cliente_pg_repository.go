@@ -1367,6 +1367,79 @@ func (r *ClientePgRepository) ObterGorjetasDoBarbeiro(barbeiroID int) ([]domain.
 	return gorjetas, nil
 }
 
+func (r *ClientePgRepository) ObterUltimoCorteConcluido(clienteID int) (*domain.Agendamento, error) {
+	query := `
+		SELECT a.id, a.clienteid, a.barbeiroid, u.nome AS barbeironome, a.servicoid, s.nome AS serviconome, a.datahora, a.status
+		FROM Agendamentos a
+		JOIN Usuarios u ON a.barbeiroid = u.id
+		JOIN Servicos s ON a.servicoid = s.id
+		WHERE a.clienteid = $1 AND a.status = 'Concluido'
+		ORDER BY a.datahora DESC
+		LIMIT 1
+	`
+	var a domain.Agendamento
+	err := r.db.QueryRow(query, clienteID).Scan(&a.ID, &a.ClienteID, &a.BarbeiroID, &a.BarbeiroNome, &a.ServicoID, &a.ServicoNome, &a.DataHora, &a.Status)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &a, nil
+}
+
+func (r *ClientePgRepository) BuscarAvaliacaoPorAgendamento(agendamentoID int) (*domain.Avaliacao, error) {
+	query := `SELECT id, agendamentoid, clienteid, barbeiroid, nota, comentario, criadoem FROM Avaliacoes WHERE agendamentoid = $1`
+	var a domain.Avaliacao
+	err := r.db.QueryRow(query, agendamentoID).Scan(&a.ID, &a.AgendamentoID, &a.ClienteID, &a.BarbeiroID, &a.Nota, &a.Comentario, &a.CriadoEm)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &a, nil
+}
+
+func (r *ClientePgRepository) CriarAvaliacao(a *domain.Avaliacao) error {
+	query := `INSERT INTO Avaliacoes (agendamentoid, clienteid, barbeiroid, nota, comentario) VALUES ($1, $2, $3, $4, $5)`
+	_, err := r.db.Exec(query, a.AgendamentoID, a.ClienteID, a.BarbeiroID, a.Nota, a.Comentario)
+	return err
+}
+
+func (r *ClientePgRepository) RecalcularAvaliacaoMediaBarbeiro(barbeiroID int) error {
+	queryAvg := `SELECT COALESCE(AVG(nota), 0) FROM Avaliacoes WHERE barbeiroid = $1`
+	var avg float64
+	err := r.db.QueryRow(queryAvg, barbeiroID).Scan(&avg)
+	if err != nil {
+		return err
+	}
+	queryUpdate := `UPDATE Usuarios SET avaliacao_media = $1 WHERE id = $2`
+	_, err = r.db.Exec(queryUpdate, avg, barbeiroID)
+	return err
+}
+
+func (r *ClientePgRepository) BuscarAgendamentoPorID(id int) (*domain.Agendamento, error) {
+	query := `
+		SELECT a.id, a.clienteid, a.barbeiroid, u.nome AS barbeironome, a.servicoid, s.nome AS serviconome, a.datahora, a.status
+		FROM Agendamentos a
+		JOIN Usuarios u ON a.barbeiroid = u.id
+		JOIN Servicos s ON a.servicoid = s.id
+		WHERE a.id = $1
+	`
+	var a domain.Agendamento
+	err := r.db.QueryRow(query, id).Scan(&a.ID, &a.ClienteID, &a.BarbeiroID, &a.BarbeiroNome, &a.ServicoID, &a.ServicoNome, &a.DataHora, &a.Status)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &a, nil
+}
+
+
+
 
 
 
