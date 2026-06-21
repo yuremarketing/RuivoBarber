@@ -636,7 +636,7 @@ func main() {
     liveHandler := handlers.NewLiveHandler(liveService)
 
     pdvRepo := repositories.NewPdvPgRepository(db)
-    pdvService := services.NewPdvService(pdvRepo)
+    pdvService := services.NewPdvService(pdvRepo, clienteRepo, notificationService)
     pdvHandler := handlers.NewPdvHandler(pdvService)
 
     app := fiber.New(fiber.Config{AppName: "RuivoBarber API v1.0"})
