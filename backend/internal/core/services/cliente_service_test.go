@@ -1,6 +1,7 @@
 package services
 
 import (
+	"strings"
 	"testing"
 	"ruivobarber-api/internal/core/domain"
 	"ruivobarber-api/internal/core/ports"
@@ -28,6 +29,17 @@ func (m *mockClienteRepository) ObterDisponibilidadeBarbeiro(barbeiroID int) ([]
 
 func (m *mockClienteRepository) ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.BarbeiroBloqueio, error) {
 	return m.bloqueios, nil
+}
+
+func (m *mockClienteRepository) ListarBarbeiros() ([]domain.Barbeiro, error) {
+	return []domain.Barbeiro{
+		{ID: 1, Nome: "Vitor Navalha", ChavePix: "vitor@navalha.com"},
+		{ID: 2, Nome: "Thiago Barba", ChavePix: ""},
+	}, nil
+}
+
+func (m *mockClienteRepository) CriarGorjeta(g *domain.Gorjeta) (int, error) {
+	return 100, nil
 }
 
 func TestObterAgendaBarbeiro(t *testing.T) {
@@ -93,5 +105,56 @@ func TestObterAgendaBarbeiro(t *testing.T) {
 		if !slot.Available {
 			t.Errorf("slot %s deveria estar disponível", slot.Time)
 		}
+	}
+}
+
+func TestGerarPayloadPix(t *testing.T) {
+	payload, err := GerarPayloadPix("vitor@navalha.com", 15.50, "Vitor Navalha", "Sao Paulo")
+	if err != nil {
+		t.Fatalf("erro inesperado ao gerar payload Pix: %v", err)
+	}
+
+	if !strings.HasPrefix(payload, "000201") {
+		t.Errorf("esperava prefixo '000201' no payload Pix, obteve %s", payload)
+	}
+
+	if !strings.Contains(payload, "vitor@navalha.com") {
+		t.Errorf("esperava chave Pix no payload, obteve %s", payload)
+	}
+
+	if !strings.Contains(payload, "Vitor Navalha") {
+		t.Errorf("esperava nome formatado no payload, obteve %s", payload)
+	}
+
+	if len(payload) < 4 {
+		t.Fatalf("payload muito curto: %s", payload)
+	}
+}
+
+func TestCriarGorjeta(t *testing.T) {
+	repo := &mockClienteRepository{}
+	service := NewClienteService(repo, nil, nil)
+
+	_, err := service.CriarGorjeta(nil, nil, 2, 10.00)
+	if err == nil {
+		t.Error("esperava erro ao tentar criar gorjeta para barbeiro sem chave Pix cadastrada")
+	}
+
+	g, err := service.CriarGorjeta(nil, nil, 1, 20.00)
+	if err != nil {
+		t.Fatalf("erro inesperado ao criar gorjeta: %v", err)
+	}
+
+	if g.ID != 100 {
+		t.Errorf("esperava ID 100, obteve %d", g.ID)
+	}
+	if g.Valor != 20.00 {
+		t.Errorf("esperava valor 20.00, obteve %f", g.Valor)
+	}
+	if g.PixCopiaECola == "" {
+		t.Error("esperava payload Pix gerado")
+	}
+	if g.QrCodeURL == "" {
+		t.Error("esperava URL do QR Code gerada")
 	}
 }
