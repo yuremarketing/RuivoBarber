@@ -78,8 +78,20 @@ export default function DashboardPage() {
     if (isClient) {
       setLoadingBadges(true)
       fetchMeusBadges()
-        .then(res => setBadges(Array.isArray(res.data) ? res.data : []))
-        .catch(err => console.error('Erro ao buscar badges:', err))
+        .then(res => {
+          const data = Array.isArray(res.data) ? res.data : []
+          setBadges(data)
+        })
+        .catch(err => {
+          console.error('Erro ao buscar badges:', err)
+          // Fallback: mostra os badges do sistema todos bloqueados
+          setBadges([
+            { id: 1, nome: 'Primeiro Sangue', descricao: 'Conclua seu 1º atendimento', xpBonus: 50, desbloqueada: false, desbloqueadaEm: null },
+            { id: 2, nome: 'Fiel da Navalha', descricao: 'Conclua 5 atendimentos', xpBonus: 50, desbloqueada: false, desbloqueadaEm: null },
+            { id: 3, nome: 'Barba de Respeito', descricao: 'Alcance o nível 2', xpBonus: 50, desbloqueada: false, desbloqueadaEm: null },
+            { id: 4, nome: 'Lenda Viva', descricao: 'Alcance o nível 3 (patente máxima)', xpBonus: 50, desbloqueada: false, desbloqueadaEm: null },
+          ])
+        })
         .finally(() => setLoadingBadges(false))
     }
   }, [])
