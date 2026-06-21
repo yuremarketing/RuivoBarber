@@ -5,6 +5,7 @@ type Barbeiro struct {
 	Nome           string  `json:"nome"`
 	FotoURL        string  `json:"foto_url"`
 	AvaliacaoMedia float64 `json:"avaliacao_media"`
+	ChavePix       string  `json:"chave_pix"`
 }
 
 type BarbeiroDisponibilidade struct {
