@@ -95,6 +95,7 @@ export default function DashboardPage() {
               nome={currentClient.nome} 
               nivel={currentClient.nivel} 
               xp={currentClient.xp} 
+              avatarUrl={currentClient.avatarUrl}
             />
           </div>
 

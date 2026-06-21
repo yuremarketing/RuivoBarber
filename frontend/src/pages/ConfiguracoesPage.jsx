@@ -20,8 +20,55 @@ export default function ConfiguracoesPage() {
   const [login, setLogin] = useState('')
   const [senha, setSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const MAX_WIDTH = 200
+        const MAX_HEIGHT = 200
+        let width = img.width
+        let height = img.height
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width
+            width = MAX_WIDTH
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height
+            height = MAX_HEIGHT
+          }
+        }
+
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, width, height)
+
+        let quality = 0.8
+        let dataUrl = canvas.toDataURL('image/webp', quality)
+        
+        while (dataUrl.length > 68000 && quality > 0.1) {
+          quality -= 0.1
+          dataUrl = canvas.toDataURL('image/webp', quality)
+        }
+
+        setAvatarUrl(dataUrl)
+      }
+      img.src = event.target.result
+    }
+    reader.readAsDataURL(file)
+  }
 
   const loadClientInfo = async () => {
     if (isAdmin) return
@@ -31,11 +78,13 @@ export default function ConfiguracoesPage() {
         setClientData(res.data)
         setNome(res.data.nome || '')
         setLogin(res.data.login || '')
+        setAvatarUrl(res.data.avatarUrl || '')
       }
     } catch (err) {
       console.error('Erro ao buscar dados do cliente:', err)
       setNome(user.nome || '')
       setLogin(user.login || '')
+      setAvatarUrl(user.avatarUrl || '')
       setClientData(user)
     }
   }
@@ -86,7 +135,7 @@ export default function ConfiguracoesPage() {
 
     try {
       setLoading(true)
-      const payload = { nome, login }
+      const payload = { nome, login, avatarUrl }
       if (senha) {
         payload.senha = senha
       }
@@ -98,6 +147,7 @@ export default function ConfiguracoesPage() {
           ...user,
           nome: res.data.user.nome,
           login: res.data.user.login,
+          avatarUrl: res.data.user.avatarUrl,
         }
         localStorage.setItem('ruivobarber_user', JSON.stringify(updatedUser))
         
@@ -106,6 +156,7 @@ export default function ConfiguracoesPage() {
           ...prev,
           nome: res.data.user.nome,
           login: res.data.user.login,
+          avatarUrl: res.data.user.avatarUrl,
         }))
         
         setSenha('')
@@ -143,6 +194,7 @@ export default function ConfiguracoesPage() {
               nome={currentClient.nome} 
               nivel={currentClient.nivel} 
               xp={currentClient.xp} 
+              avatarUrl={avatarUrl}
             />
             <div className="card" style={{ width: '100%', textAlign: 'center', padding: '1rem' }}>
               <h4 style={{ color: 'var(--gold)', marginBottom: '0.25rem' }}>👑 Patente Atual</h4>
@@ -182,6 +234,58 @@ export default function ConfiguracoesPage() {
                   onChange={e => setLogin(e.target.value)} 
                   required 
                 />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ marginBottom: '0.5rem', display: 'block' }}>Aparência do Personagem (Avatar)</label>
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                  {[
+                    { id: 'viking', name: 'Viking', src: '/avatars/viking.png' },
+                    { id: 'cyborg', name: 'Cyborg', src: '/avatars/cyborg.png' },
+                    { id: 'knight', name: 'Knight', src: '/avatars/knight.png' },
+                    { id: 'wizard', name: 'Wizard', src: '/avatars/wizard.png' }
+                  ].map((preset) => (
+                    <div 
+                      key={preset.id}
+                      onClick={() => setAvatarUrl(preset.src)}
+                      style={{
+                        position: 'relative',
+                        width: '60px',
+                        height: '60px',
+                        borderRadius: '50%',
+                        cursor: 'pointer',
+                        border: avatarUrl === preset.src ? '3px solid var(--gold)' : '3px solid transparent',
+                        boxShadow: avatarUrl === preset.src ? '0 0 10px var(--gold)' : 'none',
+                        transition: 'all 0.2s ease',
+                        overflow: 'hidden',
+                        backgroundColor: 'var(--bg-input)'
+                      }}
+                    >
+                      <img src={preset.src} alt={preset.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  ))}
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <label className="form-label" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Ou envie uma foto personalizada:</label>
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    style={{
+                      backgroundColor: 'var(--bg-input)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '4px',
+                      padding: '0.4rem',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      width: '100%'
+                    }}
+                  />
+                  <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                    A imagem será comprimida automaticamente (máx. 50KB WebP) para economia de dados.
+                  </small>
+                </div>
               </div>
 
               <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '0.5rem 0' }} />

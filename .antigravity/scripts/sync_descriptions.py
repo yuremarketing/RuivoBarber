@@ -8,7 +8,7 @@ import re
 import os
 
 TOKEN = os.getenv("GITHUB_TOKEN", "")
-PROJECT_ID = "PVT_kwHOAEqFx84Baw1O"
+PROJECT_ID = "PVT_kwHOAEqFx84BaAE4"
 LOGS_DIR = os.path.join(os.path.dirname(__file__), "..", "logs")
 
 def graphql(query, variables=None):
