@@ -28,6 +28,14 @@ const MOCK_SERVICOS = [
   { id: 4, nome: 'Hidratação Capilar', preco: 50.00, xpRecompensa: 20, duracaoMinutos: 40 }
 ]
 
+const getLocalDateStr = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export default function AgendamentosPage() {
   const [agendamentos, setAgendamentos] = useState([])
   const [servicos, setServicos] = useState([])
@@ -144,7 +152,7 @@ export default function AgendamentosPage() {
       return
     }
 
-    const todayStr = new Date().toISOString().split('T')[0]
+    const todayStr = getLocalDateStr()
     if (dateVal < todayStr) {
       alert('Não é possível selecionar uma data no passado.')
       setSelectedData('')
@@ -524,7 +532,7 @@ export default function AgendamentosPage() {
                       type="date"
                       className="form-input"
                       value={selectedData}
-                      min={new Date().toISOString().split('T')[0]}
+                      min={getLocalDateStr()}
                       onChange={e => handleDateChange(e.target.value)}
                       required
                     />
