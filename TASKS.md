@@ -123,36 +123,29 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 
 ## 🛡️ 9. Backlog Reorganizado e Priorizado
 
-### ⚙️ Backend (Lógica Go e Banco de Dados) (Prioridade Máxima — Modelo de Negócio)
+### 🕒 Correções Críticas
+- [ ] [Fix] Task 38-A: Ajuste de Fuso Horário de Brasília (America/Sao_Paulo) no Backend e Frontend (Issue #13)
+
+### ⚙️ Backend (Lógica Go e Banco de Dados)
 - [x] [Guilds] Task 47: Sistema de Missões Semanais do Clã (Quests de Guilda) (Backend)
-  - [x] Backend: Cron para resetar missões de clã semanalmente (ex: "Clã realiza 10 cortes em conjunto").
 - [x] [Loyalty] Task 54: Recompensa por Acesso Diário (Daily Streak / Login Diário)
-  - [x] Backend/Frontend: Bonificação de pequenos pontos de XP por check-in de login diário na plataforma.
 - [x] [Guilds] Task 48: Eventos Cooperativos de "Raid" (Meta Comunitária de Cortes) (Backend)
-  - [x] Backend: Evento global temporário (ex: "Navalha Suprema: 500 barbas feitas este mês").
-- [ ] [Queue] Task 41: Controle de Presença (Check-in/Check-out) e Tempo Médio
-  - [x] Backend: Gerenciamento do status "Em Cadeira" e cálculo automático de tempo médio do corte.
-  - [ ] Frontend: Painel operacional administrativo para controle físico da fila da barbearia.
 - [x] [Ops] Task 56: Notificação Automática de Conquistas e Nível via WhatsApp
-  - [x] Backend: Integração do chat de IA para parabenizar o cliente via WhatsApp ao atingir patentes lendárias.
-- [x] [Lives] Task 42: Integração com Transmissões de Lives ao Vivo
-  - [x] Backend: Rota para salvar e ativar links de transmissões de lives (YouTube, Facebook, Twitch).
-  - [x] Frontend: Player de vídeo incorporado dinamicamente para os clientes assistirem a transmissões ao vivo.
+- [x] [Lives] Task 42: Integração com Transmissões de Lives ao Vivo (Backend & Frontend)
+- [ ] [Wizard/Profile] Task 38-BC: Banco de Dados e Backend para Perfis de Barbeiros (Foto e Avaliação Média) (Issue #15)
+- [ ] [Checkout] Task 38-D: Backend e Banco de Dados para Gorjeta Digital via Pix (Chave Pix e QR Code) (Issue #16)
+- [ ] [Review/Rewards] Task 38-E/40: Banco de Dados e Rota Unificada do "Último Corte" com flag de Avaliação Pendente (Issues #5 e #17)
 
 ### 🖥️ Frontend (Telas React)
-- [ ] [Rewards] Task 40: Painel de Conquistas e Histórico "Último Corte"
-  - [ ] Backend: Buscar dados e estatísticas do último atendimento finalizado do cliente.
-  - [ ] Frontend: Exibição da árvore de patentes RPG e card "Último Corte" no portal do cliente.
+- [ ] [Wizard] Task 38-BC-FE: Wizard de Agendamento Passo a Passo (BookingWizard) com Fotos e Estrelas Reais (Issue #14/15)
+- [ ] [Checkout] Task 38-D-FE: Painel do Admin para Cadastrar Chave Pix e Modal de Gorjeta para Clientes (Issue #16)
+- [ ] [Review/Rewards] Task 38-E/40-FE: Modal de Avaliação Pós-Atendimento e Card do "Último Corte" no Portal do Cliente (Issues #5 e #17)
+- [ ] [Queue] Task 41: Controle de Presença (Check-in/Check-out) e Tempo Médio
+  - [x] Backend: Gerenciamento do status "Em Cadeira" e cálculo automático de tempo médio do corte.
+  - [ ] Frontend: Painel operacional administrativo para controle físico da fila da barbearia (Issue #6)
 - [ ] [Badges] Task 52: Vitrine de Badges no PlayerCard do Cliente
-  - [ ] Frontend: Renderizar as medalhas desbloqueadas com efeitos visuais no perfil do cliente.
-- [x] [Guilds] Task 53: Ranking Semanal de Clãs (Leaderboard de Guildas)
-  - [x] Frontend: Exibir tabela de classificação comparando os níveis e XP acumulado de cada clã.
-- [x] [Guilds] Task 46: Mural de Recados do Clã (Chat Interno)
-  - [x] Frontend: Criar aba com feed ou mural de mensagens para interação exclusiva dos membros do clã.
 - [ ] [Store] Task 50: Inventário do Cliente no Frontend (Bolsa de Itens/Poções)
-  - [ ] Frontend: Exibição visual de itens resgatados, como poções que aceleram ganho de XP.
 - [ ] [Fame] Task 57: Galeria Histórica de Lendários (Hall of Fame)
-  - [ ] Frontend: Página listando os maiores pontuadores históricos das temporadas passadas da barbearia.
 
 ### 🎨 UX (Experiência, Animações e Mídias)
 - [ ] [UX-Audio] Task 55: Efeitos Sonoros e Efeitos Visuais de Level Up no Frontend
@@ -160,8 +153,6 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 
 ### 🚀 DevOps / Infraestrutura (CI/CD)
 - [ ] [DevOps] Task 60: Implantação do Harness.io (CI/CD)
-  - [ ] DevOps: Configurar pipeline no Harness.io para compilação, execução de testes automatizados e deploy contínuo, mapeando o deploy automático do Render.
-
 
 
 
