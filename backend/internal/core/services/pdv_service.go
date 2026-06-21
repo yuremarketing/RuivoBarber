@@ -8,13 +8,14 @@ import (
 )
 
 type CaixaStatusResponse struct {
-	CaixaID      int       `json:"caixa_id"`
-	Status       string    `json:"status"`
-	AbertoEm     time.Time `json:"aberto_em"`
-	SaldoInicial float64   `json:"saldo_inicial"`
-	Entradas     float64   `json:"entradas"`
-	Saidas       float64   `json:"saidas"`
-	SaldoAtual   float64   `json:"saldo_atual"`
+	CaixaID        int                        `json:"caixa_id"`
+	Status         string                     `json:"status"`
+	AbertoEm       time.Time                  `json:"aberto_em"`
+	SaldoInicial   float64                    `json:"saldo_inicial"`
+	Entradas       float64                    `json:"entradas"`
+	Saidas         float64                    `json:"saidas"`
+	SaldoAtual     float64                    `json:"saldo_atual"`
+	Movimentacoes  []domain.MovimentacaoCaixa `json:"movimentacoes"`
 }
 
 type PdvService struct {
@@ -123,13 +124,14 @@ func (s *PdvService) ObterStatusCaixa(operadorID int) (*CaixaStatusResponse, err
 	saldoAtual := ativo.SaldoInicial + entradas - saidas + vendasDinheiro
 
 	return &CaixaStatusResponse{
-		CaixaID:      ativo.ID,
-		Status:       ativo.Status,
-		AbertoEm:     ativo.AbertoEm,
-		SaldoInicial: ativo.SaldoInicial,
-		Entradas:     entradas,
-		Saidas:       saidas,
-		SaldoAtual:   saldoAtual,
+		CaixaID:       ativo.ID,
+		Status:        ativo.Status,
+		AbertoEm:      ativo.AbertoEm,
+		SaldoInicial:  ativo.SaldoInicial,
+		Entradas:      entradas,
+		Saidas:        saidas,
+		SaldoAtual:    saldoAtual,
+		Movimentacoes: mcs,
 	}, nil
 }
 
