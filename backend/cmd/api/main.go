@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	_ "time/tzdata"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -28,6 +29,15 @@ var schemaFS embed.FS
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("Ficheiro .env não encontrado, a usar variáveis do sistema")
+	}
+
+	// Configurar fuso horário global America/Sao_Paulo
+	loc, err := time.LoadLocation("America/Sao_Paulo")
+	if err != nil {
+		log.Printf("⚠️ Erro ao carregar fuso horário America/Sao_Paulo: %v. Usando padrão local.", err)
+	} else {
+		time.Local = loc
+		log.Println("✅ Fuso horário padrão definido para America/Sao_Paulo")
 	}
 
 	sslMode := os.Getenv("DB_SSLMODE")
@@ -50,6 +60,13 @@ func main() {
 		log.Fatalf("Banco inacessível: %v", err)
 	}
 	log.Println("✅ Conectado ao PostgreSQL com sucesso")
+
+	var tz string
+	if err := db.QueryRow("SHOW TIMEZONE").Scan(&tz); err != nil {
+		log.Printf("⚠️ Erro ao obter session timezone: %v", err)
+	} else {
+		log.Printf("ℹ️ PostgreSQL Session TimeZone: %s", tz)
+	}
 
 	// Verificar se a tabela Usuarios existe, se não, inicializar o banco
 	var tableExists bool

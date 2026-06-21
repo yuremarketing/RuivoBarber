@@ -130,7 +130,7 @@ export default function DashboardPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h4 style={{ color: '#f5a623', margin: 0, fontSize: '0.95rem' }}>⏳ Temporada Ativa: {temporadaAtiva.nome}</h4>
                   <span style={{ fontSize: '0.72rem', color: '#e94560', fontWeight: 'bold' }}>
-                    Término: {new Date(temporadaAtiva.dataFim).toLocaleDateString('pt-BR')}
+                    Término: {new Date(temporadaAtiva.dataFim).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                   </span>
                 </div>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem', marginBottom: 0 }}>
