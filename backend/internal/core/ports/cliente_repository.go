@@ -18,6 +18,9 @@ type ClienteRepository interface {
 	ValidarCupom(codigo string) (*domain.Cupom, error)
 	ListarServicos() ([]domain.Servico, error)
 	BuscarServico(id int) (*domain.Servico, error)
+	CriarServico(s *domain.Servico) (int, error)
+	AtualizarServico(s *domain.Servico) error
+	DeletarServico(id int) error
 	ListarBarbeiros() ([]domain.Barbeiro, error)
 	ListarAgendamentos(data string) ([]domain.Agendamento, error)
 	ListarAgendamentosDoBarbeiro(barbeiroID int, data string) ([]domain.Agendamento, error)
@@ -27,5 +30,10 @@ type ClienteRepository interface {
 	SalvarConfiguracoes(cfg *domain.Configuracoes) error
 	BuscarClientePorTelefone(telefone string) (*domain.Cliente, error)
 	RegistrarMensagemProcessada(messageID string) (bool, error)
+	ObterDisponibilidadeBarbeiro(barbeiroID int) ([]domain.BarbeiroDisponibilidade, error)
+	SalvarDisponibilidadeBarbeiro(barbeiroID int, disps []domain.BarbeiroDisponibilidade) error
+	ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.BarbeiroBloqueio, error)
+	AdicionarBloqueioBarbeiro(barbeiroID int, data string, motivo string) error
+	RemoverBloqueioBarbeiro(barbeiroID int, data string) error
 }
 

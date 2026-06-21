@@ -13,6 +13,7 @@ import ConfiguracoesPage from './pages/ConfiguracoesPage.jsx'
 import TemporadasPage from './pages/TemporadasPage.jsx'
 import LivesPage from './pages/LivesPage.jsx'
 import ClasPage from './pages/ClasPage.jsx'
+import AgendaConfigPage from './pages/AgendaConfigPage.jsx'
 
 
 export default function App() {
@@ -35,6 +36,7 @@ export default function App() {
           <Route path="/temporadas" element={<TemporadasPage />} />
           <Route path="/lives" element={<LivesPage />} />
           <Route path="/clas" element={<ClasPage />} />
+          <Route path="/agenda-config" element={<AgendaConfigPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </main>
