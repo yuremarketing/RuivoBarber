@@ -151,7 +151,7 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
   - [ ] Frontend: Painel operacional administrativo para controle físico da fila da barbearia (Issue #6)
 - [ ] [Badges] Task 52: Vitrine de Badges no PlayerCard do Cliente
 - [ ] [Store] Task 50: Inventário do Cliente no Frontend (Bolsa de Itens/Poções)
-- [ ] [Fame] Task 57: Galeria Histórica de Lendários (Hall of Fame)
+- [x] [Fame] Task 57: Galeria Histórica de Lendários (Hall of Fame)
 
 ### 🎨 UX (Experiência, Animações e Mídias)
 - [ ] [UX-Audio] Task 55: Efeitos Sonoros e Efeitos Visuais de Level Up no Frontend

@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"strings"
 	"time"
 	"golang.org/x/crypto/bcrypt"
@@ -33,6 +34,17 @@ func NewClienteService(repo ports.ClienteRepository, notifier ports.Notification
 
 func (s *ClienteService) ListarClientes() ([]domain.Cliente, error) {
 	return s.repo.FindAll()
+}
+
+func (s *ClienteService) ObterHallOfFame() ([]domain.Cliente, error) {
+	clientes, err := s.repo.FindAll()
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(clientes, func(i, j int) bool {
+		return clientes[i].XP > clientes[j].XP
+	})
+	return clientes, nil
 }
 
 func (s *ClienteService) BuscarCliente(id int) (*domain.Cliente, error) {
