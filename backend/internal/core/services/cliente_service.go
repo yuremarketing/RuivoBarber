@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -1196,6 +1197,157 @@ func (s *ClienteService) AtualizarServico(serv *domain.Servico) error {
 func (s *ClienteService) DeletarServico(id int) error {
 	return s.repo.DeletarServico(id)
 }
+
+func calculateCRC16(data string) string {
+	crc := 0xFFFF
+	polynomial := 0x1021
+	for i := 0; i < len(data); i++ {
+		crc ^= int(data[i]) << 8
+		for j := 0; j < 8; j++ {
+			if (crc & 0x8000) != 0 {
+				crc = (crc << 1) ^ polynomial
+			} else {
+				crc <<= 1
+			}
+		}
+	}
+	return fmt.Sprintf("%04X", crc&0xFFFF)
+}
+
+func formatTLV(tag string, value string) string {
+	return fmt.Sprintf("%02s%02d%s", tag, len(value), value)
+}
+
+func GerarPayloadPix(chave string, valor float64, nomeRecebedor string, cidadeRecebedora string) (string, error) {
+	nomeClean := sanitizeString(nomeRecebedor, 25)
+	cidadeClean := sanitizeString(cidadeRecebedora, 15)
+
+	valorStr := fmt.Sprintf("%.2f", valor)
+
+	pfi := formatTLV("00", "01")
+
+	gui := formatTLV("00", "br.gov.bcb.pix")
+	key := formatTLV("01", chave)
+	merchantAccount := formatTLV("26", gui+key)
+
+	mcc := formatTLV("52", "0000")
+
+	currency := formatTLV("53", "986")
+
+	amount := formatTLV("54", valorStr)
+
+	country := formatTLV("58", "BR")
+
+	name := formatTLV("59", nomeClean)
+
+	city := formatTLV("60", cidadeClean)
+
+	ref := formatTLV("05", "GORJETA")
+	additionalData := formatTLV("62", ref)
+
+	basePayload := pfi + merchantAccount + mcc + currency + amount + country + name + city + additionalData + "6304"
+
+	crc := calculateCRC16(basePayload)
+
+	return basePayload + crc, nil
+}
+
+func sanitizeString(input string, maxLength int) string {
+	replacer := strings.NewReplacer(
+		"á", "a", "à", "a", "â", "a", "ã", "a", "ä", "a",
+		"é", "e", "è", "e", "ê", "e", "ë", "e",
+		"í", "i", "ì", "i", "î", "i", "ï", "i",
+		"ó", "o", "ò", "o", "ô", "o", "õ", "o", "ö", "o",
+		"ú", "u", "ù", "u", "û", "u", "ü", "u",
+		"ç", "c", "ñ", "n",
+		"Á", "A", "À", "A", "Â", "A", "Ã", "A", "Ä", "A",
+		"É", "E", "È", "E", "Ê", "E", "Ë", "E",
+		"Í", "I", "Ì", "I", "Î", "I", "Ï", "I",
+		"Ó", "O", "Ò", "O", "Ô", "O", "Õ", "O", "Ö", "O",
+		"Ú", "U", "Ù", "U", "Û", "U", "Ü", "U",
+		"Ç", "C", "Ñ", "N",
+	)
+	clean := replacer.Replace(input)
+	var sb strings.Builder
+	for _, r := range clean {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == ' ' {
+			sb.WriteRune(r)
+		}
+	}
+	res := sb.String()
+	if len(res) > maxLength {
+		res = res[:maxLength]
+	}
+	return strings.TrimSpace(res)
+}
+
+func (s *ClienteService) SalvarChavePixBarbeiro(barbeiroID int, chavePix string) error {
+	return s.repo.SalvarChavePixBarbeiro(barbeiroID, chavePix)
+}
+
+func (s *ClienteService) ConfirmarPagamentoGorjeta(id int) error {
+	return s.repo.ConfirmarPagamentoGorjeta(id)
+}
+
+func (s *ClienteService) ObterGorjetasDoBarbeiro(barbeiroID int) ([]domain.Gorjeta, error) {
+	gorjetas, err := s.repo.ObterGorjetasDoBarbeiro(barbeiroID)
+	if err != nil {
+		return nil, err
+	}
+	for i := range gorjetas {
+		gorjetas[i].QrCodeURL = fmt.Sprintf("https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=%s", url.QueryEscape(gorjetas[i].PixCopiaECola))
+	}
+	return gorjetas, nil
+}
+
+func (s *ClienteService) CriarGorjeta(agendamentoID *int, clienteID *int, barbeiroID int, valor float64) (*domain.Gorjeta, error) {
+	barbeiros, err := s.repo.ListarBarbeiros()
+	if err != nil {
+		return nil, err
+	}
+
+	var targetBarbeiro *domain.Barbeiro
+	for i := range barbeiros {
+		if barbeiros[i].ID == barbeiroID {
+			targetBarbeiro = &barbeiros[i]
+			break
+		}
+	}
+
+	if targetBarbeiro == nil {
+		return nil, errors.New("barbeiro não encontrado")
+	}
+
+	if targetBarbeiro.ChavePix == "" {
+		return nil, errors.New("o barbeiro não possui uma chave Pix cadastrada para receber gorjetas")
+	}
+
+	pixCopiaECola, err := GerarPayloadPix(targetBarbeiro.ChavePix, valor, targetBarbeiro.Nome, "Sao Paulo")
+	if err != nil {
+		return nil, fmt.Errorf("falha ao gerar payload Pix: %v", err)
+	}
+
+	g := &domain.Gorjeta{
+		AgendamentoID: agendamentoID,
+		ClienteID:     clienteID,
+		BarbeiroID:    barbeiroID,
+		Valor:         valor,
+		ChavePix:      targetBarbeiro.ChavePix,
+		PixCopiaECola: pixCopiaECola,
+		Status:        "Pendente",
+	}
+
+	id, err := s.repo.CriarGorjeta(g)
+	if err != nil {
+		return nil, err
+	}
+
+	g.ID = id
+	g.QrCodeURL = fmt.Sprintf("https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=%s", url.QueryEscape(pixCopiaECola))
+
+	return g, nil
+}
+
 
 
 
