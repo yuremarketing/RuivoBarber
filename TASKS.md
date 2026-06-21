@@ -136,7 +136,7 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 - [x] [Checkout] Task 38-D: Backend e Banco de Dados para Gorjeta Digital via Pix (Chave Pix e QR Code) (Issue #16)
 - [ ] [Review/Rewards] Task 38-E/40: Banco de Dados e Rota Unificada do "Último Corte" com flag de Avaliação Pendente (Issues #5 e #17)
 - [x] [PDV-DB] Task 61: Modelagem e Tabelas do Fluxo Financeiro (SQL) (Issue #18)
-- [ ] [PDV-BE] Task 62: Controle de Sessão de Caixa (Abertura/Fechamento) (Issue #19)
+- [x] [PDV-BE] Task 62: Controle de Sessão de Caixa (Abertura/Fechamento) (Issue #19)
 - [ ] [PDV-BE] Task 63: Processamento de Venda e Integração de Fidelidade (Issue #20)
 
 ### 🖥️ Frontend (Telas React)
