@@ -24,5 +24,6 @@ Tarefas finalizadas e prontas para validação:
 - [x] [TASK-042] [Lives] Integração com Transmissões de Lives ao Vivo (Backend & Frontend)
 - [x] [TASK-053] [Guilds] Ranking Semanal de Clãs (Leaderboard de Guildas) (Backend & Frontend)
 - [x] [TASK-046] [Guilds] Mural de Recados do Clã (Chat Interno) (Backend & Frontend)
+- [x] [TASK-057] [Fame] Galeria Histórica de Lendários (Hall of Fame) (Backend & Frontend)
+- [x] [TASK-050] [Store] Inventário do Cliente no Frontend (Bolsa de Itens/Poções) (Frontend)
 - [x] [TASK-038-BC] [Wizard/Profile] Banco de Dados e Backend para Perfis de Barbeiros (Foto e Avaliação Média) (Issue #15)
-
