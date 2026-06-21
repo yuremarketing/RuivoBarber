@@ -775,7 +775,7 @@ func (r *ClientePgRepository) ListarServicos() ([]domain.Servico, error) {
 }
 
 func (r *ClientePgRepository) ListarBarbeiros() ([]domain.Barbeiro, error) {
-	query := `SELECT id, nome, COALESCE(foto_url, ''), COALESCE(avaliacao_media, 5.00) FROM Usuarios WHERE cargo IN ('Barbeiro', 'Adm') ORDER BY nome ASC`
+	query := `SELECT id, nome, COALESCE(foto_url, ''), COALESCE(avaliacao_media, 5.00), COALESCE(chave_pix, '') FROM Usuarios WHERE cargo IN ('Barbeiro', 'Adm') ORDER BY nome ASC`
 	rows, err := r.db.Query(query)
 	if err != nil {
 		return nil, err
@@ -785,7 +785,7 @@ func (r *ClientePgRepository) ListarBarbeiros() ([]domain.Barbeiro, error) {
 	var barbeiros []domain.Barbeiro
 	for rows.Next() {
 		var b domain.Barbeiro
-		if err := rows.Scan(&b.ID, &b.Nome, &b.FotoURL, &b.AvaliacaoMedia); err != nil {
+		if err := rows.Scan(&b.ID, &b.Nome, &b.FotoURL, &b.AvaliacaoMedia, &b.ChavePix); err != nil {
 			return nil, err
 		}
 		barbeiros = append(barbeiros, b)
@@ -1293,6 +1293,71 @@ func (r *ClientePgRepository) RemoverBloqueioBarbeiro(barbeiroID int, data strin
 	_, err := r.db.Exec(query, barbeiroID, data)
 	return err
 }
+
+func (r *ClientePgRepository) SalvarChavePixBarbeiro(barbeiroID int, chavePix string) error {
+	query := `UPDATE Usuarios SET chave_pix = $1 WHERE id = $2`
+	_, err := r.db.Exec(query, chavePix, barbeiroID)
+	return err
+}
+
+func (r *ClientePgRepository) CriarGorjeta(g *domain.Gorjeta) (int, error) {
+	query := `
+		INSERT INTO Gorjetas (agendamentoid, clienteid, barbeiroid, valor, chavepix, pixcopiaecola, status)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id
+	`
+	var id int
+	err := r.db.QueryRow(query, g.AgendamentoID, g.ClienteID, g.BarbeiroID, g.Valor, g.ChavePix, g.PixCopiaECola, g.Status).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
+func (r *ClientePgRepository) ConfirmarPagamentoGorjeta(id int) error {
+	query := `UPDATE Gorjetas SET status = 'Pago', pagoem = NOW() WHERE id = $1`
+	_, err := r.db.Exec(query, id)
+	return err
+}
+
+func (r *ClientePgRepository) ObterGorjetasDoBarbeiro(barbeiroID int) ([]domain.Gorjeta, error) {
+	query := `
+		SELECT id, agendamentoid, clienteid, barbeiroid, valor, chavepix, pixcopiaecola, status, criadoem, pagoem
+		FROM Gorjetas
+		WHERE barbeiroid = $1
+		ORDER BY criadoem DESC
+	`
+	rows, err := r.db.Query(query, barbeiroID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var gorjetas []domain.Gorjeta
+	for rows.Next() {
+		var g domain.Gorjeta
+		var pagoEmNull sql.NullTime
+		var agendamentoIDNull, clienteIDNull sql.NullInt64
+		err := rows.Scan(&g.ID, &agendamentoIDNull, &clienteIDNull, &g.BarbeiroID, &g.Valor, &g.ChavePix, &g.PixCopiaECola, &g.Status, &g.CriadoEm, &pagoEmNull)
+		if err != nil {
+			return nil, err
+		}
+		if agendamentoIDNull.Valid {
+			v := int(agendamentoIDNull.Int64)
+			g.AgendamentoID = &v
+		}
+		if clienteIDNull.Valid {
+			v := int(clienteIDNull.Int64)
+			g.ClienteID = &v
+		}
+		if pagoEmNull.Valid {
+			g.PagoEm = &pagoEmNull.Time
+		}
+		gorjetas = append(gorjetas, g)
+	}
+	return gorjetas, nil
+}
+
 
 
 
