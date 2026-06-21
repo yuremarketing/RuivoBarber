@@ -106,6 +106,15 @@ export const removerBloqueioBarbeiro = (barbeiroId, data) => api.delete(`/barbei
 // Badges / Conquistas
 export const fetchMeusBadges = () => api.get('/badges/me')
 
+export const salvarChavePixBarbeiro = (barbeiroId, chavePix) => api.post(`/barbeiros/${barbeiroId}/chave-pix`, { chave_pix: chavePix })
+export const criarGorjeta = (barbeiroId, valor, agendamentoId = null) => api.post('/gorjetas', {
+  barbeiro_id: Number(barbeiroId),
+  valor: Number(valor),
+  agendamento_id: agendamentoId ? Number(agendamentoId) : null
+})
+export const confirmarPagamentoGorjeta = (gorjetaId) => api.post(`/gorjetas/${gorjetaId}/confirmar`)
+export const fetchGorjetasBarbeiro = (barbeiroId) => api.get(`/barbeiros/${barbeiroId}/gorjetas`)
+
 export const streamChat = async (message, history, onChunk, onError, onDone) => {
   try {
     const userSessionStr = localStorage.getItem('ruivobarber_user')

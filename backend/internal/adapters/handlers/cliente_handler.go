@@ -130,6 +130,10 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
 	api.Delete("/barbeiros/:id/bloqueios/:date", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.RemoverBloqueioBarbeiro)
 	api.Get("/agendamentos", JWTMiddleware, h.ListarAgendamentos)
 	api.Post("/agendamentos", JWTMiddleware, h.CriarAgendamento)
+	api.Post("/barbeiros/:id/chave-pix", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.SalvarChavePixBarbeiro)
+	api.Post("/gorjetas", JWTMiddleware, h.CriarGorjeta)
+	api.Post("/gorjetas/:id/confirmar", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.ConfirmarPagamentoGorjeta)
+	api.Get("/barbeiros/:id/gorjetas", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.ObterGorjetasDoBarbeiro)
 
 	api.Get("/configuracoes", JWTMiddleware, RequireCargo("Adm"), h.ObterConfiguracoes)
 	api.Post("/configuracoes", JWTMiddleware, RequireCargo("Adm"), h.SalvarConfiguracoes)
@@ -913,6 +917,90 @@ func (h *ClienteHandler) RemoverBloqueioBarbeiro(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"status": "sucesso"})
+}
+
+func (h *ClienteHandler) SalvarChavePixBarbeiro(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "id de barbeiro inválido"})
+	}
+
+	userId := c.Locals("userId").(int)
+	userCargo := c.Locals("userCargo").(string)
+	if userCargo != "Adm" && userId != id {
+		return c.Status(403).JSON(fiber.Map{"error": "Você só pode alterar sua própria chave Pix ou deve ser administrador"})
+	}
+
+	var req struct {
+		ChavePix string `json:"chave_pix"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "corpo inválido"})
+	}
+
+	err = h.service.SalvarChavePixBarbeiro(id, req.ChavePix)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"status": "sucesso", "chave_pix": req.ChavePix})
+}
+
+type CriarGorjetaRequest struct {
+	AgendamentoID *int    `json:"agendamento_id"`
+	BarbeiroID    int     `json:"barbeiro_id"`
+	Valor         float64 `json:"valor"`
+}
+
+func (h *ClienteHandler) CriarGorjeta(c *fiber.Ctx) error {
+	var req CriarGorjetaRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "corpo inválido"})
+	}
+
+	if req.BarbeiroID <= 0 || req.Valor <= 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "barbeiro_id e valor (maior que 0) são obrigatórios"})
+	}
+
+	clienteID := c.Locals("userId").(int)
+
+	g, err := h.service.CriarGorjeta(req.AgendamentoID, &clienteID, req.BarbeiroID, req.Valor)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(g)
+}
+
+func (h *ClienteHandler) ConfirmarPagamentoGorjeta(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
+	}
+
+	err = h.service.ConfirmarPagamentoGorjeta(id)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"status": "sucesso"})
+}
+
+func (h *ClienteHandler) ObterGorjetasDoBarbeiro(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
+	}
+
+	userId := c.Locals("userId").(int)
+	userCargo := c.Locals("userCargo").(string)
+	if userCargo != "Adm" && userId != id {
+		return c.Status(403).JSON(fiber.Map{"error": "Você só pode consultar suas próprias gorjetas ou deve ser administrador"})
+	}
+
+	gorjetas, err := h.service.ObterGorjetasDoBarbeiro(id)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(gorjetas)
 }
 
 

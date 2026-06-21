@@ -272,11 +272,27 @@ CREATE TABLE IF NOT EXISTS BarbeiroBloqueios (
     UNIQUE(BarbeiroID, DataBloqueio)
 );
 
--- Popular dados padrão de exemplo (Segunda a Sábado das 09:00 às 19:00) para todos os Barbeiros cadastrados
+-- Popular dados padrão de exemplo (Todos os dias das 09:00 às 19:00) para todos os Barbeiros cadastrados
 INSERT INTO BarbeiroDisponibilidade (BarbeiroID, DiaSemana, Trabalha, HoraInicio, HoraFim)
 SELECT u.ID, d.dia, TRUE, '09:00', '19:00'
 FROM Usuarios u
-CROSS JOIN (SELECT generate_series(1, 6) AS dia) d
+CROSS JOIN (SELECT generate_series(0, 6) AS dia) d
 WHERE u.Cargo IN ('Barbeiro', 'Adm')
 ON CONFLICT DO NOTHING;
+
+ALTER TABLE Usuarios ADD COLUMN IF NOT EXISTS chave_pix VARCHAR(150) DEFAULT '';
+
+CREATE TABLE IF NOT EXISTS Gorjetas (
+    ID SERIAL PRIMARY KEY,
+    AgendamentoID INT REFERENCES Agendamentos(ID) ON DELETE SET NULL,
+    ClienteID INT REFERENCES Usuarios(ID) ON DELETE SET NULL,
+    BarbeiroID INT REFERENCES Usuarios(ID) ON DELETE CASCADE,
+    Valor DECIMAL(8,2) NOT NULL CHECK (Valor > 0),
+    ChavePix VARCHAR(150) NOT NULL,
+    PixCopiaECola TEXT NOT NULL,
+    Status VARCHAR(20) DEFAULT 'Pendente' CHECK (Status IN ('Pendente', 'Pago', 'Cancelado')),
+    CriadoEm TIMESTAMP DEFAULT NOW(),
+    PagoEm TIMESTAMP
+);
+
 
