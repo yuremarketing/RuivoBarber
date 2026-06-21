@@ -11,6 +11,14 @@ const DIAS_SEMANA_NOMES = [
   'Sábado'
 ]
 
+const getLocalDateStr = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export default function AgendaConfigPage() {
   const userSessionStr = localStorage.getItem('ruivobarber_user')
   const session = userSessionStr ? JSON.parse(userSessionStr) : null
@@ -289,7 +297,7 @@ export default function AgendaConfigPage() {
                     type="date"
                     className="form-input"
                     value={novaData}
-                    min={new Date().toISOString().split('T')[0]}
+                    min={getLocalDateStr()}
                     onChange={(e) => setNovaData(e.target.value)}
                     required
                   />
