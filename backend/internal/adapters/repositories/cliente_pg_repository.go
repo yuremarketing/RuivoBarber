@@ -1208,11 +1208,11 @@ func (r *ClientePgRepository) ObterDisponibilidadeBarbeiro(barbeiroID int) ([]do
 		disps = append(disps, d)
 	}
 
-	// Se não houver registros, criar os padrões (1 a 6 como trabalha, 0 como não trabalha)
+	// Se não houver registros, criar os padrões (todos os dias trabalham por padrão)
 	if len(disps) == 0 {
 		disps = make([]domain.BarbeiroDisponibilidade, 7)
 		for i := 0; i < 7; i++ {
-			trabalha := i != 0 // Segunda a Sábado trabalha, Domingo não
+			trabalha := true // Todos os dias trabalham por padrão para facilidade de testes
 			disps[i] = domain.BarbeiroDisponibilidade{
 				BarbeiroID: barbeiroID,
 				DiaSemana:  i,
