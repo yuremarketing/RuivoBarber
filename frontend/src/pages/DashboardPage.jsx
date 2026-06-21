@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react'
 import PlayerCard from '../components/PlayerCard.jsx'
 import RpgProgressBar from '../components/RpgProgressBar.jsx'
 import RedeemCouponManager from '../components/RedeemCouponManager.jsx'
-import { buscarCliente, listarClientes, fetchTemporadaAtiva } from '../services/api.js'
+import BadgeShowcase from '../components/BadgeShowcase.jsx'
+import { buscarCliente, listarClientes, fetchTemporadaAtiva, fetchMeusBadges } from '../services/api.js'
 
 
 const stats = [
@@ -26,6 +27,8 @@ export default function DashboardPage() {
   const [ranking, setRanking] = useState([])
   const [loading, setLoading] = useState(false)
   const [temporadaAtiva, setTemporadaAtiva] = useState(null)
+  const [badges, setBadges] = useState([])
+  const [loadingBadges, setLoadingBadges] = useState(false)
  
   const isClient = user.cargo === 'Cliente'
   const hoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -67,14 +70,18 @@ export default function DashboardPage() {
   useEffect(() => {
     loadRealTimeClientData()
     loadRanking()
-    
+
     fetchTemporadaAtiva()
-      .then(res => {
-        setTemporadaAtiva(res.data)
-      })
-      .catch(err => {
-        console.log('Sem temporada ativa cadastrada ou erro:', err)
-      })
+      .then(res => setTemporadaAtiva(res.data))
+      .catch(err => console.log('Sem temporada ativa cadastrada ou erro:', err))
+
+    if (isClient) {
+      setLoadingBadges(true)
+      fetchMeusBadges()
+        .then(res => setBadges(Array.isArray(res.data) ? res.data : []))
+        .catch(err => console.error('Erro ao buscar badges:', err))
+        .finally(() => setLoadingBadges(false))
+    }
   }, [])
 
 
@@ -150,6 +157,9 @@ export default function DashboardPage() {
                 ℹ️ Nenhuma temporada ativa no momento. Aproveite para subir de nível e acumular XP base!
               </div>
             )}
+
+            {/* Vitrine de Conquistas */}
+            <BadgeShowcase badges={badges} loading={loadingBadges} />
           </div>
         </div>
 
