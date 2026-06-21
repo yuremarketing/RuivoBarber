@@ -635,6 +635,10 @@ func main() {
     liveService := services.NewLiveService(liveRepo)
     liveHandler := handlers.NewLiveHandler(liveService)
 
+    pdvRepo := repositories.NewPdvPgRepository(db)
+    pdvService := services.NewPdvService(pdvRepo)
+    pdvHandler := handlers.NewPdvHandler(pdvService)
+
     app := fiber.New(fiber.Config{AppName: "RuivoBarber API v1.0"})
     app.Use(logger.New())
     app.Use(cors.New())
@@ -656,6 +660,8 @@ func main() {
     raidHandler.RegisterRoutes(app)
     queueHandler.RegisterRoutes(app)
     liveHandler.RegisterRoutes(app)
+    pdvHandler.RegisterRoutes(app)
+
 
     port := os.Getenv("PORT")
     if port == "" {
