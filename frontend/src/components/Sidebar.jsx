@@ -18,6 +18,8 @@ export default function Sidebar() {
         { path: '/dashboard', icon: '⚔️', label: 'Meu RPG' },
         { path: '/cupons', icon: '🎟️', label: 'Meus Cupons' },
         { path: '/temporadas', icon: '⏳', label: 'Temporadas RPG' },
+        { path: '/clas', icon: '🛡️', label: 'Clãs & Guildas' },
+        { path: '/lives', icon: '📺', label: 'Assista ao Vivo' },
         { path: '/configuracoes', icon: '⚙️', label: 'Minha Conta' },
       ]
     }
@@ -28,6 +30,7 @@ export default function Sidebar() {
         { path: '/dashboard', icon: '📊', label: 'Dashboard' },
         { path: '/agendamentos', icon: '📅', label: 'Agendamentos' },
         { path: '/clientes', icon: '👥', label: 'Clientes' },
+        { path: '/lives', icon: '📺', label: 'Transmissões ao Vivo' },
       ]
     }
 
@@ -43,6 +46,7 @@ export default function Sidebar() {
       { section: 'Sistema' },
       { path: '/niveis', icon: '⚔️', label: 'Níveis RPG' },
       { path: '/temporadas', icon: '⏳', label: 'Temporadas RPG' },
+      { path: '/lives', icon: '📺', label: 'Lives & Transmissões' },
       { path: '/configuracoes', icon: '⚙️', label: 'Configurações' },
     ]
   }

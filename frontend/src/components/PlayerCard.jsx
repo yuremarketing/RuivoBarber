@@ -1,6 +1,6 @@
 import React from 'react'
 
-function PlayerCard({ nome = 'Cliente', nivel = 'Corte Iniciante', xp = 0 }) {
+function PlayerCard({ nome = 'Cliente', nivel = 'Corte Iniciante', xp = 0, avatarUrl = '' }) {
   const getPatenteInfo = (nivelNome) => {
     const nomeNormalizado = (nivelNome || '').trim()
     switch (nomeNormalizado) {
@@ -27,9 +27,13 @@ function PlayerCard({ nome = 'Cliente', nivel = 'Corte Iniciante', xp = 0 }) {
       <div className="avatar-rpg-container">
         {crown && <div className="badge-crown-rpg">👑</div>}
         <div className={`avatar-rpg-wrapper ${frameClass}`}>
-          <div className="avatar-rpg-placeholder">
-            {iniciais}
-          </div>
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={nome} className="avatar-rpg-image" />
+          ) : (
+            <div className="avatar-rpg-placeholder">
+              {iniciais}
+            </div>
+          )}
         </div>
       </div>
 

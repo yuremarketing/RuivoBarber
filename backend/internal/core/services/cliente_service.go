@@ -114,7 +114,7 @@ func (s *ClienteService) CadastrarCliente(cliente *domain.Cliente, password stri
 	return s.repo.Save(cliente, string(hashedBytes))
 }
 
-func (s *ClienteService) AtualizarPerfil(id int, nome, login, senha string) error {
+func (s *ClienteService) AtualizarPerfil(id int, nome, login, senha, avatarUrl string) error {
 	if login != "" {
 		cExistente, err := s.repo.FindByLogin(login)
 		if err == nil && cExistente.ID != id {
@@ -133,6 +133,8 @@ func (s *ClienteService) AtualizarPerfil(id int, nome, login, senha string) erro
 	if login != "" {
 		cliente.Login = login
 	}
+	
+	cliente.AvatarURL = avatarUrl
 
 	var hashedSenha string
 	if senha != "" {
