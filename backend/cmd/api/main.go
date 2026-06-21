@@ -375,6 +375,29 @@ func main() {
 		log.Println("✅ Migração automática: tabelas de Disponibilidade e Bloqueios de Barbeiros garantidas no banco")
 	}
 
+	// Migração automática para Gorjetas Digitais via Pix
+	_, err = db.Exec(`
+		ALTER TABLE Usuarios ADD COLUMN IF NOT EXISTS chave_pix VARCHAR(150) DEFAULT '';
+
+		CREATE TABLE IF NOT EXISTS Gorjetas (
+			ID SERIAL PRIMARY KEY,
+			AgendamentoID INT REFERENCES Agendamentos(ID) ON DELETE SET NULL,
+			ClienteID INT REFERENCES Usuarios(ID) ON DELETE SET NULL,
+			BarbeiroID INT REFERENCES Usuarios(ID) ON DELETE CASCADE,
+			Valor DECIMAL(8,2) NOT NULL CHECK (Valor > 0),
+			ChavePix VARCHAR(150) NOT NULL,
+			PixCopiaECola TEXT NOT NULL,
+			Status VARCHAR(20) DEFAULT 'Pendente' CHECK (Status IN ('Pendente', 'Pago', 'Cancelado')),
+			CriadoEm TIMESTAMP DEFAULT NOW(),
+			PagoEm TIMESTAMP
+		);
+	`)
+	if err != nil {
+		log.Printf("[DB] Erro ao executar migração automática para Gorjetas Digitais: %v", err)
+	} else {
+		log.Println("✅ Migração automática: tabelas e colunas de Gorjetas e Pix garantidas no banco")
+	}
+
     // Atualizar senha do admin se for o placeholder ou plain-text legado para permitir login seguro com bcrypt
     var adminCount int
     err = db.QueryRow("SELECT COUNT(*) FROM Usuarios WHERE Login = 'admin'").Scan(&adminCount)
