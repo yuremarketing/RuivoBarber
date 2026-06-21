@@ -1,6 +1,6 @@
-# Diretrizes de Governança de Backlog — Petwork
+# Diretrizes de Governança de Backlog — RuivoBarber
 
-Este documento estabelece o processo oficial e obrigatório para gerenciamento de tarefas, numeração de identificadores e rastreabilidade no projeto Petwork.
+Este documento estabelece o processo oficial e obrigatório para gerenciamento de tarefas, numeração de identificadores e rastreabilidade no projeto RuivoBarber.
 
 ---
 

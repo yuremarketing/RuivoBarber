@@ -11,6 +11,8 @@ import CuponsPage from './pages/CuponsPage.jsx'
 import NiveisPage from './pages/NiveisPage.jsx'
 import ConfiguracoesPage from './pages/ConfiguracoesPage.jsx'
 import TemporadasPage from './pages/TemporadasPage.jsx'
+import LivesPage from './pages/LivesPage.jsx'
+import ClasPage from './pages/ClasPage.jsx'
 
 
 export default function App() {
@@ -31,6 +33,8 @@ export default function App() {
           <Route path="/niveis" element={<NiveisPage />} />
           <Route path="/configuracoes" element={<ConfiguracoesPage />} />
           <Route path="/temporadas" element={<TemporadasPage />} />
+          <Route path="/lives" element={<LivesPage />} />
+          <Route path="/clas" element={<ClasPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </main>

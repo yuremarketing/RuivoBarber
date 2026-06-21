@@ -95,7 +95,7 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 
 ---
 
-## 🎮 8. Novos Recursos de Engajamento e Gestão (Priorizados)
+## 🎮 8. Novos Recursos de Engajamento e Gestão Concluídos
 - [x] [Seasons] Task 37: Sistema de Temporadas RPG (Seasons)
   - [x] Backend: Domínio, repositório, serviço e endpoints para Temporadas.
   - [x] Frontend: Painel de controle no Adm, Alerta de temporada inativa e widget no painel do Cliente.
@@ -105,55 +105,60 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 - [x] [AI-Chatbot] Task 39: Integração de Inteligência Artificial e Chatbot com WhatsApp/Webhooks
   - [x] Backend: Criar receiver de webhook para mensagens de WhatsApp, repassar para IA com histórico e responder via API do WhatsApp.
   - [x] Frontend: Melhorar tela de Configurações no painel do Administrador para salvar/testar as credenciais da API do WhatsApp e a URL do Webhook.
-- [ ] [Rewards] Task 40: Painel de Conquistas e Histórico "Último Corte"
-  - [ ] Backend: Buscar dados e estatísticas do último atendimento finalizado do cliente.
-  - [ ] Frontend: Exibição da árvore de patentes RPG e card "Último Corte" no portal do cliente.
-- [ ] [Queue] Task 41: Controle de Presença (Check-in/Check-out) e Tempo Médio
-  - [ ] Backend: Gerenciamento do status "Em Cadeira" e cálculo automático de tempo médio do corte.
-  - [ ] Frontend: Painel operacional administrativo para controle físico da fila da barbearia.
-- [ ] [Lives] Task 42: Integração com Transmissões de Lives ao Vivo
-  - [ ] Backend: Rota para salvar e ativar links de transmissões de lives (YouTube, Facebook, Twitch).
-  - [ ] Frontend: Player de vídeo incorporado dinamicamente para os clientes assistirem a transmissões ao vivo.
+- [x] [Guilds] Task 43: Modelagem e Tabelas de Clãs/Guildas
+  - [x] Backend: Criar esquema SQL e tabelas de Guildas e membros associados no banco de dados.
+- [x] [Avatar] Task 58: Customização do Card de Jogador (Foto do Perfil, Upload de Imagem e Avatares RPG)
+  - [x] Frontend: Implementar compressão client-side (máx 50KB, .webp) usando API Canvas para foto de perfil do cliente.
+  - [x] Frontend/Backend: Disponibilizar biblioteca de avatares RPG pré-carregados (presets) leves e salvar apenas URL da imagem no banco de dados.
+- [x] [Guilds] Task 44: Rota de Criação e Convite para Clãs (Backend)
+  - [x] Backend: Implementar criação de clãs, relacionamentos de membros e rota de convite.
+- [x] [Guilds] Task 45: Lógica de Subida de Nível de Clãs (XP Coletivo) (Backend)
+  - [x] Backend: Implementar acumulação de XP coletivo (+1 por corte) e subida de nível de clãs.
+- [x] [Badges] Task 51: Sistema de Conquistas Individuais por Badges (Medalhas) (Backend)
+  - [x] Backend: Triggers de conquistas e bônus de XP no banco para os primeiros marcos (cortes/nível).
+- [x] [Store] Task 49: Loja de Itens Virtuais RPG (Troca de XP por itens do perfil) (Backend)
+  - [x] Backend: Permitir resgatar cosméticos e molduras para o PlayerCard usando moedas/XP.
 
 ---
 
-## 🛡️ 9. RPG de Fidelidade 2.0: Guildas, Loja e Missões Semanais (Expansão)
-- [ ] [Guilds] Task 43: Modelagem e Tabelas de Clãs/Guildas
-  - [ ] Backend: Criar esquema SQL e tabelas de Guildas e membros associados no banco de dados.
-- [ ] [Guilds] Task 44: Rota de Criação e Convite para Clãs
-  - [ ] Backend/Frontend: Fluxo para clientes criarem suas guildas e convidarem amigos do sistema.
-- [ ] [Guilds] Task 45: Lógica de Subida de Nível de Clãs (XP Coletivo)
-  - [ ] Backend: Calcular o XP total do clã baseado nos cortes individuais de seus membros.
-- [ ] [Guilds] Task 46: Mural de Recados do Clã (Chat Interno)
-  - [ ] Frontend: Criar aba com feed ou mural de mensagens para interação exclusiva dos membros do clã.
-- [ ] [Guilds] Task 47: Sistema de Missões Semanais do Clã (Quests de Guilda)
-  - [ ] Backend: Cron para resetar missões de clã semanalmente (ex: "Clã realiza 10 cortes em conjunto").
-- [ ] [Guilds] Task 48: Eventos Cooperativos de "Raid" (Meta Comunitária de Cortes)
-  - [ ] Backend/Frontend: Evento global temporário (ex: "Navalha Suprema: 500 barbas feitas este mês").
-- [ ] [Store] Task 49: Loja de Itens Virtuais RPG (Troca de XP por itens do perfil)
-  - [ ] Backend/Frontend: Permitir resgatar cosméticos e molduras para o PlayerCard usando moedas/XP.
-- [ ] [Store] Task 50: Inventário do Cliente no Frontend (Bolsa de Itens/Poções)
-  - [ ] Frontend: Exibição visual de itens resgatados, como poções que aceleram ganho de XP.
-- [ ] [Badges] Task 51: Sistema de Conquistas Individuais por Badges (Medalhas)
-  - [ ] Backend: Triggers de conquistas específicas no banco (ex: "Fez barba 5 vezes no mês").
+## 🛡️ 9. Backlog Reorganizado e Priorizado
+
+### 🕒 Correções Críticas
+- [ ] [Fix] Task 38-A: Ajuste de Fuso Horário de Brasília (America/Sao_Paulo) no Backend e Frontend (Issue #13)
+
+### ⚙️ Backend (Lógica Go e Banco de Dados)
+- [x] [Guilds] Task 47: Sistema de Missões Semanais do Clã (Quests de Guilda) (Backend)
+- [x] [Loyalty] Task 54: Recompensa por Acesso Diário (Daily Streak / Login Diário)
+- [x] [Guilds] Task 48: Eventos Cooperativos de "Raid" (Meta Comunitária de Cortes) (Backend)
+- [x] [Ops] Task 56: Notificação Automática de Conquistas e Nível via WhatsApp
+- [x] [Lives] Task 42: Integração com Transmissões de Lives ao Vivo (Backend & Frontend)
+- [x] [Wizard/Profile] Task 38-BC: Banco de Dados e Backend para Perfis de Barbeiros (Foto e Avaliação Média) (Issue #15)
+- [ ] [Checkout] Task 38-D: Backend e Banco de Dados para Gorjeta Digital via Pix (Chave Pix e QR Code) (Issue #16)
+- [ ] [Review/Rewards] Task 38-E/40: Banco de Dados e Rota Unificada do "Último Corte" com flag de Avaliação Pendente (Issues #5 e #17)
+- [ ] [PDV-DB] Task 61: Modelagem e Tabelas do Fluxo Financeiro (SQL) (Issue #18)
+- [ ] [PDV-BE] Task 62: Controle de Sessão de Caixa (Abertura/Fechamento) (Issue #19)
+- [ ] [PDV-BE] Task 63: Processamento de Venda e Integração de Fidelidade (Issue #20)
+
+### 🖥️ Frontend (Telas React)
+- [ ] [Wizard] Task 38-BC-FE: Wizard de Agendamento Passo a Passo (BookingWizard) com Fotos e Estrelas Reais (Issue #14/15)
+- [ ] [Checkout] Task 38-D-FE: Painel do Admin para Cadastrar Chave Pix e Modal de Gorjeta para Clientes (Issue #16)
+- [ ] [Review/Rewards] Task 38-E/40-FE: Modal de Avaliação Pós-Atendimento e Card do "Último Corte" no Portal do Cliente (Issues #5 e #17)
+- [ ] [PDV-FE] Task 64: Tela de Abertura/Fechamento e Painel do Caixa (Issue #21)
+- [ ] [PDV-FE] Task 65: Tela de Checkout / Caixa Registradora (Interface PDV) (Issue #22)
+- [ ] [PDV-FE/BE] Task 66: Relatório Financeiro e Comissões dos Barbeiros (Issue #23)
+- [ ] [Queue] Task 41: Controle de Presença (Check-in/Check-out) e Tempo Médio
+  - [x] Backend: Gerenciamento do status "Em Cadeira" e cálculo automático de tempo médio do corte.
+  - [ ] Frontend: Painel operacional administrativo para controle físico da fila da barbearia (Issue #6)
 - [ ] [Badges] Task 52: Vitrine de Badges no PlayerCard do Cliente
-  - [ ] Frontend: Renderizar as medalhas desbloqueadas com efeitos visuais no perfil do cliente.
-- [ ] [Guilds] Task 53: Ranking Semanal de Clãs (Leaderboard de Guildas)
-  - [ ] Frontend: Exibir tabela de classificação comparando os níveis e XP acumulado de cada clã.
-- [ ] [Loyalty] Task 54: Recompensa por Acesso Diário (Daily Streak / Login Diário)
-  - [ ] Backend/Frontend: Bonificação de pequenos pontos de XP por check-in de login diário na plataforma.
+- [ ] [Store] Task 50: Inventário do Cliente no Frontend (Bolsa de Itens/Poções)
+- [ ] [Fame] Task 57: Galeria Histórica de Lendários (Hall of Fame)
+
+### 🎨 UX (Experiência, Animações e Mídias)
 - [ ] [UX-Audio] Task 55: Efeitos Sonoros e Efeitos Visuais de Level Up no Frontend
   - [ ] Frontend: Integrar transições com sons arcade e confetes ao subir de nível ou resgatar cupons.
-- [ ] [Ops] Task 56: Notificação Automática de Conquistas e Nível via WhatsApp
-  - [ ] Backend: Integração do chat de IA para parabenizar o cliente via WhatsApp ao atingir patentes lendárias.
-- [ ] [Fame] Task 57: Galeria Histórica de Lendários (Hall of Fame)
-  - [ ] Frontend: Página listando os maiores pontuadores históricos das temporadas passadas da barbearia.
-- [ ] [Avatar] Task 58: Customização do Card de Jogador (Foto do Perfil, Upload de Imagem e Avatares RPG)
-  - [ ] Frontend: Implementar compressão client-side (máx 50KB, .webp) usando API Canvas para foto de perfil do cliente.
-  - [ ] Frontend/Backend: Disponibilizar biblioteca de avatares RPG pré-carregados (presets) leves e salvar apenas URL da imagem no banco de dados.
 
-
-
+### 🚀 DevOps / Infraestrutura (CI/CD)
+- [ ] [DevOps] Task 60: Implantação do Harness.io (CI/CD)
 
 
 

@@ -6,14 +6,14 @@ import urllib.error
 import os
 
 TOKEN = os.getenv("GITHUB_TOKEN", "")
-PROJECT_ID = "PVT_kwHOAEqFx84Baw1O"
-STATUS_FIELD_ID = "PVTSSF_lAHOAEqFx84Baw1OzhVmDmc"
+PROJECT_ID = "PVT_kwHOAEqFx84BaAE4"
+STATUS_FIELD_ID = "PVTSSF_lAHOAEqFx84BaAE4zhU6sss"
 DONE_OPTION_ID = "98236657"
 
 DONE_TASKS = [
     "[TASK-001] Setup inicial das pastas e fluxo de trabalho",
     "[TASK-002] Verificar se o MD contempla casos de uso para cada funcionalidade",
-    "[TASK-003] Analisar e Desenhar Engenharia de IA e RAG no Petwork",
+    "[TASK-003] Analisar e Desenhar Engenharia de IA e RAG no RuivoBarber",
     "[TASK-004] Instalar dependências de IA e atualizar o Prisma Schema com pgvector",
     "[TASK-005] Centralização do getTenantId() e refatoração dos imports",
     "[TASK-006] Implementar o Embedder e o Retriever (RAG) com pgvector",
