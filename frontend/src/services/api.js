@@ -103,6 +103,8 @@ export const fetchBloqueiosBarbeiro = (barbeiroId) => api.get(`/barbeiros/${barb
 export const adicionarBloqueioBarbeiro = (barbeiroId, data, motivo) => api.post(`/barbeiros/${barbeiroId}/bloqueios`, { data, motivo })
 export const removerBloqueioBarbeiro = (barbeiroId, data) => api.delete(`/barbeiros/${barbeiroId}/bloqueios/${data}`)
 
+// Badges / Conquistas
+export const fetchMeusBadges = () => api.get('/badges/me')
 
 export const streamChat = async (message, history, onChunk, onError, onDone) => {
   try {
