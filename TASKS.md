@@ -124,7 +124,7 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 ## 🛡️ 9. Backlog Reorganizado e Priorizado
 
 ### 🕒 Correções Críticas
-- [ ] [Fix] Task 38-A: Ajuste de Fuso Horário de Brasília (America/Sao_Paulo) no Backend e Frontend (Issue #13)
+- [x] [Fix] Task 38-A: Ajuste de Fuso Horário de Brasília (America/Sao_Paulo) no Backend e Frontend (Issue #13)
 
 ### ⚙️ Backend (Lógica Go e Banco de Dados)
 - [x] [Guilds] Task 47: Sistema de Missões Semanais do Clã (Quests de Guilda) (Backend)
