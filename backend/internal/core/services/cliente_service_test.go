@@ -13,6 +13,11 @@ type mockClienteRepository struct {
 	agendamentos     []domain.Agendamento
 	disponibilidades []domain.BarbeiroDisponibilidade
 	bloqueios        []domain.BarbeiroBloqueio
+	ultimoCorte      *domain.Agendamento
+	avaliacao        *domain.Avaliacao
+	agendamento      *domain.Agendamento
+	avaliacaoSalva   *domain.Avaliacao
+	recalculado      bool
 }
 
 func (m *mockClienteRepository) BuscarServico(id int) (*domain.Servico, error) {
@@ -40,6 +45,28 @@ func (m *mockClienteRepository) ListarBarbeiros() ([]domain.Barbeiro, error) {
 
 func (m *mockClienteRepository) CriarGorjeta(g *domain.Gorjeta) (int, error) {
 	return 100, nil
+}
+
+func (m *mockClienteRepository) ObterUltimoCorteConcluido(clienteID int) (*domain.Agendamento, error) {
+	return m.ultimoCorte, nil
+}
+
+func (m *mockClienteRepository) BuscarAvaliacaoPorAgendamento(agendamentoID int) (*domain.Avaliacao, error) {
+	return m.avaliacao, nil
+}
+
+func (m *mockClienteRepository) CriarAvaliacao(a *domain.Avaliacao) error {
+	m.avaliacaoSalva = a
+	return nil
+}
+
+func (m *mockClienteRepository) RecalcularAvaliacaoMediaBarbeiro(barbeiroID int) error {
+	m.recalculado = true
+	return nil
+}
+
+func (m *mockClienteRepository) BuscarAgendamentoPorID(id int) (*domain.Agendamento, error) {
+	return m.agendamento, nil
 }
 
 func TestObterAgendaBarbeiro(t *testing.T) {
@@ -156,5 +183,102 @@ func TestCriarGorjeta(t *testing.T) {
 	}
 	if g.QrCodeURL == "" {
 		t.Error("esperava URL do QR Code gerada")
+	}
+}
+
+func TestAvaliacoes(t *testing.T) {
+	repo := &mockClienteRepository{}
+	service := NewClienteService(repo, nil, nil)
+
+	// Teste 1: Obter último corte quando não há cortes concluídos
+	repo.ultimoCorte = nil
+	res, err := service.ObterUltimoCorteComStatusAvaliacao(1)
+	if err != nil {
+		t.Fatalf("erro inesperado: %v", err)
+	}
+	if res != nil {
+		t.Errorf("esperava retorno nil, obteve %+v", res)
+	}
+
+	// Teste 2: Obter último corte com avaliação pendente
+	corte := &domain.Agendamento{
+		ID:           12,
+		ClienteID:    1,
+		BarbeiroID:   2,
+		BarbeiroNome: "Vitor Navalha",
+		ServicoNome:  "Corte Simples",
+		Status:       "Concluido",
+	}
+	repo.ultimoCorte = corte
+	repo.avaliacao = nil
+
+	res, err = service.ObterUltimoCorteComStatusAvaliacao(1)
+	if err != nil {
+		t.Fatalf("erro inesperado: %v", err)
+	}
+	if res == nil {
+		t.Fatal("esperava resposta não nula")
+	}
+	if !res.AvaliacaoPendente {
+		t.Error("esperava avaliacao_pendente = true")
+	}
+	if res.AgendamentoID != 12 {
+		t.Errorf("esperava agendamento_id 12, obteve %d", res.AgendamentoID)
+	}
+
+	// Teste 3: Obter último corte com avaliação já feita
+	repo.avaliacao = &domain.Avaliacao{ID: 1, Nota: 5}
+	res, err = service.ObterUltimoCorteComStatusAvaliacao(1)
+	if err != nil {
+		t.Fatalf("erro inesperado: %v", err)
+	}
+	if res == nil {
+		t.Fatal("esperava resposta não nula")
+	}
+	if res.AvaliacaoPendente {
+		t.Error("esperava avaliacao_pendente = false")
+	}
+
+	// Teste 4: Salvar avaliação com nota inválida
+	err = service.SalvarAvaliacao(12, 1, 6, "Excelente")
+	if err == nil || err.Error() != "a nota deve ser entre 1 e 5" {
+		t.Errorf("esperava erro de nota inválida, obteve %v", err)
+	}
+
+	// Teste 5: Salvar avaliação com agendamento que não pertence ao cliente
+	repo.agendamento = &domain.Agendamento{
+		ID:         12,
+		ClienteID:  99, // Outro cliente
+		BarbeiroID: 2,
+		Status:     "Concluido",
+	}
+	err = service.SalvarAvaliacao(12, 1, 5, "Excelente")
+	if err == nil || err.Error() != "este agendamento não pertence a você" {
+		t.Errorf("esperava erro de propriedade do agendamento, obteve %v", err)
+	}
+
+	// Teste 6: Salvar avaliação com sucesso
+	repo.agendamento = &domain.Agendamento{
+		ID:         12,
+		ClienteID:  1,
+		BarbeiroID: 2,
+		Status:     "Concluido",
+	}
+	repo.avaliacao = nil
+	repo.recalculado = false
+
+	err = service.SalvarAvaliacao(12, 1, 5, "Lendário!")
+	if err != nil {
+		t.Fatalf("erro inesperado ao salvar avaliação: %v", err)
+	}
+
+	if repo.avaliacaoSalva == nil {
+		t.Fatal("esperava avaliação salva no repositório")
+	}
+	if repo.avaliacaoSalva.Nota != 5 || repo.avaliacaoSalva.Comentario != "Lendário!" {
+		t.Errorf("valores incorretos na avaliação salva: %+v", repo.avaliacaoSalva)
+	}
+	if !repo.recalculado {
+		t.Error("esperava recálculo da média do barbeiro")
 	}
 }

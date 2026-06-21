@@ -134,6 +134,8 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
 	api.Post("/gorjetas", JWTMiddleware, h.CriarGorjeta)
 	api.Post("/gorjetas/:id/confirmar", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.ConfirmarPagamentoGorjeta)
 	api.Get("/barbeiros/:id/gorjetas", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.ObterGorjetasDoBarbeiro)
+	api.Get("/clientes/me/ultimo-corte", JWTMiddleware, h.ObterUltimoCorte)
+	api.Post("/atendimentos/:id/avaliar", JWTMiddleware, h.AvaliarAtendimento)
 
 	api.Get("/configuracoes", JWTMiddleware, RequireCargo("Adm"), h.ObterConfiguracoes)
 	api.Post("/configuracoes", JWTMiddleware, RequireCargo("Adm"), h.SalvarConfiguracoes)
@@ -1001,6 +1003,52 @@ func (h *ClienteHandler) ObterGorjetasDoBarbeiro(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(gorjetas)
+}
+
+func (h *ClienteHandler) ObterUltimoCorte(c *fiber.Ctx) error {
+	if err := infra.Wait(context.Background()); err != nil {
+		return c.Status(429).JSON(fiber.Map{"error": "Too Many Requests"})
+	}
+
+	clienteID := c.Locals("userId").(int)
+	res, err := h.service.ObterUltimoCorteComStatusAvaliacao(clienteID)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	if res == nil {
+		return c.JSON(nil)
+	}
+	return c.JSON(res)
+}
+
+type AvaliarAtendimentoRequest struct {
+	Nota       int    `json:"nota"`
+	Comentario string `json:"comentario"`
+}
+
+func (h *ClienteHandler) AvaliarAtendimento(c *fiber.Ctx) error {
+	if err := infra.Wait(context.Background()); err != nil {
+		return c.Status(429).JSON(fiber.Map{"error": "Too Many Requests"})
+	}
+
+	agendamentoID, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "id de agendamento inválido"})
+	}
+
+	var req AvaliarAtendimentoRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "corpo da requisição inválido"})
+	}
+
+	clienteID := c.Locals("userId").(int)
+
+	err = h.service.SalvarAvaliacao(agendamentoID, clienteID, req.Nota, req.Comentario)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"status": "sucesso"})
 }
 
 

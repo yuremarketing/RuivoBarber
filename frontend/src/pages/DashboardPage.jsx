@@ -3,7 +3,8 @@ import PlayerCard from '../components/PlayerCard.jsx'
 import RpgProgressBar from '../components/RpgProgressBar.jsx'
 import RedeemCouponManager from '../components/RedeemCouponManager.jsx'
 import BadgeShowcase from '../components/BadgeShowcase.jsx'
-import { buscarCliente, listarClientes, fetchTemporadaAtiva, fetchMeusBadges } from '../services/api.js'
+import AvaliacaoModal from '../components/AvaliacaoModal.jsx'
+import { buscarCliente, listarClientes, fetchTemporadaAtiva, fetchMeusBadges, fetchUltimoCorte } from '../services/api.js'
 
 
 const stats = [
@@ -29,6 +30,8 @@ export default function DashboardPage() {
   const [temporadaAtiva, setTemporadaAtiva] = useState(null)
   const [badges, setBadges] = useState([])
   const [loadingBadges, setLoadingBadges] = useState(false)
+  const [ultimoCorte, setUltimoCorte] = useState(null)
+  const [showAvaliacaoModal, setShowAvaliacaoModal] = useState(false)
  
   const isClient = user.cargo === 'Cliente'
   const hoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -66,10 +69,21 @@ export default function DashboardPage() {
       setLoading(false)
     }
   }
+
+  const loadUltimoCorte = async () => {
+    if (!isClient) return
+    try {
+      const res = await fetchUltimoCorte()
+      setUltimoCorte(res.data)
+    } catch (err) {
+      console.error('Erro ao carregar último corte:', err)
+    }
+  }
  
   useEffect(() => {
     loadRealTimeClientData()
     loadRanking()
+    loadUltimoCorte()
 
     fetchTemporadaAtiva()
       .then(res => setTemporadaAtiva(res.data))
@@ -106,6 +120,39 @@ export default function DashboardPage() {
           <h2>⚔️ Bem-vindo ao RuivoBarber RPG!</h2>
           <p>Acompanhe sua jornada, ganhe XP nos atendimentos e resgate descontos lendários.</p>
         </div>
+
+        {ultimoCorte && ultimoCorte.avaliacao_pendente && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(245,166,35,0.1), rgba(245,166,35,0.05))',
+            border: '1px dashed var(--gold)',
+            borderRadius: '12px',
+            padding: '1.25rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '1rem',
+            flexWrap: 'wrap',
+            boxShadow: '0 4px 12px rgba(245,166,35,0.05)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <span style={{ fontSize: '2rem' }}>⭐</span>
+              <div style={{ textAlign: 'left' }}>
+                <h4 style={{ color: 'var(--gold)', margin: 0, fontSize: '1rem' }}>Como foi seu último corte?</h4>
+                <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  Você foi atendido por <strong>{ultimoCorte.barbeiro_nome}</strong> ({ultimoCorte.servico_nome}). Sua avaliação nos ajuda muito!
+                </p>
+              </div>
+            </div>
+            <button 
+              className="btn btn-primary" 
+              onClick={() => setShowAvaliacaoModal(true)}
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              Avaliar Atendimento
+            </button>
+          </div>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'row', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'start' }}>
           {/* Ficha RPG Principal */}
@@ -229,6 +276,17 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+        {showAvaliacaoModal && ultimoCorte && (
+          <AvaliacaoModal
+            agendamento={ultimoCorte}
+            onClose={() => setShowAvaliacaoModal(false)}
+            onSuccess={() => {
+              loadUltimoCorte()
+              loadRealTimeClientData()
+              loadRanking()
+            }}
+          />
+        )}
       </div>
     )
   }
