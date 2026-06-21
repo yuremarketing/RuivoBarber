@@ -1104,4 +1104,17 @@ func (s *ClienteService) resolverFunctionCallSincrono(ctx context.Context, apiKe
 	return finalText, nil
 }
 
+func (s *ClienteService) CriarServico(serv *domain.Servico) (int, error) {
+	return s.repo.CriarServico(serv)
+}
+
+func (s *ClienteService) AtualizarServico(serv *domain.Servico) error {
+	return s.repo.AtualizarServico(serv)
+}
+
+func (s *ClienteService) DeletarServico(id int) error {
+	return s.repo.DeletarServico(id)
+}
+
+
 
