@@ -785,3 +785,26 @@ func (r *ClientePgRepository) RegistrarMensagemProcessada(messageID string) (boo
 	return rowsAffected > 0, nil
 }
 
+func (r *ClientePgRepository) CriarServico(s *domain.Servico) (int, error) {
+	query := `INSERT INTO Servicos (nome, preco, xprecompensa, duracaominutos) VALUES ($1, $2, $3, $4) RETURNING id`
+	var id int
+	err := r.db.QueryRow(query, s.Nome, s.Preco, s.XpRecompensa, s.DuracaoMinutos).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
+func (r *ClientePgRepository) AtualizarServico(s *domain.Servico) error {
+	query := `UPDATE Servicos SET nome = $1, preco = $2, xprecompensa = $3, duracaominutos = $4 WHERE id = $5`
+	_, err := r.db.Exec(query, s.Nome, s.Preco, s.XpRecompensa, s.DuracaoMinutos, s.ID)
+	return err
+}
+
+func (r *ClientePgRepository) DeletarServico(id int) error {
+	query := `DELETE FROM Servicos WHERE id = $1`
+	_, err := r.db.Exec(query, id)
+	return err
+}
+
+

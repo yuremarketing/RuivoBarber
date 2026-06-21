@@ -118,6 +118,9 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
 	// Rotas de Chat de IA e Agendamentos Dinâmicos
 	api.Post("/chat/stream", JWTMiddleware, h.ChatStream)
 	api.Get("/servicos", h.ListarServicos)
+	api.Post("/servicos", JWTMiddleware, RequireCargo("Adm"), h.CriarServico)
+	api.Put("/servicos/:id", JWTMiddleware, RequireCargo("Adm"), h.AtualizarServico)
+	api.Delete("/servicos/:id", JWTMiddleware, RequireCargo("Adm"), h.DeletarServico)
 	api.Get("/barbeiros", JWTMiddleware, h.ListarBarbeiros)
 	api.Get("/barbeiros/:id/agenda", JWTMiddleware, h.ObterAgendaBarbeiro)
 	api.Get("/agendamentos", JWTMiddleware, h.ListarAgendamentos)
@@ -750,6 +753,55 @@ func (h *ClienteHandler) WebhookWhatsApp(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{"status": "sucesso", "resposta": response})
 }
+
+func (h *ClienteHandler) CriarServico(c *fiber.Ctx) error {
+	var s domain.Servico
+	if err := c.BodyParser(&s); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "corpo inválido"})
+	}
+	if s.Nome == "" || s.Preco <= 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "nome e preço são obrigatórios"})
+	}
+	id, err := h.service.CriarServico(&s)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	s.ID = id
+	return c.Status(201).JSON(s)
+}
+
+func (h *ClienteHandler) AtualizarServico(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
+	}
+	var s domain.Servico
+	if err := c.BodyParser(&s); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "corpo inválido"})
+	}
+	if s.Nome == "" || s.Preco <= 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "nome e preço são obrigatórios"})
+	}
+	s.ID = id
+	err = h.service.AtualizarServico(&s)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(s)
+}
+
+func (h *ClienteHandler) DeletarServico(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
+	}
+	err = h.service.DeletarServico(id)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.SendStatus(204)
+}
+
 
 
 
