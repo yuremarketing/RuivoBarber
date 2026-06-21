@@ -164,6 +164,26 @@ func (s *ClienteService) ListarAgendamentosDoCliente(clienteID int) ([]domain.Ag
 	return s.repo.ListarAgendamentosDoCliente(clienteID)
 }
 
+func (s *ClienteService) ObterDisponibilidadeBarbeiro(barbeiroID int) ([]domain.BarbeiroDisponibilidade, error) {
+	return s.repo.ObterDisponibilidadeBarbeiro(barbeiroID)
+}
+
+func (s *ClienteService) SalvarDisponibilidadeBarbeiro(barbeiroID int, disps []domain.BarbeiroDisponibilidade) error {
+	return s.repo.SalvarDisponibilidadeBarbeiro(barbeiroID, disps)
+}
+
+func (s *ClienteService) ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.BarbeiroBloqueio, error) {
+	return s.repo.ObterBloqueiosBarbeiro(barbeiroID)
+}
+
+func (s *ClienteService) AdicionarBloqueioBarbeiro(barbeiroID int, data string, motivo string) error {
+	return s.repo.AdicionarBloqueioBarbeiro(barbeiroID, data, motivo)
+}
+
+func (s *ClienteService) RemoverBloqueioBarbeiro(barbeiroID int, data string) error {
+	return s.repo.RemoverBloqueioBarbeiro(barbeiroID, data)
+}
+
 func (s *ClienteService) CriarAgendamento(clienteID, barbeiroID, servicoID int, dataHora time.Time) (int, error) {
 	// 1. Fetch service to get its duration
 	servico, err := s.repo.BuscarServico(servicoID)
@@ -171,12 +191,41 @@ func (s *ClienteService) CriarAgendamento(clienteID, barbeiroID, servicoID int, 
 		return 0, errors.New("serviço não encontrado")
 	}
 
-	// 2. Validate work hours
-	startHourStr := os.Getenv("WORK_START_HOUR")
+	// 2. Verificar bloqueios pontuais
+	dateStr := dataHora.Format("2006-01-02")
+	bloqueios, err := s.repo.ObterBloqueiosBarbeiro(barbeiroID)
+	if err == nil {
+		for _, b := range bloqueios {
+			if b.DataBloqueio == dateStr {
+				return 0, errors.New("o barbeiro não está disponível nesta data (dia bloqueado/folga)")
+			}
+		}
+	}
+
+	// 3. Verificar disponibilidade semanal
+	weekday := int(dataHora.Weekday())
+	disps, err := s.repo.ObterDisponibilidadeBarbeiro(barbeiroID)
+	if err != nil {
+		return 0, err
+	}
+
+	var disp *domain.BarbeiroDisponibilidade
+	for i := range disps {
+		if disps[i].DiaSemana == weekday {
+			disp = &disps[i]
+			break
+		}
+	}
+
+	if disp == nil || !disp.Trabalha {
+		return 0, errors.New("o barbeiro não trabalha neste dia da semana")
+	}
+
+	startHourStr := disp.HoraInicio
 	if startHourStr == "" {
 		startHourStr = "09:00"
 	}
-	endHourStr := os.Getenv("WORK_END_HOUR")
+	endHourStr := disp.HoraFim
 	if endHourStr == "" {
 		endHourStr = "19:00"
 	}
@@ -195,14 +244,13 @@ func (s *ClienteService) CriarAgendamento(clienteID, barbeiroID, servicoID int, 
 		return 0, errors.New("horário escolhido está fora da jornada de trabalho do barbeiro")
 	}
 
-	// 3. Fetch existing appointments to prevent conflict
-	dateStr := dataHora.Format("2006-01-02")
+	// 4. Fetch existing appointments to prevent conflict
 	existingAgendamentos, err := s.repo.ListarAgendamentosDoBarbeiro(barbeiroID, dateStr)
 	if err != nil {
 		return 0, err
 	}
 
-	// 4. Validate conflict using formula: newStart < existingEnd AND newEnd > existingStart
+	// 5. Validate conflict using formula: newStart < existingEnd AND newEnd > existingStart
 	for _, existing := range existingAgendamentos {
 		existingStart := existing.DataHora
 		existingEnd := existingStart.Add(time.Duration(existing.DuracaoMinutos) * time.Minute)
@@ -224,18 +272,55 @@ func (s *ClienteService) ObterAgendaBarbeiro(barbeiroID int, dataStr string, ser
 		}
 	}
 
-	// 2. Fetch existing appointments
+	// 2. Parse the date in local location
+	parsedDate, err := time.ParseInLocation("2006-01-02", dataStr, time.Local)
+	if err != nil {
+		return nil, errors.New("formato de data inválido. Use YYYY-MM-DD")
+	}
+
+	// 3. Verificar bloqueios pontuais
+	bloqueios, err := s.repo.ObterBloqueiosBarbeiro(barbeiroID)
+	if err == nil {
+		for _, b := range bloqueios {
+			if b.DataBloqueio == dataStr {
+				// Dia totalmente bloqueado
+				return []domain.AgendaSlot{}, nil
+			}
+		}
+	}
+
+	// 4. Verificar disponibilidade semanal
+	weekday := int(parsedDate.Weekday())
+	disps, err := s.repo.ObterDisponibilidadeBarbeiro(barbeiroID)
+	if err != nil {
+		return nil, err
+	}
+
+	var disp *domain.BarbeiroDisponibilidade
+	for i := range disps {
+		if disps[i].DiaSemana == weekday {
+			disp = &disps[i]
+			break
+		}
+	}
+
+	if disp == nil || !disp.Trabalha {
+		// Não trabalha neste dia da semana
+		return []domain.AgendaSlot{}, nil
+	}
+
+	// 5. Fetch existing appointments
 	agendamentos, err := s.repo.ListarAgendamentosDoBarbeiro(barbeiroID, dataStr)
 	if err != nil {
 		return nil, err
 	}
 
-	// 3. Define work hours
-	startHourStr := os.Getenv("WORK_START_HOUR")
+	// 6. Define work hours
+	startHourStr := disp.HoraInicio
 	if startHourStr == "" {
 		startHourStr = "09:00"
 	}
-	endHourStr := os.Getenv("WORK_END_HOUR")
+	endHourStr := disp.HoraFim
 	if endHourStr == "" {
 		endHourStr = "19:00"
 	}
@@ -243,12 +328,6 @@ func (s *ClienteService) ObterAgendaBarbeiro(barbeiroID int, dataStr string, ser
 	var startHour, startMin, endHour, endMin int
 	fmt.Sscanf(startHourStr, "%d:%d", &startHour, &startMin)
 	fmt.Sscanf(endHourStr, "%d:%d", &endHour, &endMin)
-
-	// 4. Parse the date in local location
-	parsedDate, err := time.ParseInLocation("2006-01-02", dataStr, time.Local)
-	if err != nil {
-		return nil, errors.New("formato de data inválido. Use YYYY-MM-DD")
-	}
 
 	workStart := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), startHour, startMin, 0, 0, time.Local)
 	workEnd := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), endHour, endMin, 0, 0, time.Local)
