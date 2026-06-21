@@ -118,8 +118,16 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
 	// Rotas de Chat de IA e Agendamentos Dinâmicos
 	api.Post("/chat/stream", JWTMiddleware, h.ChatStream)
 	api.Get("/servicos", h.ListarServicos)
+	api.Post("/servicos", JWTMiddleware, RequireCargo("Adm"), h.CriarServico)
+	api.Put("/servicos/:id", JWTMiddleware, RequireCargo("Adm"), h.AtualizarServico)
+	api.Delete("/servicos/:id", JWTMiddleware, RequireCargo("Adm"), h.DeletarServico)
 	api.Get("/barbeiros", JWTMiddleware, h.ListarBarbeiros)
 	api.Get("/barbeiros/:id/agenda", JWTMiddleware, h.ObterAgendaBarbeiro)
+	api.Get("/barbeiros/:id/disponibilidade", JWTMiddleware, h.ObterDisponibilidadeBarbeiro)
+	api.Post("/barbeiros/:id/disponibilidade", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.SalvarDisponibilidadeBarbeiro)
+	api.Get("/barbeiros/:id/bloqueios", JWTMiddleware, h.ObterBloqueiosBarbeiro)
+	api.Post("/barbeiros/:id/bloqueios", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.AdicionarBloqueioBarbeiro)
+	api.Delete("/barbeiros/:id/bloqueios/:date", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.RemoverBloqueioBarbeiro)
 	api.Get("/agendamentos", JWTMiddleware, h.ListarAgendamentos)
 	api.Post("/agendamentos", JWTMiddleware, h.CriarAgendamento)
 
@@ -754,6 +762,159 @@ func (h *ClienteHandler) WebhookWhatsApp(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{"status": "sucesso", "resposta": response})
 }
+
+func (h *ClienteHandler) CriarServico(c *fiber.Ctx) error {
+	var s domain.Servico
+	if err := c.BodyParser(&s); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "corpo inválido"})
+	}
+	if s.Nome == "" || s.Preco <= 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "nome e preço são obrigatórios"})
+	}
+	id, err := h.service.CriarServico(&s)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	s.ID = id
+	return c.Status(201).JSON(s)
+}
+
+func (h *ClienteHandler) AtualizarServico(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
+	}
+	var s domain.Servico
+	if err := c.BodyParser(&s); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "corpo inválido"})
+	}
+	if s.Nome == "" || s.Preco <= 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "nome e preço são obrigatórios"})
+	}
+	s.ID = id
+	err = h.service.AtualizarServico(&s)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(s)
+}
+
+func (h *ClienteHandler) DeletarServico(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
+	}
+	err = h.service.DeletarServico(id)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.SendStatus(204)
+}
+
+func (h *ClienteHandler) ObterDisponibilidadeBarbeiro(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
+	}
+	disps, err := h.service.ObterDisponibilidadeBarbeiro(id)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(disps)
+}
+
+func (h *ClienteHandler) SalvarDisponibilidadeBarbeiro(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
+	}
+
+	userId := c.Locals("userId").(int)
+	userCargo := c.Locals("userCargo").(string)
+	if userCargo != "Adm" && userId != id {
+		return c.Status(403).JSON(fiber.Map{"error": "Você não tem permissão para alterar a escala deste barbeiro"})
+	}
+
+	var disps []domain.BarbeiroDisponibilidade
+	if err := c.BodyParser(&disps); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "corpo inválido"})
+	}
+
+	err = h.service.SalvarDisponibilidadeBarbeiro(id, disps)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"status": "sucesso"})
+}
+
+func (h *ClienteHandler) ObterBloqueiosBarbeiro(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
+	}
+	bloqueios, err := h.service.ObterBloqueiosBarbeiro(id)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(bloqueios)
+}
+
+type AddBloqueioRequest struct {
+	Data   string `json:"data"`
+	Motivo string `json:"motivo"`
+}
+
+func (h *ClienteHandler) AdicionarBloqueioBarbeiro(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
+	}
+
+	userId := c.Locals("userId").(int)
+	userCargo := c.Locals("userCargo").(string)
+	if userCargo != "Adm" && userId != id {
+		return c.Status(403).JSON(fiber.Map{"error": "Você não tem permissão para alterar folgas deste barbeiro"})
+	}
+
+	var req AddBloqueioRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "corpo inválido"})
+	}
+	if req.Data == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "data é obrigatória"})
+	}
+
+	err = h.service.AdicionarBloqueioBarbeiro(id, req.Data, req.Motivo)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"status": "sucesso"})
+}
+
+func (h *ClienteHandler) RemoverBloqueioBarbeiro(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "id inválido"})
+	}
+
+	userId := c.Locals("userId").(int)
+	userCargo := c.Locals("userCargo").(string)
+	if userCargo != "Adm" && userId != id {
+		return c.Status(403).JSON(fiber.Map{"error": "Você não tem permissão para alterar folgas deste barbeiro"})
+	}
+
+	date := c.Params("date")
+	if date == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "data inválida"})
+	}
+
+	err = h.service.RemoverBloqueioBarbeiro(id, date)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"status": "sucesso"})
+}
+
 
 
 
