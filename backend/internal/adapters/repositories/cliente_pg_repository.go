@@ -775,7 +775,7 @@ func (r *ClientePgRepository) ListarServicos() ([]domain.Servico, error) {
 }
 
 func (r *ClientePgRepository) ListarBarbeiros() ([]domain.Barbeiro, error) {
-	query := `SELECT id, nome FROM Usuarios WHERE cargo IN ('Barbeiro', 'Adm') ORDER BY nome ASC`
+	query := `SELECT id, nome, COALESCE(foto_url, ''), COALESCE(avaliacao_media, 5.00) FROM Usuarios WHERE cargo IN ('Barbeiro', 'Adm') ORDER BY nome ASC`
 	rows, err := r.db.Query(query)
 	if err != nil {
 		return nil, err
@@ -785,7 +785,7 @@ func (r *ClientePgRepository) ListarBarbeiros() ([]domain.Barbeiro, error) {
 	var barbeiros []domain.Barbeiro
 	for rows.Next() {
 		var b domain.Barbeiro
-		if err := rows.Scan(&b.ID, &b.Nome); err != nil {
+		if err := rows.Scan(&b.ID, &b.Nome, &b.FotoURL, &b.AvaliacaoMedia); err != nil {
 			return nil, err
 		}
 		barbeiros = append(barbeiros, b)

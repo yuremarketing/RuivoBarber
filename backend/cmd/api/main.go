@@ -79,6 +79,21 @@ func main() {
 		log.Println("✅ Migração automática: coluna avatar_url garantida na tabela Usuarios")
 	}
 
+	// Migração automática: Garantir colunas foto_url e avaliacao_media na tabela Usuarios
+	_, err = db.Exec("ALTER TABLE Usuarios ADD COLUMN IF NOT EXISTS foto_url VARCHAR(300) DEFAULT ''")
+	if err != nil {
+		log.Printf("[DB] Erro ao executar migração automática (foto_url): %v", err)
+	} else {
+		log.Println("✅ Migração automática: coluna foto_url garantida na tabela Usuarios")
+	}
+
+	_, err = db.Exec("ALTER TABLE Usuarios ADD COLUMN IF NOT EXISTS avaliacao_media DECIMAL(3,2) DEFAULT 5.00")
+	if err != nil {
+		log.Printf("[DB] Erro ao executar migração automática (avaliacao_media): %v", err)
+	} else {
+		log.Println("✅ Migração automática: coluna avaliacao_media garantida na tabela Usuarios")
+	}
+
 	// Migração automática para Clãs
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS Clas (

@@ -9,7 +9,9 @@ CREATE TABLE Usuarios (
     Login VARCHAR(50) UNIQUE NOT NULL,
     Senha VARCHAR(255) NOT NULL,
     Comissao DECIMAL(5,2),
-    AvatarURL TEXT DEFAULT ''
+    AvatarURL TEXT DEFAULT '',
+    FotoURL VARCHAR(300) DEFAULT '',
+    AvaliacaoMedia DECIMAL(3,2) DEFAULT 5.00
 );
 
 CREATE TABLE Niveis (

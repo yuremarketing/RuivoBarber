@@ -4,7 +4,6 @@
 - [ ] [TASK-038-A] [Fix] Ajuste de Fuso Horário de Brasília (America/Sao_Paulo) no Backend e Frontend (Issue #13)
 
 ## ⚙️ Backend (Lógica Go e Banco de Dados)
-- [ ] [TASK-038-BC] [Feature] Banco de Dados e Backend para Perfis de Barbeiros (Foto e Avaliação Média) (Issue #15)
 - [ ] [TASK-038-D] [Feature] Backend e Banco de Dados para Gorjeta Digital via Pix (Chave Pix e QR Code) (Issue #16)
 - [ ] [TASK-038-E/040] [Feature] Banco de Dados e Rota Unificada do "Último Corte" com flag de Avaliação Pendente (Issues #5 e #17)
 - [ ] [TASK-061] [PDV-DB] Modelagem e Tabelas do Fluxo Financeiro (SQL) (Issue #18)

@@ -132,7 +132,7 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 - [x] [Guilds] Task 48: Eventos Cooperativos de "Raid" (Meta Comunitária de Cortes) (Backend)
 - [x] [Ops] Task 56: Notificação Automática de Conquistas e Nível via WhatsApp
 - [x] [Lives] Task 42: Integração com Transmissões de Lives ao Vivo (Backend & Frontend)
-- [ ] [Wizard/Profile] Task 38-BC: Banco de Dados e Backend para Perfis de Barbeiros (Foto e Avaliação Média) (Issue #15)
+- [x] [Wizard/Profile] Task 38-BC: Banco de Dados e Backend para Perfis de Barbeiros (Foto e Avaliação Média) (Issue #15)
 - [ ] [Checkout] Task 38-D: Backend e Banco de Dados para Gorjeta Digital via Pix (Chave Pix e QR Code) (Issue #16)
 - [ ] [Review/Rewards] Task 38-E/40: Banco de Dados e Rota Unificada do "Último Corte" com flag de Avaliação Pendente (Issues #5 e #17)
 - [ ] [PDV-DB] Task 61: Modelagem e Tabelas do Fluxo Financeiro (SQL) (Issue #18)
