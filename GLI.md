@@ -29,11 +29,11 @@ graph TD
 
 ### A. Branch `main` (Produção)
 *   **Destino**: Conectada diretamente ao pipeline de deploy no **Render / Google Cloud Run** (ambiente de produção).
-*   **Regra de Ouro**: **PROIBIDO push direto ou merge automático**. Apenas o Gestor (Mark) pode mergear Pull Requests vindos de `develop` para `main` após homologação das tarefas.
+*   **Regra de Ouro**: **PROIBIDO push direto ou merge automático** (bloqueado por regras do GitHub). Apenas o Gestor (Mark) pode mergear Pull Requests vindos de `develop` para `main` após homologação.
 
 ### B. Branch `develop` (Desenvolvimento)
 *   **Destino**: Ambiente compartilhado de desenvolvimento e integração local/testes.
-*   **Fluxo**: Todas as tarefas finalizadas pelo desenvolvedor devem ser enviadas e integradas aqui.
+*   **Regra de Ouro**: **PROIBIDO push direto**. Toda alteração deve ser enviada para uma branch de feature e integrada via Pull Request no GitHub.
 
 ### C. Branches de Funcionalidades (`feature/TASK-XXX-nome`)
 *   Criadas sempre a partir de `develop`.

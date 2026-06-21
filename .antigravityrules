@@ -9,7 +9,7 @@
     <rule>Pausa de Ação Obrigatória: Pare imediatamente após apresentar um plano de implementação (implementation_plan.md) e aguarde aprovação explícita e manual do usuário no chat para prosseguir. Respeite o cooldown de 5 minutos antes de qualquer execução.</rule>
     <rule>Controle de Sub-agentes: Não inicie mais de 3 sub-agentes simultâneos. Prefira processamento sequencial.</rule>
     <rule>Tratamento de Rate Limit: Pause por 15 segundos em caso de erro HTTP 429.</rule>
-    <rule>Branch Target Rule: Para qualquer tarefa de desenvolvimento, a branch de destino padrão para criação de novas ramificações e integração deve ser sempre 'develop'. É expressamente proibido realizar commits ou merges direcionados à branch 'main' (produção).</rule>
+    <rule>Branch Target Rule: É expressamente proibido realizar commits, pushes ou merges direcionados diretamente às branches 'develop' ou 'main'. O agente deve sempre criar uma branch de feature dedicada (ex: feature/TASK-XXX), fazer push para essa branch de feature e instruir o usuário a abrir um Pull Request no GitHub para integração.</rule>
   </execution_flow>
   <coding_standards>
     <architecture>
