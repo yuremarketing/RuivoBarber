@@ -989,6 +989,28 @@ func (r *ClientePgRepository) RegistrarMensagemProcessada(messageID string) (boo
 	return rowsAffected > 0, nil
 }
 
+func (r *ClientePgRepository) CriarServico(s *domain.Servico) (int, error) {
+	query := `INSERT INTO Servicos (nome, preco, xprecompensa, duracaominutos) VALUES ($1, $2, $3, $4) RETURNING id`
+	var id int
+	err := r.db.QueryRow(query, s.Nome, s.Preco, s.XpRecompensa, s.DuracaoMinutos).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
+func (r *ClientePgRepository) AtualizarServico(s *domain.Servico) error {
+	query := `UPDATE Servicos SET nome = $1, preco = $2, xprecompensa = $3, duracaominutos = $4 WHERE id = $5`
+	_, err := r.db.Exec(query, s.Nome, s.Preco, s.XpRecompensa, s.DuracaoMinutos, s.ID)
+	return err
+}
+
+func (r *ClientePgRepository) DeletarServico(id int) error {
+	query := `DELETE FROM Servicos WHERE id = $1`
+	_, err := r.db.Exec(query, id)
+	return err
+}
+
 func incrementQuestProgress(ctx context.Context, tx *sql.Tx, claID int, semanaAno, tipoRequisito string, incremento int) error {
 	queryActive := `
 		SELECT m.id, m.meta, m.xpbonus, COALESCE(p.progresso, 0), COALESCE(p.completada, FALSE)
@@ -1169,5 +1191,117 @@ func incrementRaidProgress(ctx context.Context, tx *sql.Tx, clienteID int, servi
 
 	return nil
 }
+
+func (r *ClientePgRepository) ObterDisponibilidadeBarbeiro(barbeiroID int) ([]domain.BarbeiroDisponibilidade, error) {
+	query := `
+		SELECT id, barbeiroid, diasemana, trabalha, 
+		       to_char(horainicio, 'HH24:MI') as horainicio, 
+		       to_char(horafim, 'HH24:MI') as horafim
+		FROM BarbeiroDisponibilidade
+		WHERE barbeiroid = $1
+		ORDER BY diasemana
+	`
+	rows, err := r.db.Query(query, barbeiroID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var disps []domain.BarbeiroDisponibilidade
+	for rows.Next() {
+		var d domain.BarbeiroDisponibilidade
+		err := rows.Scan(&d.ID, &d.BarbeiroID, &d.DiaSemana, &d.Trabalha, &d.HoraInicio, &d.HoraFim)
+		if err != nil {
+			return nil, err
+		}
+		disps = append(disps, d)
+	}
+
+	// Se não houver registros, criar os padrões (1 a 6 como trabalha, 0 como não trabalha)
+	if len(disps) == 0 {
+		disps = make([]domain.BarbeiroDisponibilidade, 7)
+		for i := 0; i < 7; i++ {
+			trabalha := i != 0 // Segunda a Sábado trabalha, Domingo não
+			disps[i] = domain.BarbeiroDisponibilidade{
+				BarbeiroID: barbeiroID,
+				DiaSemana:  i,
+				Trabalha:   trabalha,
+				HoraInicio: "09:00",
+				HoraFim:    "19:00",
+			}
+		}
+	}
+
+	return disps, nil
+}
+
+func (r *ClientePgRepository) SalvarDisponibilidadeBarbeiro(barbeiroID int, disps []domain.BarbeiroDisponibilidade) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	query := `
+		INSERT INTO BarbeiroDisponibilidade (barbeiroid, diasemana, trabalha, horainicio, horafim)
+		VALUES ($1, $2, $3, $4::time, $5::time)
+		ON CONFLICT (barbeiroid, diasemana) 
+		DO UPDATE SET trabalha = EXCLUDED.trabalha, horainicio = EXCLUDED.horainicio, horafim = EXCLUDED.horafim
+	`
+	for _, d := range disps {
+		_, err := tx.Exec(query, barbeiroID, d.DiaSemana, d.Trabalha, d.HoraInicio, d.HoraFim)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+func (r *ClientePgRepository) ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.BarbeiroBloqueio, error) {
+	query := `
+		SELECT id, barbeiroid, to_char(databloqueio, 'YYYY-MM-DD') as databloqueio, COALESCE(motivo, '') as motivo
+		FROM BarbeiroBloqueios
+		WHERE barbeiroid = $1
+		ORDER BY databloqueio
+	`
+	rows, err := r.db.Query(query, barbeiroID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var bloqueios []domain.BarbeiroBloqueio
+	for rows.Next() {
+		var b domain.BarbeiroBloqueio
+		err := rows.Scan(&b.ID, &b.BarbeiroID, &b.DataBloqueio, &b.Motivo)
+		if err != nil {
+			return nil, err
+		}
+		bloqueios = append(bloqueios, b)
+	}
+	return bloqueios, nil
+}
+
+func (r *ClientePgRepository) AdicionarBloqueioBarbeiro(barbeiroID int, data string, motivo string) error {
+	query := `
+		INSERT INTO BarbeiroBloqueios (barbeiroid, databloqueio, motivo)
+		VALUES ($1, $2::date, $3)
+		ON CONFLICT (barbeiroid, databloqueio) 
+		DO UPDATE SET motivo = EXCLUDED.motivo
+	`
+	_, err := r.db.Exec(query, barbeiroID, data, motivo)
+	return err
+}
+
+func (r *ClientePgRepository) RemoverBloqueioBarbeiro(barbeiroID int, data string) error {
+	query := `
+		DELETE FROM BarbeiroBloqueios
+		WHERE barbeiroid = $1 AND databloqueio = $2::date
+	`
+	_, err := r.db.Exec(query, barbeiroID, data)
+	return err
+}
+
 
 

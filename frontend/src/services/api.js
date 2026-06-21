@@ -78,6 +78,9 @@ export const criarTemporada = (nome, dataInicio, dataFim, ativa) => api.post('/t
 export const atualizarTemporada = (id, nome, dataInicio, dataFim, ativa) => api.put(`/temporadas/${id}`, { nome, dataInicio, dataFim, ativa })
 
 export const fetchServicos = () => api.get('/servicos')
+export const criarServico = (servico) => api.post('/servicos', servico)
+export const atualizarServico = (id, servico) => api.put(`/servicos/${id}`, servico)
+export const deletarServico = (id) => api.delete(`/servicos/${id}`)
 
 export const fetchBarbeiros = () => api.get('/barbeiros')
 export const fetchAgendaBarbeiro = (barbeiroId, data, servicoId) => {
@@ -93,6 +96,13 @@ export const criarAgendamento = (barbeiroId, servicoId, dataHora) => api.post('/
   servico_id: Number(servicoId),
   data_hora: dataHora
 })
+
+export const fetchDisponibilidadeBarbeiro = (barbeiroId) => api.get(`/barbeiros/${barbeiroId}/disponibilidade`)
+export const salvarDisponibilidadeBarbeiro = (barbeiroId, disps) => api.post(`/barbeiros/${barbeiroId}/disponibilidade`, disps)
+export const fetchBloqueiosBarbeiro = (barbeiroId) => api.get(`/barbeiros/${barbeiroId}/bloqueios`)
+export const adicionarBloqueioBarbeiro = (barbeiroId, data, motivo) => api.post(`/barbeiros/${barbeiroId}/bloqueios`, { data, motivo })
+export const removerBloqueioBarbeiro = (barbeiroId, data) => api.delete(`/barbeiros/${barbeiroId}/bloqueios/${data}`)
+
 
 export const streamChat = async (message, history, onChunk, onError, onDone) => {
   try {
