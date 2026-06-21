@@ -415,7 +415,56 @@ func main() {
 		log.Println("✅ Migração automática: tabelas e colunas de Gorjetas e Pix garantidas no banco")
 	}
 
+	// Migração automática para PDV (Pontos de Venda) e Controle Financeiro
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS Caixas (
+			ID SERIAL PRIMARY KEY,
+			OperadorID INT REFERENCES Usuarios(ID) ON DELETE SET NULL,
+			SaldoInicial DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			SaldoFinal DECIMAL(10,2) DEFAULT NULL,
+			SaldoInformado DECIMAL(10,2) DEFAULT NULL,
+			Status VARCHAR(20) NOT NULL DEFAULT 'Aberto' CHECK (Status IN ('Aberto', 'Fechado')),
+			AbertoEm TIMESTAMP DEFAULT NOW(),
+			FechadoEm TIMESTAMP DEFAULT NULL
+		);
+
+		CREATE TABLE IF NOT EXISTS Vendas (
+			ID SERIAL PRIMARY KEY,
+			CaixaID INT REFERENCES Caixas(ID) ON DELETE CASCADE,
+			ClienteID INT REFERENCES Usuarios(ID) ON DELETE SET NULL,
+			AgendamentoID INT REFERENCES Agendamentos(ID) ON DELETE SET NULL,
+			ValorBruto DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			Desconto DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			ValorLiquido DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			MetodoPagamento VARCHAR(30) NOT NULL CHECK (MetodoPagamento IN ('Dinheiro', 'Pix', 'Debito', 'Credito')),
+			CriadoEm TIMESTAMP DEFAULT NOW()
+		);
+
+		CREATE TABLE IF NOT EXISTS VendaItens (
+			ID SERIAL PRIMARY KEY,
+			VendaID INT REFERENCES Vendas(ID) ON DELETE CASCADE,
+			ServicoID INT REFERENCES Servicos(ID) ON DELETE SET NULL,
+			PrecoUnitario DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			Quantidade INT NOT NULL DEFAULT 1
+		);
+
+		CREATE TABLE IF NOT EXISTS MovimentacoesCaixa (
+			ID SERIAL PRIMARY KEY,
+			CaixaID INT REFERENCES Caixas(ID) ON DELETE CASCADE,
+			Tipo VARCHAR(20) NOT NULL CHECK (Tipo IN ('Entrada', 'Saida')),
+			Valor DECIMAL(10,2) NOT NULL CHECK (Valor > 0),
+			Motivo VARCHAR(200) NOT NULL,
+			CriadoEm TIMESTAMP DEFAULT NOW()
+		);
+	`)
+	if err != nil {
+		log.Printf("[DB] Erro ao executar migração automática para PDV: %v", err)
+	} else {
+		log.Println("✅ Migração automática: tabelas de PDV e Fluxo Financeiro garantidas no banco")
+	}
+
     // Atualizar senha do admin se for o placeholder ou plain-text legado para permitir login seguro com bcrypt
+
     var adminCount int
     err = db.QueryRow("SELECT COUNT(*) FROM Usuarios WHERE Login = 'admin'").Scan(&adminCount)
     if err == nil && adminCount > 0 {
