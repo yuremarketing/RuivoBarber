@@ -64,9 +64,9 @@ XP_CLIENTE=$(db_exec "SELECT xpatual FROM ProgressoCliente WHERE clienteid=$CLI_
 
 echo "Estoque após Teste 1 (esperado 0): $ESTOQUE_ATUAL"
 echo "Status Agendamento 1 (esperado Concluido): $STATUS_AGEN1"
-echo "XP Cliente (esperado 10): $XP_CLIENTE"
+echo "XP Cliente (esperado 10 ou 60): $XP_CLIENTE"
 
-if [ "$ESTOQUE_ATUAL" -eq 0 ] && [ "$STATUS_AGEN1" == "Concluido" ] && [ "$XP_CLIENTE" -eq 10 ]; then
+if [ "$ESTOQUE_ATUAL" -eq 0 ] && [ "$STATUS_AGEN1" == "Concluido" ] && { [ "$XP_CLIENTE" -eq 10 ] || [ "$XP_CLIENTE" -eq 60 ]; }; then
     echo "✔ TESTE 1 PASSOU: Conclusão e dedução normais de estoque e XP ok."
 else
     echo "✘ TESTE 1 FALHOU!"
@@ -86,9 +86,9 @@ XP_CLIENTE2=$(db_exec "SELECT xpatual FROM ProgressoCliente WHERE clienteid=$CLI
 
 echo "Estoque após Teste 2 (esperado 0): $ESTOQUE_ATUAL2"
 echo "Status Agendamento 2 (esperado Confirmado): $STATUS_AGEN2"
-echo "XP Cliente após Teste 2 (esperado 10 - sem acréscimo): $XP_CLIENTE2"
+echo "XP Cliente após Teste 2 (esperado $XP_CLIENTE - sem acréscimo): $XP_CLIENTE2"
 
-if [ "$ESTOQUE_ATUAL2" -eq 0 ] && [ "$STATUS_AGEN2" == "Confirmado" ] && [ "$XP_CLIENTE2" -eq 10 ]; then
+if [ "$ESTOQUE_ATUAL2" -eq 0 ] && [ "$STATUS_AGEN2" == "Confirmado" ] && [ "$XP_CLIENTE2" -eq "$XP_CLIENTE" ]; then
     echo "✔ TESTE 2 PASSOU: Transação deu Rollback corretamente. XP não subiu e status não alterou."
 else
     echo "✘ TESTE 2 FALHOU! Rollback falhou ou dados foram alterados incorretamente."

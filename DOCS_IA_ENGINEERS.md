@@ -1,6 +1,6 @@
 # 🤖 Guia Prático de Engenharia de IA - RuivoBarber
 
-Este guia orienta o Engenheiro de IA (**Mark**, **Rodrigo** e **Igor**) a atuar na direção estratégica do projeto, utilizando o agente **Antigravity**. 
+Este guia orienta o Engenheiro de IA (**Mark** e **Igor Japa**) a atuar na direção estratégica do projeto, utilizando o agente **Antigravity**. 
 
 Aqui, adotamos o princípio da **Abstração Total de Código (Zero Code)** para o humano. O Engenheiro humano foca na lógica de negócio e na arquitetura de IA, enquanto a IA executa os códigos e a infraestrutura técnica nos bastidores.
 
