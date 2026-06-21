@@ -103,6 +103,9 @@ export const fetchBloqueiosBarbeiro = (barbeiroId) => api.get(`/barbeiros/${barb
 export const adicionarBloqueioBarbeiro = (barbeiroId, data, motivo) => api.post(`/barbeiros/${barbeiroId}/bloqueios`, { data, motivo })
 export const removerBloqueioBarbeiro = (barbeiroId, data) => api.delete(`/barbeiros/${barbeiroId}/bloqueios/${data}`)
 
+// Badges / Conquistas
+export const fetchMeusBadges = () => api.get('/badges/me')
+
 export const salvarChavePixBarbeiro = (barbeiroId, chavePix) => api.post(`/barbeiros/${barbeiroId}/chave-pix`, { chave_pix: chavePix })
 export const criarGorjeta = (barbeiroId, valor, agendamentoId = null) => api.post('/gorjetas', {
   barbeiro_id: Number(barbeiroId),
@@ -111,8 +114,6 @@ export const criarGorjeta = (barbeiroId, valor, agendamentoId = null) => api.pos
 })
 export const confirmarPagamentoGorjeta = (gorjetaId) => api.post(`/gorjetas/${gorjetaId}/confirmar`)
 export const fetchGorjetasBarbeiro = (barbeiroId) => api.get(`/barbeiros/${barbeiroId}/gorjetas`)
-
-
 
 export const streamChat = async (message, history, onChunk, onError, onDone) => {
   try {
