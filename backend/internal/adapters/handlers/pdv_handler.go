@@ -19,6 +19,7 @@ func (h *PdvHandler) RegisterRoutes(app *fiber.App) {
 	api.Post("/pdv/caixa/fechar", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.FecharCaixa)
 	api.Get("/pdv/caixa/status", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.ObterStatusCaixa)
 	api.Post("/pdv/caixa/movimentar", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.MovimentarCaixa)
+	api.Post("/pdv/venda", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.ProcessarVenda)
 }
 
 func NewPdvHandler(service *services.PdvService) *PdvHandler {
@@ -108,4 +109,23 @@ func (h *PdvHandler) MovimentarCaixa(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"status": "sucesso"})
+}
+
+func (h *PdvHandler) ProcessarVenda(c *fiber.Ctx) error {
+	if err := infra.Wait(context.Background()); err != nil {
+		return c.Status(429).JSON(fiber.Map{"error": "Too Many Requests"})
+	}
+
+	var req services.ProcessarVendaRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "corpo da requisição inválido"})
+	}
+
+	operadorID := c.Locals("userId").(int)
+	venda, err := h.service.ProcessarVenda(operadorID, &req)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(venda)
 }

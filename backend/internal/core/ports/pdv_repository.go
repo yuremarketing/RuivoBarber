@@ -9,4 +9,6 @@ type PdvRepository interface {
 	ObterCaixaPorID(caixaID int) (*domain.Caixa, error)
 	AdicionarMovimentacaoCaixa(mc *domain.MovimentacaoCaixa) error
 	ObterMovimentacoesCaixa(caixaID int) ([]domain.MovimentacaoCaixa, error)
+	AdicionarVenda(venda *domain.Venda, itens []domain.VendaItem) error
+	ObterTotalVendasDinheiro(caixaID int) (float64, error)
 }

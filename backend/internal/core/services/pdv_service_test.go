@@ -1,5 +1,5 @@
 package services
-
+ 
 import (
 	"errors"
 	"ruivobarber-api/internal/core/domain"
@@ -13,6 +13,7 @@ type mockPdvRepository struct {
 	caixaAtivo    *domain.Caixa
 	caixas        map[int]*domain.Caixa
 	movimentacoes map[int][]domain.MovimentacaoCaixa
+	vendas        map[int][]domain.Venda
 	nextID        int
 }
 
@@ -20,6 +21,7 @@ func newMockPdvRepository() *mockPdvRepository {
 	return &mockPdvRepository{
 		caixas:        make(map[int]*domain.Caixa),
 		movimentacoes: make(map[int][]domain.MovimentacaoCaixa),
+		vendas:        make(map[int][]domain.Venda),
 		nextID:        1,
 	}
 }
@@ -77,9 +79,99 @@ func (m *mockPdvRepository) ObterMovimentacoesCaixa(caixaID int) ([]domain.Movim
 	return m.movimentacoes[caixaID], nil
 }
 
+func (m *mockPdvRepository) AdicionarVenda(venda *domain.Venda, itens []domain.VendaItem) error {
+	venda.ID = m.nextID
+	m.nextID++
+	venda.CriadoEm = time.Now()
+	m.vendas[venda.CaixaID] = append(m.vendas[venda.CaixaID], *venda)
+	return nil
+}
+
+func (m *mockPdvRepository) ObterTotalVendasDinheiro(caixaID int) (float64, error) {
+	var total float64
+	for _, v := range m.vendas[caixaID] {
+		if v.MetodoPagamento == "Dinheiro" {
+			total += v.ValorLiquido
+		}
+	}
+	return total, nil
+}
+
+type mockPdvClienteRepository struct {
+	ports.ClienteRepository
+	clientes     map[int]*domain.Cliente
+	agendamentos map[int]*domain.Agendamento
+	nextID       int
+}
+
+func newMockPdvClienteRepository() *mockPdvClienteRepository {
+	r := &mockPdvClienteRepository{
+		clientes:     make(map[int]*domain.Cliente),
+		agendamentos: make(map[int]*domain.Agendamento),
+		nextID:       1,
+	}
+	r.clientes[1] = &domain.Cliente{ID: 1, Nome: "Barbeiro", Cargo: "Barbeiro"}
+	r.clientes[2] = &domain.Cliente{ID: 2, Nome: "Cliente", Cargo: "Cliente"}
+	return r
+}
+
+func (m *mockPdvClienteRepository) FindByID(id int) (*domain.Cliente, error) {
+	c, ok := m.clientes[id]
+	if !ok {
+		return nil, nil
+	}
+	return c, nil
+}
+
+func (m *mockPdvClienteRepository) ObterAgendamentoPorID(id int) (*domain.Agendamento, error) {
+	a, ok := m.agendamentos[id]
+	if !ok {
+		return nil, nil
+	}
+	return a, nil
+}
+
+func (m *mockPdvClienteRepository) CriarAgendamento(clienteID, barbeiroID, servicoID int, dataHora time.Time) (int, error) {
+	id := m.nextID
+	m.nextID++
+	m.agendamentos[id] = &domain.Agendamento{
+		ID:         id,
+		ClienteID:  clienteID,
+		BarbeiroID: barbeiroID,
+		ServicoID:  servicoID,
+		Status:     "Pendente",
+		DataHora:   dataHora,
+	}
+	return id, nil
+}
+
+func (m *mockPdvClienteRepository) ConcluirAtendimento(agendamentoID int) (*ports.NotificationEvent, error) {
+	a, ok := m.agendamentos[agendamentoID]
+	if !ok {
+		return nil, errors.New("agendamento não encontrado")
+	}
+	a.Status = "Concluido"
+	return &ports.NotificationEvent{
+		ClienteID:   a.ClienteID,
+		ClienteNome: "Cliente Teste",
+		XpGanhado:   10,
+	}, nil
+}
+
+type mockNotificationService struct {
+	ports.NotificationService
+	enqueued []ports.NotificationEvent
+}
+
+func (m *mockNotificationService) EnqueueNotification(event ports.NotificationEvent) {
+	m.enqueued = append(m.enqueued, event)
+}
+
 func TestPdvService_AbrirCaixa(t *testing.T) {
 	repo := newMockPdvRepository()
-	service := NewPdvService(repo)
+	cliRepo := newMockPdvClienteRepository()
+	notifier := &mockNotificationService{}
+	service := NewPdvService(repo, cliRepo, notifier)
 
 	// Teste 1: Abertura bem sucedida
 	c, err := service.AbrirCaixa(1, 150.00)
@@ -106,7 +198,9 @@ func TestPdvService_AbrirCaixa(t *testing.T) {
 
 func TestPdvService_MovimentarCaixa(t *testing.T) {
 	repo := newMockPdvRepository()
-	service := NewPdvService(repo)
+	cliRepo := newMockPdvClienteRepository()
+	notifier := &mockNotificationService{}
+	service := NewPdvService(repo, cliRepo, notifier)
 
 	// Teste 1: Movimentação em caixa fechado
 	err := service.MovimentarCaixa(1, "Entrada", 50.00, "Suprimento")
@@ -144,7 +238,9 @@ func TestPdvService_MovimentarCaixa(t *testing.T) {
 
 func TestPdvService_FecharCaixa(t *testing.T) {
 	repo := newMockPdvRepository()
-	service := NewPdvService(repo)
+	cliRepo := newMockPdvClienteRepository()
+	notifier := &mockNotificationService{}
+	service := NewPdvService(repo, cliRepo, notifier)
 
 	// Teste 1: Fechar caixa inexistente
 	_, err := service.FecharCaixa(1, 100.00)
@@ -172,4 +268,75 @@ func TestPdvService_FecharCaixa(t *testing.T) {
 	if *c.SaldoInformado != 130.00 {
 		t.Errorf("esperava saldo informado 130.00, obteve %f", *c.SaldoInformado)
 	}
+}
+
+func TestPdvService_ProcessarVenda(t *testing.T) {
+	repo := newMockPdvRepository()
+	cliRepo := newMockPdvClienteRepository()
+	notifier := &mockNotificationService{}
+	service := NewPdvService(repo, cliRepo, notifier)
+
+	// Teste 1: Venda sem caixa aberto
+	_, err := service.ProcessarVenda(1, &ProcessarVendaRequest{
+		MetodoPagamento: "Dinheiro",
+		Itens: []VendaItemRequest{
+			{ServicoID: intPtr(1), PrecoUnitario: 50.00, Quantidade: 1},
+		},
+	})
+	if err == nil || err.Error() != "operação não permitida: nenhum caixa aberto encontrado" {
+		t.Errorf("esperava erro de caixa fechado, obteve: %v", err)
+	}
+
+	// Abrir Caixa
+	_, _ = service.AbrirCaixa(1, 100.00)
+
+	// Teste 2: Venda com cliente anônimo (Dinheiro)
+	venda, err := service.ProcessarVenda(1, &ProcessarVendaRequest{
+		MetodoPagamento: "Dinheiro",
+		Itens: []VendaItemRequest{
+			{ServicoID: intPtr(1), PrecoUnitario: 50.00, Quantidade: 1},
+		},
+	})
+	if err != nil {
+		t.Fatalf("erro inesperado: %v", err)
+	}
+	if venda.ValorBruto != 50.00 || venda.ValorLiquido != 50.00 {
+		t.Errorf("valores incorretos: %+v", venda)
+	}
+
+	// Verificar se o saldo do caixa foi atualizado
+	status, _ := service.ObterStatusCaixa(1)
+	if status.SaldoAtual != 150.00 {
+		t.Errorf("esperava saldo atual 150.00, obteve: %f", status.SaldoAtual)
+	}
+
+	// Teste 3: Venda com cliente identificado e criação de agendamento relâmpago
+	vendaCli, err := service.ProcessarVenda(1, &ProcessarVendaRequest{
+		ClienteID:       intPtr(2),
+		MetodoPagamento: "Pix",
+		Itens: []VendaItemRequest{
+			{ServicoID: intPtr(2), PrecoUnitario: 40.00, Quantidade: 1},
+		},
+	})
+	if err != nil {
+		t.Fatalf("erro inesperado: %v", err)
+	}
+	if vendaCli.ClienteID == nil || *vendaCli.ClienteID != 2 {
+		t.Error("cliente não foi associado à venda")
+	}
+
+	// Como a venda foi em Pix, o saldo do caixa não deve ser alterado (deve continuar R$ 150.00)
+	status2, _ := service.ObterStatusCaixa(1)
+	if status2.SaldoAtual != 150.00 {
+		t.Errorf("esperava saldo atual 150.00, obteve: %f", status2.SaldoAtual)
+	}
+
+	// Verificar se a notificação de fidelidade foi enfileirada
+	if len(notifier.enqueued) == 0 {
+		t.Error("esperava que a notificação de fidelidade fosse enfileirada")
+	}
+}
+
+func intPtr(v int) *int {
+	return &v
 }

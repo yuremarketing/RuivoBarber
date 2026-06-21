@@ -119,3 +119,90 @@ func (r *PdvPgRepository) ObterMovimentacoesCaixa(caixaID int) ([]domain.Movimen
 	}
 	return mcs, nil
 }
+
+func (r *PdvPgRepository) AdicionarVenda(venda *domain.Venda, itens []domain.VendaItem) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// 1. Inserir a venda
+	queryVenda := `
+		INSERT INTO Vendas (caixaid, clienteid, agendamentoid, valorbruto, desconto, valorliquido, metodopagamento)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id, criadoem
+	`
+	err = tx.QueryRow(queryVenda,
+		venda.CaixaID, venda.ClienteID, venda.AgendamentoID,
+		venda.ValorBruto, venda.Desconto, venda.ValorLiquido, venda.MetodoPagamento,
+	).Scan(&venda.ID, &venda.CriadoEm)
+	if err != nil {
+		return err
+	}
+
+	// 2. Inserir os itens e realizar a baixa de estoque APENAS se o cliente for anônimo (ClienteID == nil)
+	queryItem := `
+		INSERT INTO VendaItens (vendaid, servicoid, precounitario, quantidade)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id
+	`
+
+	for i := range itens {
+		itens[i].VendaID = venda.ID
+		err = tx.QueryRow(queryItem,
+			itens[i].VendaID, itens[i].ServicoID, itens[i].PrecoUnitario, itens[i].Quantidade,
+		).Scan(&itens[i].ID)
+		if err != nil {
+			return err
+		}
+
+		// Se o cliente for anônimo (venda.ClienteID == nil), damos baixa no estoque dos produtos associados a esse serviço.
+		if venda.ClienteID == nil && itens[i].ServicoID != nil {
+			queryProdutos := `
+				SELECT produtoid, quantidadenecessaria
+				FROM ServicoProdutos
+				WHERE servicoid = $1
+			`
+			rows, err := tx.Query(queryProdutos, *itens[i].ServicoID)
+			if err != nil {
+				return err
+			}
+			
+			type ProdInfo struct {
+				ProdutoID int
+				QtdNec    int
+			}
+			var prods []ProdInfo
+			for rows.Next() {
+				var p ProdInfo
+				if err := rows.Scan(&p.ProdutoID, &p.QtdNec); err != nil {
+					rows.Close()
+					return err
+				}
+				prods = append(prods, p)
+			}
+			rows.Close()
+
+			for _, p := range prods {
+				_, err = tx.Exec(
+					"UPDATE Produtos SET quantidade = quantidade - $1 WHERE id = $2",
+					p.QtdNec * itens[i].Quantidade, p.ProdutoID,
+				)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return tx.Commit()
+}
+
+func (r *PdvPgRepository) ObterTotalVendasDinheiro(caixaID int) (float64, error) {
+	query := `SELECT COALESCE(SUM(valorliquido), 0) FROM Vendas WHERE caixaid = $1 AND metodopagamento = 'Dinheiro'`
+	var total float64
+	err := r.db.QueryRow(query, caixaID).Scan(&total)
+	return total, err
+}
+
