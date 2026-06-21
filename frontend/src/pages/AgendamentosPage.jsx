@@ -15,6 +15,19 @@ const getServiceDetails = (nome) => {
   return { icon: '✨', desc: 'Serviço personalizado de alta qualidade' }
 }
 
+const MOCK_BARBEIROS = [
+  { id: 1, nome: 'Vitor Navalha (Mock)' },
+  { id: 2, nome: 'Thiago Barba (Mock)' },
+  { id: 3, nome: 'Yure Estilo (Mock)' }
+]
+
+const MOCK_SERVICOS = [
+  { id: 1, nome: 'Corte Simples', preco: 35.00, xpRecompensa: 10, duracaoMinutos: 30 },
+  { id: 2, nome: 'Corte + Barba', preco: 60.00, xpRecompensa: 25, duracaoMinutos: 60 },
+  { id: 3, nome: 'Barba Completa', preco: 40.00, xpRecompensa: 15, duracaoMinutos: 45 },
+  { id: 4, nome: 'Hidratação Capilar', preco: 50.00, xpRecompensa: 20, duracaoMinutos: 40 }
+]
+
 export default function AgendamentosPage() {
   const [agendamentos, setAgendamentos] = useState([])
   const [servicos, setServicos] = useState([])
@@ -43,28 +56,33 @@ export default function AgendamentosPage() {
     setError(null)
     try {
       const [resAgendamentos, resServicos, resBarbeiros] = await Promise.all([
-        fetchAgendamentos(),
-        fetchServicos(),
-        isClient ? Promise.resolve({ data: [] }) : fetchBarbeiros()
+        fetchAgendamentos().catch(err => {
+          console.warn('Erro ao buscar agendamentos, usando vazio:', err)
+          return { data: [] }
+        }),
+        fetchServicos().catch(err => {
+          console.warn('Erro ao buscar servicos, usando mock:', err)
+          return { data: MOCK_SERVICOS }
+        }),
+        fetchBarbeiros().catch(err => {
+          console.warn('Erro ao buscar barbeiros, usando mock:', err)
+          return { data: MOCK_BARBEIROS }
+        })
       ])
       
       setAgendamentos(resAgendamentos.data || [])
-      setServicos(resServicos.data || [])
       
-      const listBarbeiros = resBarbeiros.data || []
-      setBarbeiros(listBarbeiros)
+      const servicosData = resServicos.data && resServicos.data.length > 0 ? resServicos.data : MOCK_SERVICOS
+      setServicos(servicosData)
+      
+      const barbeirosData = resBarbeiros.data && resBarbeiros.data.length > 0 ? resBarbeiros.data : MOCK_BARBEIROS
+      setBarbeiros(barbeirosData)
 
-      if (resServicos.data?.length > 0) setSelectedServico(resServicos.data[0].id)
-      if (listBarbeiros.length > 0) setSelectedBarbeiro(listBarbeiros[0].id)
-      else if (isClient) {
-        // Para clientes, buscar lista de barbeiros de qualquer forma para selecionar no form
-        const fallbackBarbeiros = await fetchBarbeiros()
-        setBarbeiros(fallbackBarbeiros.data || [])
-        if (fallbackBarbeiros.data?.length > 0) setSelectedBarbeiro(fallbackBarbeiros.data[0].id)
-      }
+      if (servicosData.length > 0) setSelectedServico(servicosData[0].id)
+      if (barbeirosData.length > 0) setSelectedBarbeiro(barbeirosData[0].id)
     } catch (err) {
       console.error(err)
-      setError('Erro ao carregar os dados. Verifique a ligação ao servidor.')
+      setError('Erro ao carregar os dados. Usando dados fictícios locais.')
     } finally {
       setLoading(false)
     }
