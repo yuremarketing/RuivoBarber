@@ -187,7 +187,7 @@ export default function AgendamentosPage() {
                     <td style={{ fontWeight: 600 }}>{a.cliente_nome || `Cliente #${a.cliente_id}`}</td>
                     <td>{a.barbeiro_nome || `Barbeiro #${a.barbeiro_id}`}</td>
                     <td>{a.servico_nome || `Serviço #${a.servico_id}`}</td>
-                    <td>{new Date(a.data_hora).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+                    <td>{new Date(a.data_hora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
                     <td style={{ fontWeight: 600 }}>R$ {a.preco ? a.preco.toFixed(2) : '35.00'}</td>
                     <td><span className={`badge badge-${a.status.toLowerCase()}`}>{a.status}</span></td>
                     <td>
