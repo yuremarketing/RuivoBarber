@@ -20,7 +20,6 @@
 - [ ] [TASK-041-FE] [Queue] Painel Administrativo Operacional para Controle Físico da Fila da Barbearia (Issue #6)
 - [ ] [TASK-052] [Badges] Vitrine de Badges no PlayerCard do Cliente
 - [ ] [TASK-050] [Store] Inventário do Cliente no Frontend (Bolsa de Itens/Poções)
-- [ ] [TASK-057] [Fame] Galeria Histórica de Lendários (Hall of Fame)
 
 ## 🎨 UX (Experiência e Mídias)
 - [ ] [TASK-055] [UX-Audio] Efeitos Sonoros e Efeitos Visuais de Level Up no Frontend
