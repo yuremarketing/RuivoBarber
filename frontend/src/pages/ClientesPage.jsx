@@ -262,6 +262,7 @@ export default function ClientesPage() {
                   nome={selectedCliente.nome} 
                   nivel={selectedCliente.nivel} 
                   xp={selectedCliente.xp} 
+                  avatarUrl={selectedCliente.avatarUrl}
                 />
               </div>
               
