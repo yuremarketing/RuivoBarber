@@ -19,7 +19,6 @@
 - [ ] [TASK-066] [PDV-FE/BE] Relatório Financeiro e Comissões dos Barbeiros (Issue #23)
 - [ ] [TASK-041-FE] [Queue] Painel Administrativo Operacional para Controle Físico da Fila da Barbearia (Issue #6)
 - [ ] [TASK-052] [Badges] Vitrine de Badges no PlayerCard do Cliente
-- [ ] [TASK-050] [Store] Inventário do Cliente no Frontend (Bolsa de Itens/Poções)
 - [ ] [TASK-057] [Fame] Galeria Histórica de Lendários (Hall of Fame)
 
 ## 🎨 UX (Experiência e Mídias)
