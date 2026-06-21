@@ -174,3 +174,54 @@ func (s *ClaService) ObterClaDoUsuario(ctx context.Context, userID int) (*domain
 	}
 	return cla, nil
 }
+
+func (s *ClaService) ListarClas(ctx context.Context) ([]domain.ClaRankingDTO, error) {
+	return s.repo.ListarClas(ctx)
+}
+
+func (s *ClaService) SalvarMensagemMural(ctx context.Context, userID int, mensagem string) (*domain.ClaMensagem, error) {
+	mensagem = strings.TrimSpace(mensagem)
+	if mensagem == "" {
+		return nil, errors.New("a mensagem do mural não pode ser vazia")
+	}
+
+	membro, err := s.repo.FindMember(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if membro == nil {
+		return nil, errors.New("você não pertence a nenhum clã")
+	}
+
+	msg := &domain.ClaMensagem{
+		ClaID:     membro.ClaID,
+		UsuarioID: userID,
+		Mensagem:  mensagem,
+	}
+
+	err = s.repo.SalvarMensagemMural(ctx, msg)
+	if err != nil {
+		return nil, err
+	}
+	return msg, nil
+}
+
+func (s *ClaService) ListarMensagensMural(ctx context.Context, userID int) ([]domain.ClaMensagemDTO, error) {
+	membro, err := s.repo.FindMember(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if membro == nil {
+		return nil, errors.New("você não pertence a nenhum clã")
+	}
+
+	return s.repo.ListarMensagensMural(ctx, membro.ClaID)
+}
+
+func (s *ClaService) BuscarJogadoresSemCla(ctx context.Context, query string) ([]domain.JogadorBuscaDTO, error) {
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return []domain.JogadorBuscaDTO{}, nil
+	}
+	return s.repo.BuscarJogadoresSemCla(ctx, query)
+}

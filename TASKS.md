@@ -145,10 +145,10 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
   - [ ] Frontend: Exibição da árvore de patentes RPG e card "Último Corte" no portal do cliente.
 - [ ] [Badges] Task 52: Vitrine de Badges no PlayerCard do Cliente
   - [ ] Frontend: Renderizar as medalhas desbloqueadas com efeitos visuais no perfil do cliente.
-- [ ] [Guilds] Task 53: Ranking Semanal de Clãs (Leaderboard de Guildas)
-  - [ ] Frontend: Exibir tabela de classificação comparando os níveis e XP acumulado de cada clã.
-- [ ] [Guilds] Task 46: Mural de Recados do Clã (Chat Interno)
-  - [ ] Frontend: Criar aba com feed ou mural de mensagens para interação exclusiva dos membros do clã.
+- [x] [Guilds] Task 53: Ranking Semanal de Clãs (Leaderboard de Guildas)
+  - [x] Frontend: Exibir tabela de classificação comparando os níveis e XP acumulado de cada clã.
+- [x] [Guilds] Task 46: Mural de Recados do Clã (Chat Interno)
+  - [x] Frontend: Criar aba com feed ou mural de mensagens para interação exclusiva dos membros do clã.
 - [ ] [Store] Task 50: Inventário do Cliente no Frontend (Bolsa de Itens/Poções)
   - [ ] Frontend: Exibição visual de itens resgatados, como poções que aceleram ganho de XP.
 - [ ] [Fame] Task 57: Galeria Histórica de Lendários (Hall of Fame)

@@ -6,8 +6,6 @@
 ## 🖥️ Frontend (Telas React)
 - [ ] [TASK-040] [Rewards] Painel de Conquistas e Histórico "Último Corte"
 - [ ] [TASK-052] [Badges] Vitrine de Badges no PlayerCard do Cliente
-- [ ] [TASK-053] [Guilds] Ranking Semanal de Clãs (Leaderboard de Guildas)
-- [ ] [TASK-046] [Guilds] Mural de Recados do Clã (Chat Interno)
 - [ ] [TASK-050] [Store] Inventário do Cliente no Frontend (Bolsa de Itens/Poções)
 - [ ] [TASK-057] [Fame] Galeria Histórica de Lendários (Hall of Fame)
 

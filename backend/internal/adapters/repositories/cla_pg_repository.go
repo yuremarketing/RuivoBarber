@@ -174,3 +174,93 @@ func (r *ClaPgRepository) ListInvitesByConvidadoID(ctx context.Context, convidad
 	}
 	return invites, nil
 }
+
+func (r *ClaPgRepository) ListarClas(ctx context.Context) ([]domain.ClaRankingDTO, error) {
+	query := `
+		SELECT c.id, c.nome, c.descricao, c.xpcoletivo, c.nivelatual, c.liderid, u.nome as nome_lider,
+			   (SELECT COUNT(*) FROM ClaMembros WHERE claid = c.id) as membros_qtd, c.criadoem
+		FROM Clas c
+		JOIN Usuarios u ON c.liderid = u.id
+		ORDER BY c.nivelatual DESC, c.xpcoletivo DESC, c.nome ASC
+	`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ranking []domain.ClaRankingDTO
+	for rows.Next() {
+		var item domain.ClaRankingDTO
+		err := rows.Scan(&item.ID, &item.Nome, &item.Descricao, &item.XPColetivo, &item.NivelAtual, &item.LiderID, &item.NomeLider, &item.MembrosQtd, &item.CriadoEm)
+		if err != nil {
+			return nil, err
+		}
+		ranking = append(ranking, item)
+	}
+	return ranking, nil
+}
+
+func (r *ClaPgRepository) SalvarMensagemMural(ctx context.Context, msg *domain.ClaMensagem) error {
+	query := `
+		INSERT INTO ClaMural (claid, usuarioid, mensagem, criadoem)
+		VALUES ($1, $2, $3, NOW())
+		RETURNING id, criadoem
+	`
+	return r.db.QueryRowContext(ctx, query, msg.ClaID, msg.UsuarioID, msg.Mensagem).Scan(&msg.ID, &msg.CriadoEm)
+}
+
+func (r *ClaPgRepository) ListarMensagensMural(ctx context.Context, claID int) ([]domain.ClaMensagemDTO, error) {
+	query := `
+		SELECT m.id, m.usuarioid, u.nome as nome_usuario, m.mensagem, m.criadoem
+		FROM ClaMural m
+		JOIN Usuarios u ON m.usuarioid = u.id
+		WHERE m.claid = $1
+		ORDER BY m.criadoem ASC
+	`
+	rows, err := r.db.QueryContext(ctx, query, claID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var messages []domain.ClaMensagemDTO
+	for rows.Next() {
+		var m domain.ClaMensagemDTO
+		err := rows.Scan(&m.ID, &m.UsuarioID, &m.NomeUsuario, &m.Mensagem, &m.CriadoEm)
+		if err != nil {
+			return nil, err
+		}
+		messages = append(messages, m)
+	}
+	return messages, nil
+}
+
+func (r *ClaPgRepository) BuscarJogadoresSemCla(ctx context.Context, query string) ([]domain.JogadorBuscaDTO, error) {
+	dbQuery := `
+		SELECT id, nome, login
+		FROM Usuarios
+		WHERE cargo = 'Cliente'
+		  AND id NOT IN (SELECT usuarioid FROM ClaMembros)
+		  AND (nome ILIKE $1 OR login ILIKE $1)
+		ORDER BY nome ASC
+		LIMIT 10
+	`
+	searchPattern := "%" + query + "%"
+	rows, err := r.db.QueryContext(ctx, dbQuery, searchPattern)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var jogadores []domain.JogadorBuscaDTO
+	for rows.Next() {
+		var j domain.JogadorBuscaDTO
+		err := rows.Scan(&j.ID, &j.Nome, &j.Login)
+		if err != nil {
+			return nil, err
+		}
+		jogadores = append(jogadores, j)
+	}
+	return jogadores, nil
+}

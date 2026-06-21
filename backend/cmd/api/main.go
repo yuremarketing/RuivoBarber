@@ -111,6 +111,14 @@ func main() {
 			CriadoEm TIMESTAMP DEFAULT NOW(),
 			UNIQUE(ClaID, ConvidadoID)
 		);
+
+		CREATE TABLE IF NOT EXISTS ClaMural (
+			ID SERIAL PRIMARY KEY,
+			ClaID INT NOT NULL REFERENCES Clas(ID) ON DELETE CASCADE,
+			UsuarioID INT NOT NULL REFERENCES Usuarios(ID) ON DELETE CASCADE,
+			Mensagem TEXT NOT NULL,
+			CriadoEm TIMESTAMP DEFAULT NOW()
+		);
 	`)
 	if err != nil {
 		log.Printf("[DB] Erro ao executar migração automática para Clãs: %v", err)

@@ -22,3 +22,5 @@ Tarefas finalizadas e prontas para validação:
 - [x] [TASK-041] [Queue] Controle de Presença (Check-in/Check-out) e Tempo Médio (Backend)
 - [x] [TASK-056] [Ops] Notificação Automática de Conquistas e Nível via WhatsApp (Backend)
 - [x] [TASK-042] [Lives] Integração com Transmissões de Lives ao Vivo (Backend & Frontend)
+- [x] [TASK-053] [Guilds] Ranking Semanal de Clãs (Leaderboard de Guildas) (Backend & Frontend)
+- [x] [TASK-046] [Guilds] Mural de Recados do Clã (Chat Interno) (Backend & Frontend)

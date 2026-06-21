@@ -16,4 +16,8 @@ type ClaRepository interface {
 	FindInviteByID(ctx context.Context, inviteID int) (claID, convidadoID int, status string, err error)
 	UpdateInviteStatus(ctx context.Context, inviteID int, status string) error
 	ListInvitesByConvidadoID(ctx context.Context, convidadoID int) ([]domain.ClaConviteDTO, error)
+	ListarClas(ctx context.Context) ([]domain.ClaRankingDTO, error)
+	SalvarMensagemMural(ctx context.Context, msg *domain.ClaMensagem) error
+	ListarMensagensMural(ctx context.Context, claID int) ([]domain.ClaMensagemDTO, error)
+	BuscarJogadoresSemCla(ctx context.Context, query string) ([]domain.JogadorBuscaDTO, error)
 }

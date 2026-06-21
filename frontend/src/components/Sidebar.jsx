@@ -18,6 +18,7 @@ export default function Sidebar() {
         { path: '/dashboard', icon: '⚔️', label: 'Meu RPG' },
         { path: '/cupons', icon: '🎟️', label: 'Meus Cupons' },
         { path: '/temporadas', icon: '⏳', label: 'Temporadas RPG' },
+        { path: '/clas', icon: '🛡️', label: 'Clãs & Guildas' },
         { path: '/lives', icon: '📺', label: 'Assista ao Vivo' },
         { path: '/configuracoes', icon: '⚙️', label: 'Minha Conta' },
       ]

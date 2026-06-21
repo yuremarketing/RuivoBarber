@@ -17,14 +17,18 @@ func NewClaHandler(service *services.ClaService) *ClaHandler {
 func (h *ClaHandler) RegisterRoutes(app *fiber.App) {
 	api := app.Group("/api/v1")
 
+	api.Get("/clas", JWTMiddleware, h.ListarClas)
 	api.Post("/clas", JWTMiddleware, h.CriarCla)
 	api.Post("/clas/convidar", JWTMiddleware, RequireCargo("Cliente"), h.ConvidarUsuario)
 	api.Get("/clas/convites", JWTMiddleware, RequireCargo("Cliente"), h.ListarConvites)
 	api.Post("/clas/convites/:id/aceitar", JWTMiddleware, RequireCargo("Cliente"), h.AceitarConvite)
 	api.Post("/clas/convites/:id/recusar", JWTMiddleware, RequireCargo("Cliente"), h.RecusarConvite)
 	api.Get("/clas/me", JWTMiddleware, h.ObterMeuCla)
+	api.Get("/clas/me/mural", JWTMiddleware, h.ObterMural)
+	api.Post("/clas/me/mural", JWTMiddleware, h.PostarMural)
 	api.Get("/clas/:id", JWTMiddleware, h.ObterClaPorID)
 	api.Get("/clas/:id/membros", JWTMiddleware, h.ListarMembros)
+	api.Get("/jogadores/busca", JWTMiddleware, h.BuscarJogadores)
 }
 
 func (h *ClaHandler) CriarCla(c *fiber.Ctx) error {
@@ -152,4 +156,46 @@ func (h *ClaHandler) ObterClaPorID(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(cla)
+}
+
+func (h *ClaHandler) ListarClas(c *fiber.Ctx) error {
+	ranking, err := h.service.ListarClas(c.UserContext())
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(ranking)
+}
+
+func (h *ClaHandler) ObterMural(c *fiber.Ctx) error {
+	userID := c.Locals("userId").(int)
+	messages, err := h.service.ListarMensagensMural(c.UserContext(), userID)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(messages)
+}
+
+func (h *ClaHandler) PostarMural(c *fiber.Ctx) error {
+	userID := c.Locals("userId").(int)
+	var req struct {
+		Mensagem string `json:"mensagem"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "dados inválidos"})
+	}
+
+	msg, err := h.service.SalvarMensagemMural(c.UserContext(), userID, req.Mensagem)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.Status(201).JSON(msg)
+}
+
+func (h *ClaHandler) BuscarJogadores(c *fiber.Ctx) error {
+	query := c.Query("query")
+	jogadores, err := h.service.BuscarJogadoresSemCla(c.UserContext(), query)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(jogadores)
 }
