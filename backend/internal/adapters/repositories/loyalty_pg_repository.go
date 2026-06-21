@@ -28,7 +28,9 @@ func (r *LoyaltyPgRepository) ObterCheckInInfo(ctx context.Context, userID int) 
 		return 0, nil, err
 	}
 	if uCheck.Valid {
-		t := uCheck.Time
+		t := time.Date(uCheck.Time.Year(), uCheck.Time.Month(), uCheck.Time.Day(),
+			uCheck.Time.Hour(), uCheck.Time.Minute(), uCheck.Time.Second(),
+			uCheck.Time.Nanosecond(), time.Local)
 		return streak, &t, nil
 	}
 	return streak, nil, nil

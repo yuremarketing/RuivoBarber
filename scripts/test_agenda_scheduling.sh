@@ -13,7 +13,9 @@ db_exec() {
 echo "===== INICIANDO TESTE DE AGENDA E OVERBOOKING (TASK #38) ====="
 
 # 1. Preparar massa de testes
-db_exec "DELETE FROM Agendamentos WHERE datahora::date = '2026-06-20';"
+db_exec "DELETE FROM Agendamentos WHERE barbeiroid IN (SELECT id FROM Usuarios WHERE login = 'test_barber_agenda');"
+db_exec "DELETE FROM Agendamentos WHERE clienteid IN (SELECT id FROM Usuarios WHERE login = 'test_cli_agenda');"
+db_exec "DELETE FROM ProgressoCliente WHERE clienteid IN (SELECT id FROM Usuarios WHERE login = 'test_cli_agenda');"
 db_exec "DELETE FROM Usuarios WHERE login = 'test_barber_agenda';"
 db_exec "DELETE FROM Usuarios WHERE login = 'test_cli_agenda';"
 
