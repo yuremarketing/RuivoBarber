@@ -54,6 +54,11 @@ export const atualizarPerfil = (id, dados) => api.put(`/clientes/${id}/perfil`, 
 export const fetchConfiguracoes = () => api.get('/configuracoes')
 export const salvarConfiguracoes = (dados) => api.post('/configuracoes', dados)
 
+export const fetchLives = () => api.get('/lives')
+export const fetchLiveAtiva = () => api.get('/lives/ativa')
+export const criarLive = (titulo, url, plataforma, ativa) => api.post('/lives', { titulo, url, plataforma, ativa })
+export const ativarLive = (id) => api.post(`/lives/${id}/ativar`)
+export const excluirLive = (id) => api.delete(`/lives/${id}`)
 export const fetchTemporadas = () => api.get('/temporadas')
 export const fetchTemporadaAtiva = () => api.get('/temporadas/ativa')
 export const criarTemporada = (nome, dataInicio, dataFim, ativa) => api.post('/temporadas', { nome, dataInicio, dataFim, ativa })

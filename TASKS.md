@@ -116,14 +116,28 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
   - [x] Backend: Implementar acumulação de XP coletivo (+1 por corte) e subida de nível de clãs.
 - [x] [Badges] Task 51: Sistema de Conquistas Individuais por Badges (Medalhas) (Backend)
   - [x] Backend: Triggers de conquistas e bônus de XP no banco para os primeiros marcos (cortes/nível).
+- [x] [Store] Task 49: Loja de Itens Virtuais RPG (Troca de XP por itens do perfil) (Backend)
+  - [x] Backend: Permitir resgatar cosméticos e molduras para o PlayerCard usando moedas/XP.
 
 ---
 
 ## 🛡️ 9. Backlog Reorganizado e Priorizado
 
-### 🎨 UX (Experiência, Animações e Mídias)
-- [ ] [UX-Audio] Task 55: Efeitos Sonoros e Efeitos Visuais de Level Up no Frontend
-  - [ ] Frontend: Integrar transições com sons arcade e confetes ao subir de nível ou resgatar cupons.
+### ⚙️ Backend (Lógica Go e Banco de Dados) (Prioridade Máxima — Modelo de Negócio)
+- [x] [Guilds] Task 47: Sistema de Missões Semanais do Clã (Quests de Guilda) (Backend)
+  - [x] Backend: Cron para resetar missões de clã semanalmente (ex: "Clã realiza 10 cortes em conjunto").
+- [x] [Loyalty] Task 54: Recompensa por Acesso Diário (Daily Streak / Login Diário)
+  - [x] Backend/Frontend: Bonificação de pequenos pontos de XP por check-in de login diário na plataforma.
+- [x] [Guilds] Task 48: Eventos Cooperativos de "Raid" (Meta Comunitária de Cortes) (Backend)
+  - [x] Backend: Evento global temporário (ex: "Navalha Suprema: 500 barbas feitas este mês").
+- [ ] [Queue] Task 41: Controle de Presença (Check-in/Check-out) e Tempo Médio
+  - [x] Backend: Gerenciamento do status "Em Cadeira" e cálculo automático de tempo médio do corte.
+  - [ ] Frontend: Painel operacional administrativo para controle físico da fila da barbearia.
+- [x] [Ops] Task 56: Notificação Automática de Conquistas e Nível via WhatsApp
+  - [x] Backend: Integração do chat de IA para parabenizar o cliente via WhatsApp ao atingir patentes lendárias.
+- [x] [Lives] Task 42: Integração com Transmissões de Lives ao Vivo
+  - [x] Backend: Rota para salvar e ativar links de transmissões de lives (YouTube, Facebook, Twitch).
+  - [x] Frontend: Player de vídeo incorporado dinamicamente para os clientes assistirem a transmissões ao vivo.
 
 ### 🖥️ Frontend (Telas React)
 - [ ] [Rewards] Task 40: Painel de Conquistas e Histórico "Último Corte"
@@ -140,25 +154,13 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 - [ ] [Fame] Task 57: Galeria Histórica de Lendários (Hall of Fame)
   - [ ] Frontend: Página listando os maiores pontuadores históricos das temporadas passadas da barbearia.
 
-### ⚙️ Backend (Lógica Go e Banco de Dados)
-- [ ] [Store] Task 49: Loja de Itens Virtuais RPG (Troca de XP por itens do perfil)
-  - [ ] Backend/Frontend: Permitir resgatar cosméticos e molduras para o PlayerCard usando moedas/XP.
-- [ ] [Guilds] Task 47: Sistema de Missões Semanais do Clã (Quests de Guilda)
-  - [ ] Backend: Cron para resetar missões de clã semanalmente (ex: "Clã realiza 10 cortes em conjunto").
-- [ ] [Loyalty] Task 54: Recompensa por Acesso Diário (Daily Streak / Login Diário)
-  - [ ] Backend/Frontend: Bonificação de pequenos pontos de XP por check-in de login diário na plataforma.
-- [ ] [Guilds] Task 48: Eventos Cooperativos de "Raid" (Meta Comunitária de Cortes)
-  - [ ] Backend/Frontend: Evento global temporário (ex: "Navalha Suprema: 500 barbas feitas este mês").
-- [ ] [Queue] Task 41: Controle de Presença (Check-in/Check-out) e Tempo Médio
-  - [ ] Backend: Gerenciamento do status "Em Cadeira" e cálculo automático de tempo médio do corte.
-  - [ ] Frontend: Painel operacional administrativo para controle físico da fila da barbearia.
-- [ ] [Ops] Task 56: Notificação Automática de Conquistas e Nível via WhatsApp
-  - [ ] Backend: Integração do chat de IA para parabenizar o cliente via WhatsApp ao atingir patentes lendárias.
-- [ ] [Lives] Task 42: Integração com Transmissões de Lives ao Vivo
-  - [ ] Backend: Rota para salvar e ativar links de transmissões de lives (YouTube, Facebook, Twitch).
-  - [ ] Frontend: Player de vídeo incorporado dinamicamente para os clientes assistirem a transmissões ao vivo.
+### 🎨 UX (Experiência, Animações e Mídias)
+- [ ] [UX-Audio] Task 55: Efeitos Sonoros e Efeitos Visuais de Level Up no Frontend
+  - [ ] Frontend: Integrar transições com sons arcade e confetes ao subir de nível ou resgatar cupons.
 
-
+### 🚀 DevOps / Infraestrutura (CI/CD)
+- [ ] [DevOps] Task 60: Implantação do Harness.io (CI/CD)
+  - [ ] DevOps: Configurar pipeline no Harness.io para compilação, execução de testes automatizados e deploy contínuo, mapeando o deploy automático do Render.
 
 
 

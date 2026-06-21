@@ -4,7 +4,9 @@ import (
     "context"
     "database/sql"
     "errors"
+    "fmt"
     "math/rand"
+    "strings"
     "time"
     "ruivobarber-api/internal/core/domain"
     "ruivobarber-api/internal/core/ports"
@@ -25,7 +27,11 @@ func (r *ClientePgRepository) FindAll() ([]domain.Cliente, error) {
                COALESCE(p.nivelatual, 1) as nivel, 
                COALESCE(p.barrapercentual, 0.0) as barra_percentual, 
                COALESCE(n.nomedonivel, 'Corte Iniciante') as nome_do_nivel,
-               COALESCE(u.avatar_url, '') as avatar_url
+               COALESCE(u.avatar_url, '') as avatar_url,
+               COALESCE(p.moedas, 0) as moedas,
+               COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Moldura' LIMIT 1), '') as moldura_equipada,
+               COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Background' LIMIT 1), '') as fundo_equipado,
+               COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Efeito' LIMIT 1), '') as efeito_equipado
         FROM Usuarios u
         LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
         LEFT JOIN Niveis n ON p.nivelatual = n.id
@@ -39,7 +45,7 @@ func (r *ClientePgRepository) FindAll() ([]domain.Cliente, error) {
     var clientes []domain.Cliente
     for rows.Next() {
         var c domain.Cliente
-        err := rows.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL)
+        err := rows.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado)
         if err != nil {
             return nil, err
         }
@@ -59,14 +65,18 @@ func (r *ClientePgRepository) FindByID(id int) (*domain.Cliente, error) {
                COALESCE(p.nivelatual, 1) as nivel, 
                COALESCE(p.barrapercentual, 0.0) as barra_percentual, 
                COALESCE(n.nomedonivel, 'Corte Iniciante') as nome_do_nivel,
-               COALESCE(u.avatar_url, '') as avatar_url
+               COALESCE(u.avatar_url, '') as avatar_url,
+               COALESCE(p.moedas, 0) as moedas,
+               COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Moldura' LIMIT 1), '') as moldura_equipada,
+               COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Background' LIMIT 1), '') as fundo_equipado,
+               COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Efeito' LIMIT 1), '') as efeito_equipado
         FROM Usuarios u
         LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
         LEFT JOIN Niveis n ON p.nivelatual = n.id
         WHERE u.id = $1
     `
     row := r.db.QueryRow(query, id)
-    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL)
+    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado)
     if err != nil {
         return nil, err
     }
@@ -81,14 +91,18 @@ func (r *ClientePgRepository) FindByLogin(login string) (*domain.Cliente, error)
                COALESCE(p.nivelatual, 1) as nivel, 
                COALESCE(p.barrapercentual, 0.0) as barra_percentual, 
                COALESCE(n.nomedonivel, 'Corte Iniciante') as nome_do_nivel,
-               COALESCE(u.avatar_url, '') as avatar_url
+               COALESCE(u.avatar_url, '') as avatar_url,
+               COALESCE(p.moedas, 0) as moedas,
+               COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Moldura' LIMIT 1), '') as moldura_equipada,
+               COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Background' LIMIT 1), '') as fundo_equipado,
+               COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Efeito' LIMIT 1), '') as efeito_equipado
         FROM Usuarios u
         LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
         LEFT JOIN Niveis n ON p.nivelatual = n.id
         WHERE u.login = $1
     `
     row := r.db.QueryRow(query, login)
-    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL)
+    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado)
     if err != nil {
         return nil, err
     }
@@ -171,9 +185,10 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) (*ports.Not
         return nil, err
     }
 
-    // 2. Obter XP de recompensa do Serviço
+    // 2. Obter XP de recompensa e nome do Serviço
     var xpRecompensa int
-    err = tx.QueryRowContext(ctx, "SELECT xprecompensa FROM Servicos WHERE id = $1", servicoID).Scan(&xpRecompensa)
+    var servicoNome string
+    err = tx.QueryRowContext(ctx, "SELECT nome, xprecompensa FROM Servicos WHERE id = $1", servicoID).Scan(&servicoNome, &xpRecompensa)
     if err != nil {
         return nil, err
     }
@@ -207,19 +222,20 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) (*ports.Not
     }
 
     // 4. Atualizar status do agendamento
-    _, err = tx.ExecContext(ctx, "UPDATE Agendamentos SET status = 'Concluido' WHERE id = $1", agendamentoID)
+    _, err = tx.ExecContext(ctx, "UPDATE Agendamentos SET status = 'Concluido', concluidotime = NOW() WHERE id = $1", agendamentoID)
     if err != nil {
         return nil, err
     }
 
     // 5. Atualizar ou Criar ProgressoCliente e calcular XP/Nivel
-    var xpAtual, nivelAtual int
+    var xpAtual, nivelAtual, moedas int
     var progressoExiste bool
-    err = tx.QueryRowContext(ctx, "SELECT xpatual, nivelatual FROM ProgressoCliente WHERE clienteid = $1", clienteID).Scan(&xpAtual, &nivelAtual)
+    err = tx.QueryRowContext(ctx, "SELECT xpatual, nivelatual, moedas FROM ProgressoCliente WHERE clienteid = $1", clienteID).Scan(&xpAtual, &nivelAtual, &moedas)
     if err != nil {
         if errors.Is(err, sql.ErrNoRows) {
             xpAtual = 0
             nivelAtual = 1
+            moedas = 0
             progressoExiste = false
         } else {
             return nil, err
@@ -229,6 +245,7 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) (*ports.Not
     }
 
     xpAtual += xpRecompensa
+    moedas += xpRecompensa
 
     // Carregar níveis para cálculo de nível atual e barra percentual
     type NivelInfo struct {
@@ -283,9 +300,9 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) (*ports.Not
     }
 
     if progressoExiste {
-        _, err = tx.ExecContext(ctx, "UPDATE ProgressoCliente SET xpatual = $1, nivelatual = $2, barrapercentual = $3, updatedat = NOW() WHERE clienteid = $4", xpAtual, calculatedNivel, pct, clienteID)
+        _, err = tx.ExecContext(ctx, "UPDATE ProgressoCliente SET xpatual = $1, nivelatual = $2, barrapercentual = $3, moedas = $4, updatedat = NOW() WHERE clienteid = $5", xpAtual, calculatedNivel, pct, moedas, clienteID)
     } else {
-        _, err = tx.ExecContext(ctx, "INSERT INTO ProgressoCliente (clienteid, xpatual, nivelatual, barrapercentual) VALUES ($1, $2, $3, $4)", clienteID, xpAtual, calculatedNivel, pct)
+        _, err = tx.ExecContext(ctx, "INSERT INTO ProgressoCliente (clienteid, xpatual, nivelatual, barrapercentual, moedas) VALUES ($1, $2, $3, $4, $5)", clienteID, xpAtual, calculatedNivel, pct, moedas)
     }
     if err != nil {
         return nil, err
@@ -329,7 +346,35 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) (*ports.Not
                 return nil, err
             }
         }
+
+        // Atualizar progresso das missões semanais do clã
+        year, week := time.Now().ISOWeek()
+        semanaAno := fmt.Sprintf("%d-W%02d", year, week)
+
+        if err := incrementQuestProgress(ctx, tx, claID, semanaAno, "Atendimentos", 1); err != nil {
+            return nil, err
+        }
+        if err := incrementQuestProgress(ctx, tx, claID, semanaAno, "XpClã", 1); err != nil {
+            return nil, err
+        }
+
+        if strings.Contains(strings.ToLower(servicoNome), "corte") {
+            if err := incrementQuestProgress(ctx, tx, claID, semanaAno, "Cortes", 1); err != nil {
+                return nil, err
+            }
+        }
+
+        if strings.Contains(strings.ToLower(servicoNome), "barba") {
+            if err := incrementQuestProgress(ctx, tx, claID, semanaAno, "Barbas", 1); err != nil {
+                return nil, err
+            }
+        }
     } else if !errors.Is(err, sql.ErrNoRows) {
+        return nil, err
+    }
+
+    // Atualizar progresso de qualquer Raid ativa
+    if err := incrementRaidProgress(ctx, tx, clienteID, servicoNome); err != nil {
         return nil, err
     }
 
@@ -341,8 +386,8 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) (*ports.Not
             return nil, err
         }
 
-        var xpAtual, nivelAtual int
-        err = tx.QueryRowContext(ctx, "SELECT xpatual, nivelatual FROM ProgressoCliente WHERE clienteid = $1", clienteID).Scan(&xpAtual, &nivelAtual)
+        var xpAtual, nivelAtual, moedas int
+        err = tx.QueryRowContext(ctx, "SELECT xpatual, nivelatual, moedas FROM ProgressoCliente WHERE clienteid = $1", clienteID).Scan(&xpAtual, &nivelAtual, &moedas)
         if err != nil {
             return nil, err
         }
@@ -386,8 +431,9 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) (*ports.Not
                     return nil, err
                 }
 
-                // 2. Adicionar XP bonus e atualizar ProgressoCliente
+                // 2. Adicionar XP e Moedas bonus e atualizar ProgressoCliente
                 xpAtual += b.XpBonus
+                moedas += b.XpBonus
 
                 calculatedNivel := 1
                 for _, l := range niveis {
@@ -416,7 +462,7 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) (*ports.Not
                     }
                 }
 
-                _, err = tx.ExecContext(ctx, "UPDATE ProgressoCliente SET xpatual = $1, nivelatual = $2, barrapercentual = $3, updatedat = NOW() WHERE clienteid = $4", xpAtual, calculatedNivel, pct, clienteID)
+                _, err = tx.ExecContext(ctx, "UPDATE ProgressoCliente SET xpatual = $1, nivelatual = $2, barrapercentual = $3, moedas = $4, updatedat = NOW() WHERE clienteid = $5", xpAtual, calculatedNivel, pct, moedas, clienteID)
                 if err != nil {
                     return nil, err
                 }
@@ -902,14 +948,19 @@ func (r *ClientePgRepository) BuscarClientePorTelefone(telefone string) (*domain
 		       COALESCE(p.xpatual, 0) as xp, 
 		       COALESCE(p.nivelatual, 1) as nivel, 
 		       COALESCE(p.barrapercentual, 0.0) as barra_percentual, 
-		       COALESCE(n.nomedonivel, 'Corte Iniciante') as nome_do_nivel
+		       COALESCE(n.nomedonivel, 'Corte Iniciante') as nome_do_nivel,
+		       COALESCE(u.avatar_url, '') as avatar_url,
+		       COALESCE(p.moedas, 0) as moedas,
+		       COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Moldura' LIMIT 1), '') as moldura_equipada,
+		       COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Background' LIMIT 1), '') as fundo_equipado,
+		       COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Efeito' LIMIT 1), '') as efeito_equipado
 		FROM Usuarios u
 		LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
 		LEFT JOIN Niveis n ON p.nivelatual = n.id
 		WHERE (u.login = $1 OR u.login = $2) AND u.cargo = 'Cliente'
 		LIMIT 1
 	`
-	err := r.db.QueryRow(query, telefone, cleanPhone).Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel)
+	err := r.db.QueryRow(query, telefone, cleanPhone).Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado)
 	if err != nil {
 		return nil, err
 	}
@@ -928,4 +979,186 @@ func (r *ClientePgRepository) RegistrarMensagemProcessada(messageID string) (boo
 	}
 	return rowsAffected > 0, nil
 }
+
+func incrementQuestProgress(ctx context.Context, tx *sql.Tx, claID int, semanaAno, tipoRequisito string, incremento int) error {
+	queryActive := `
+		SELECT m.id, m.meta, m.xpbonus, COALESCE(p.progresso, 0), COALESCE(p.completada, FALSE)
+		FROM ClaMissoesSemanais s
+		JOIN ClaMissoes m ON s.missaoid = m.id
+		LEFT JOIN ClaMissoesProgresso p ON s.missaoid = p.missaoid AND p.claid = $1 AND p.semanaano = $2
+		WHERE s.semanaano = $2 AND m.tiporequisito = $3
+	`
+	rows, err := tx.QueryContext(ctx, queryActive, claID, semanaAno, tipoRequisito)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	type questState struct {
+		id         int
+		meta       int
+		xpBonus    int
+		progresso  int
+		completada bool
+	}
+	var quests []questState
+	for rows.Next() {
+		var q questState
+		if err := rows.Scan(&q.id, &q.meta, &q.xpBonus, &q.progresso, &q.completada); err != nil {
+			return err
+		}
+		quests = append(quests, q)
+	}
+	rows.Close()
+
+	for _, q := range quests {
+		if q.completada {
+			continue
+		}
+
+		novoProgresso := q.progresso + incremento
+		completou := false
+		if novoProgresso >= q.meta {
+			novoProgresso = q.meta
+			completou = true
+		}
+
+		var exists bool
+		err = tx.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM ClaMissoesProgresso WHERE claid = $1 AND missaoid = $2 AND semanaano = $3)", claID, q.id, semanaAno).Scan(&exists)
+		if err != nil {
+			return err
+		}
+
+		if exists {
+			if completou {
+				_, err = tx.ExecContext(ctx, "UPDATE ClaMissoesProgresso SET progresso = $1, completada = TRUE, completadaem = NOW() WHERE claid = $2 AND missaoid = $3 AND semanaano = $4", novoProgresso, claID, q.id, semanaAno)
+			} else {
+				_, err = tx.ExecContext(ctx, "UPDATE ClaMissoesProgresso SET progresso = $1 WHERE claid = $2 AND missaoid = $3 AND semanaano = $4", novoProgresso, claID, q.id, semanaAno)
+			}
+		} else {
+			if completou {
+				_, err = tx.ExecContext(ctx, "INSERT INTO ClaMissoesProgresso (claid, missaoid, semanaano, progresso, completada, completadaem) VALUES ($1, $2, $3, $4, TRUE, NOW())", claID, q.id, semanaAno, novoProgresso)
+			} else {
+				_, err = tx.ExecContext(ctx, "INSERT INTO ClaMissoesProgresso (claid, missaoid, semanaano, progresso) VALUES ($1, $2, $3, $4)", claID, q.id, semanaAno, novoProgresso)
+			}
+		}
+		if err != nil {
+			return err
+		}
+
+		if completou {
+			var xpColetivo, nivelAtual int
+			err = tx.QueryRowContext(ctx, "UPDATE Clas SET xpcoletivo = xpcoletivo + $1 WHERE id = $2 RETURNING xpcoletivo, nivelatual", q.xpBonus, claID).Scan(&xpColetivo, &nivelAtual)
+			if err != nil {
+				return err
+			}
+
+			novoNivel := 1
+			if xpColetivo >= 100 {
+				novoNivel = 5
+				levelRequirement := 100
+				for lvl := 5; ; lvl++ {
+					nextReq := levelRequirement + (lvl * 25)
+					if xpColetivo >= nextReq {
+						novoNivel = lvl + 1
+						levelRequirement = nextReq
+					} else {
+						break
+					}
+				}
+			} else if xpColetivo >= 60 {
+				novoNivel = 4
+			} else if xpColetivo >= 30 {
+				novoNivel = 3
+			} else if xpColetivo >= 10 {
+				novoNivel = 2
+			}
+
+			if novoNivel > nivelAtual {
+				_, err = tx.ExecContext(ctx, "UPDATE Clas SET nivelatual = $1 WHERE id = $2", novoNivel, claID)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func incrementRaidProgress(ctx context.Context, tx *sql.Tx, clienteID int, servicoNome string) error {
+	query := `
+		SELECT id, meta, progresso, tiporequisito
+		FROM Raids
+		WHERE status = 'Ativo' AND NOW() BETWEEN datainicio AND datafim
+	`
+	rows, err := tx.QueryContext(ctx, query)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	type raidState struct {
+		id            int
+		meta          int
+		progresso     int
+		tipoRequisito string
+	}
+	var raids []raidState
+	for rows.Next() {
+		var r raidState
+		if err := rows.Scan(&r.id, &r.meta, &r.progresso, &r.tipoRequisito); err != nil {
+			return err
+		}
+		raids = append(raids, r)
+	}
+	rows.Close()
+
+	for _, r := range raids {
+		compativel := false
+		reqLower := strings.ToLower(r.tipoRequisito)
+		servLower := strings.ToLower(servicoNome)
+
+		if reqLower == "atendimentos" {
+			compativel = true
+		} else if reqLower == "cortes" && strings.Contains(servLower, "corte") {
+			compativel = true
+		} else if reqLower == "barbas" && strings.Contains(servLower, "barba") {
+			compativel = true
+		}
+
+		if !compativel {
+			continue
+		}
+
+		novoProgresso := r.progresso + 1
+		novoStatus := "Ativo"
+		if novoProgresso >= r.meta {
+			novoProgresso = r.meta
+			novoStatus = "Concluido"
+		}
+
+		_, err = tx.ExecContext(ctx, "UPDATE Raids SET progresso = $1, status = $2 WHERE id = $3", novoProgresso, novoStatus, r.id)
+		if err != nil {
+			return err
+		}
+
+		var exists bool
+		err = tx.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM RaidContribuicoes WHERE raidid = $1 AND usuarioid = $2)", r.id, clienteID).Scan(&exists)
+		if err != nil {
+			return err
+		}
+
+		if exists {
+			_, err = tx.ExecContext(ctx, "UPDATE RaidContribuicoes SET contribuicao = contribuicao + 1 WHERE raidid = $1 AND usuarioid = $2", r.id, clienteID)
+		} else {
+			_, err = tx.ExecContext(ctx, "INSERT INTO RaidContribuicoes (raidid, usuarioid, contribuicao) VALUES ($1, $2, 1)", r.id, clienteID)
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 

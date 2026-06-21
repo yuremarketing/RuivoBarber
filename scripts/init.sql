@@ -31,6 +31,9 @@ CREATE TABLE ProgressoCliente (
     XPAtual INT DEFAULT 0,
     NivelAtual INT DEFAULT 1 REFERENCES Niveis(ID),
     BarraPercentual DECIMAL(5,2) DEFAULT 0.00,
+    Moedas INT DEFAULT 0,
+    StreakAtual INT DEFAULT 0,
+    UltimoCheckIn TIMESTAMP,
     UpdatedAt TIMESTAMP DEFAULT NOW()
 );
 
@@ -54,7 +57,10 @@ CREATE TABLE Agendamentos (
     BarbeiroID INT REFERENCES Usuarios(ID),
     ServicoID INT REFERENCES Servicos(ID),
     DataHora TIMESTAMP NOT NULL,
-    Status VARCHAR(20) DEFAULT 'Pendente' CHECK (Status IN ('Pendente', 'Confirmado', 'Concluido', 'Cancelado', 'Falta')),
+    Status VARCHAR(20) DEFAULT 'Pendente' CHECK (Status IN ('Pendente', 'Confirmado', 'Concluido', 'Cancelado', 'Falta', 'Presente', 'EmCadeira')),
+    CheckInTime TIMESTAMP,
+    EmCadeiraTime TIMESTAMP,
+    ConcluidoTime TIMESTAMP,
     CriadoEm TIMESTAMP DEFAULT NOW()
 );
 
@@ -165,6 +171,90 @@ INSERT INTO Badges (Nome, Descricao, RequisitoTipo, RequisitoValor, XpBonus) VAL
 ('Lenda Viva', 'Alcançou o nível 3 de progresso (patente máxima)', 'Nivel', 3, 50)
 ON CONFLICT (Nome) DO NOTHING;
 
+CREATE TABLE ItensLoja (
+    ID SERIAL PRIMARY KEY,
+    Nome VARCHAR(100) UNIQUE NOT NULL,
+    Descricao VARCHAR(255) NOT NULL,
+    Preco INT NOT NULL,
+    TipoItem VARCHAR(50) NOT NULL,
+    StyleClass VARCHAR(100) NOT NULL,
+    CriadoEm TIMESTAMP DEFAULT NOW()
+);
 
+CREATE TABLE UsuarioItens (
+    UsuarioID INT NOT NULL REFERENCES Usuarios(ID) ON DELETE CASCADE,
+    ItemID INT NOT NULL REFERENCES ItensLoja(ID) ON DELETE CASCADE,
+    CompradoEm TIMESTAMP DEFAULT NOW(),
+    Equipado BOOLEAN DEFAULT FALSE,
+    PRIMARY KEY (UsuarioID, ItemID)
+);
 
+-- Inserir itens iniciais da loja
+INSERT INTO ItensLoja (Nome, Descricao, Preco, TipoItem, StyleClass) VALUES
+('Moldura de Ouro', 'Moldura dourada premium para o seu Card de Jogador', 200, 'Moldura', 'frame-gold'),
+('Fundo Neon de Fogo', 'Fundo animado de chamas neon para o seu Card', 350, 'Background', 'bg-neon-fire'),
+('Fundo Neon de Gelo', 'Fundo animado de cristais de gelo neon para o seu Card', 350, 'Background', 'bg-neon-ice'),
+('Efeito Sombra Pulsante', 'Efeito de brilho neon pulsante ao redor do seu Card', 500, 'Efeito', 'glow-pulsing')
+ON CONFLICT (Nome) DO NOTHING;
 
+CREATE TABLE ClaMissoes (
+    ID SERIAL PRIMARY KEY,
+    Descricao VARCHAR(255) UNIQUE NOT NULL,
+    Meta INT NOT NULL,
+    TipoRequisito VARCHAR(50) NOT NULL, -- 'Cortes', 'Barbas', 'Atendimentos', 'XpClã'
+    XpBonus INT NOT NULL,
+    CriadoEm TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE ClaMissoesSemanais (
+    SemanaAno VARCHAR(10) NOT NULL, -- ex: '2026-W25'
+    MissaoID INT NOT NULL REFERENCES ClaMissoes(ID) ON DELETE CASCADE,
+    PRIMARY KEY (SemanaAno, MissaoID)
+);
+
+CREATE TABLE ClaMissoesProgresso (
+    ClaID INT NOT NULL REFERENCES Clas(ID) ON DELETE CASCADE,
+    MissaoID INT NOT NULL REFERENCES ClaMissoes(ID) ON DELETE CASCADE,
+    SemanaAno VARCHAR(10) NOT NULL,
+    Progresso INT DEFAULT 0,
+    Completada BOOLEAN DEFAULT FALSE,
+    CompletadaEm TIMESTAMP,
+    PRIMARY KEY (ClaID, MissaoID, SemanaAno)
+);
+
+INSERT INTO ClaMissoes (Descricao, Meta, TipoRequisito, XpBonus) VALUES
+('Navalha de Elite: Realizar 10 atendimentos', 10, 'Atendimentos', 100),
+('Esquadrão do Cabelo: Concluir 5 cortes', 5, 'Cortes', 80),
+('Barba Suprema: Fazer 5 barbas', 5, 'Barbas', 80),
+('Força Coletiva: Acumular 15 XP de Clã', 15, 'XpClã', 150)
+ON CONFLICT DO NOTHING;
+
+CREATE TABLE Raids (
+    ID SERIAL PRIMARY KEY,
+    Nome VARCHAR(100) UNIQUE NOT NULL,
+    Descricao VARCHAR(255) NOT NULL,
+    Meta INT NOT NULL,
+    Progresso INT DEFAULT 0,
+    TipoRequisito VARCHAR(50) NOT NULL,
+    RecompensaXp INT DEFAULT 50,
+    RecompensaMoedas INT DEFAULT 50,
+    DataInicio TIMESTAMP NOT NULL,
+    DataFim TIMESTAMP NOT NULL,
+    Status VARCHAR(20) DEFAULT 'Ativo' CHECK (Status IN ('Ativo', 'Concluido', 'Expirado')),
+    CriadoEm TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE RaidContribuicoes (
+    RaidID INT REFERENCES Raids(ID) ON DELETE CASCADE,
+    UsuarioID INT REFERENCES Usuarios(ID) ON DELETE CASCADE,
+    Contribuicao INT DEFAULT 0,
+    RecompensaResgatada BOOLEAN DEFAULT FALSE,
+    PRIMARY KEY (RaidID, UsuarioID)
+);CREATE TABLE Lives (
+    ID SERIAL PRIMARY KEY,
+    Titulo VARCHAR(150) NOT NULL,
+    Url TEXT NOT NULL,
+    Plataforma VARCHAR(50) NOT NULL,
+    Ativa BOOLEAN DEFAULT FALSE,
+    CriadoEm TIMESTAMP DEFAULT NOW()
+);

@@ -10,6 +10,10 @@ type Cliente struct {
 	BarraPercentual float64 `json:"barraPercentual"`
 	NomeDoNivel     string  `json:"nomeDoNivel"`
 	AvatarURL       string  `json:"avatarUrl"`
+	Moedas          int     `json:"moedas"`
+	MolduraEquipada string  `json:"molduraEquipada"`
+	FundoEquipado   string  `json:"fundoEquipado"`
+	EfeitoEquipado  string  `json:"efeitoEquipado"`
 }
 
 type Configuracoes struct {

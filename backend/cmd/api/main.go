@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"embed"
 	"fmt"
@@ -156,6 +157,166 @@ func main() {
 		}
 	}
 
+	// Migração automática para Loja (Store)
+	_, err = db.Exec(`
+		ALTER TABLE ProgressoCliente ADD COLUMN IF NOT EXISTS Moedas INT DEFAULT 0;
+
+		CREATE TABLE IF NOT EXISTS ItensLoja (
+			ID SERIAL PRIMARY KEY,
+			Nome VARCHAR(100) UNIQUE NOT NULL,
+			Descricao VARCHAR(255) NOT NULL,
+			Preco INT NOT NULL,
+			TipoItem VARCHAR(50) NOT NULL,
+			StyleClass VARCHAR(100) NOT NULL,
+			CriadoEm TIMESTAMP DEFAULT NOW()
+		);
+
+		CREATE TABLE IF NOT EXISTS UsuarioItens (
+			UsuarioID INT NOT NULL REFERENCES Usuarios(ID) ON DELETE CASCADE,
+			ItemID INT NOT NULL REFERENCES ItensLoja(ID) ON DELETE CASCADE,
+			CompradoEm TIMESTAMP DEFAULT NOW(),
+			Equipado BOOLEAN DEFAULT FALSE,
+			PRIMARY KEY (UsuarioID, ItemID)
+		);
+	`)
+	if err != nil {
+		log.Printf("[DB] Erro ao executar migração automática para Loja: %v", err)
+	} else {
+		// Seed de Itens iniciais
+		_, err = db.Exec(`
+			INSERT INTO ItensLoja (Nome, Descricao, Preco, TipoItem, StyleClass) VALUES
+			('Moldura de Ouro', 'Moldura dourada premium para o seu Card de Jogador', 200, 'Moldura', 'frame-gold'),
+			('Fundo Neon de Fogo', 'Fundo animado de chamas neon para o seu Card', 350, 'Background', 'bg-neon-fire'),
+			('Fundo Neon de Gelo', 'Fundo animado de cristais de gelo neon para o seu Card', 350, 'Background', 'bg-neon-ice'),
+			('Efeito Sombra Pulsante', 'Efeito de brilho neon pulsante ao redor do seu Card', 500, 'Efeito', 'glow-pulsing')
+			ON CONFLICT (Nome) DO NOTHING;
+		`)
+		if err != nil {
+			log.Printf("[DB] Erro ao executar seed inicial de itens da loja: %v", err)
+		} else {
+			log.Println("✅ Migração automática: tabelas de Loja e itens iniciais garantidos no banco")
+		}
+	}
+
+	// Migração automática para Missões Semanais (Quests)
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS ClaMissoes (
+			ID SERIAL PRIMARY KEY,
+			Descricao VARCHAR(255) UNIQUE NOT NULL,
+			Meta INT NOT NULL,
+			TipoRequisito VARCHAR(50) NOT NULL,
+			XpBonus INT NOT NULL,
+			CriadoEm TIMESTAMP DEFAULT NOW()
+		);
+
+		CREATE TABLE IF NOT EXISTS ClaMissoesSemanais (
+			SemanaAno VARCHAR(10) NOT NULL,
+			MissaoID INT NOT NULL REFERENCES ClaMissoes(ID) ON DELETE CASCADE,
+			PRIMARY KEY (SemanaAno, MissaoID)
+		);
+
+		CREATE TABLE IF NOT EXISTS ClaMissoesProgresso (
+			ClaID INT NOT NULL REFERENCES Clas(ID) ON DELETE CASCADE,
+			MissaoID INT NOT NULL REFERENCES ClaMissoes(ID) ON DELETE CASCADE,
+			SemanaAno VARCHAR(10) NOT NULL,
+			Progresso INT DEFAULT 0,
+			Completada BOOLEAN DEFAULT FALSE,
+			CompletadaEm TIMESTAMP,
+			PRIMARY KEY (ClaID, MissaoID, SemanaAno)
+		);
+	`)
+	if err != nil {
+		log.Printf("[DB] Erro ao executar migração automática para Missões Semanais: %v", err)
+	} else {
+		// Seed de Missões iniciais
+		_, err = db.Exec(`
+			INSERT INTO ClaMissoes (Descricao, Meta, TipoRequisito, XpBonus) VALUES
+			('Navalha de Elite: Realizar 10 atendimentos', 10, 'Atendimentos', 100),
+			('Esquadrão do Cabelo: Concluir 5 cortes', 5, 'Cortes', 80),
+			('Barba Suprema: Fazer 5 barbas', 5, 'Barbas', 80),
+			('Força Coletiva: Acumular 15 XP de Clã', 15, 'XpClã', 150)
+			ON CONFLICT (Descricao) DO NOTHING;
+		`)
+		if err != nil {
+			log.Printf("[DB] Erro ao executar seed inicial de Missões Semanais: %v", err)
+		} else {
+			log.Println("✅ Migração automática: tabelas de Missões e sementes iniciais garantidas no banco")
+		}
+	}
+
+	// Migração automática para Loyalty (Check-In)
+	_, err = db.Exec(`
+		ALTER TABLE ProgressoCliente ADD COLUMN IF NOT EXISTS StreakAtual INT DEFAULT 0;
+		ALTER TABLE ProgressoCliente ADD COLUMN IF NOT EXISTS UltimoCheckIn TIMESTAMP;
+	`)
+	if err != nil {
+		log.Printf("[DB] Erro ao executar migração automática para Loyalty: %v", err)
+	} else {
+		log.Println("✅ Migração automática: colunas de Loyalty (StreakAtual, UltimoCheckIn) garantidas no banco")
+	}
+
+	// Migração automática para Raids
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS Raids (
+			ID SERIAL PRIMARY KEY,
+			Nome VARCHAR(100) UNIQUE NOT NULL,
+			Descricao VARCHAR(255) NOT NULL,
+			Meta INT NOT NULL,
+			Progresso INT DEFAULT 0,
+			TipoRequisito VARCHAR(50) NOT NULL,
+			RecompensaXp INT DEFAULT 50,
+			RecompensaMoedas INT DEFAULT 50,
+			DataInicio TIMESTAMP NOT NULL,
+			DataFim TIMESTAMP NOT NULL,
+			Status VARCHAR(20) DEFAULT 'Ativo' CHECK (Status IN ('Ativo', 'Concluido', 'Expirado')),
+			CriadoEm TIMESTAMP DEFAULT NOW()
+		);
+
+		CREATE TABLE IF NOT EXISTS RaidContribuicoes (
+			RaidID INT REFERENCES Raids(ID) ON DELETE CASCADE,
+			UsuarioID INT REFERENCES Usuarios(ID) ON DELETE CASCADE,
+			Contribuicao INT DEFAULT 0,
+			RecompensaResgatada BOOLEAN DEFAULT FALSE,
+			PRIMARY KEY (RaidID, UsuarioID)
+		);
+	`)
+	if err != nil {
+		log.Printf("[DB] Erro ao executar migração automática para Raids: %v", err)
+	} else {
+		log.Println("✅ Migração automática: tabelas de Raids (Raids, RaidContribuicoes) garantidas no banco")
+	}
+
+	// Migração automática para Queue (Fila & Tempo Médio)
+	_, err = db.Exec(`
+		ALTER TABLE Agendamentos DROP CONSTRAINT IF EXISTS agendamentos_status_check;
+		ALTER TABLE Agendamentos ADD CONSTRAINT agendamentos_status_check CHECK (Status IN ('Pendente', 'Confirmado', 'Concluido', 'Cancelado', 'Falta', 'Presente', 'EmCadeira'));
+
+		ALTER TABLE Agendamentos ADD COLUMN IF NOT EXISTS CheckInTime TIMESTAMP;
+		ALTER TABLE Agendamentos ADD COLUMN IF NOT EXISTS EmCadeiraTime TIMESTAMP;
+		ALTER TABLE Agendamentos ADD COLUMN IF NOT EXISTS ConcluidoTime TIMESTAMP;
+	`)
+	if err != nil {
+		log.Printf("[DB] Erro ao executar migração automática para Queue: %v", err)
+	} else {
+		log.Println("✅ Migração automática: colunas e constraints de Queue (Fila) garantidas no banco")
+	}
+
+	// Migração automática para Lives
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS Lives (
+			ID SERIAL PRIMARY KEY,
+			Titulo VARCHAR(150) NOT NULL,
+			Url TEXT NOT NULL,
+			Plataforma VARCHAR(50) NOT NULL,
+			Ativa BOOLEAN DEFAULT FALSE,
+			CriadoEm TIMESTAMP DEFAULT NOW()
+		);
+	`)
+	if err != nil {
+		log.Printf("[DB] Erro ao executar migração automática para Lives: %v", err)
+	} else {
+		log.Println("✅ Migração automática: tabela de Lives garantida no banco")
+	}
 
     // Atualizar senha do admin se for o placeholder ou plain-text legado para permitir login seguro com bcrypt
     var adminCount int
@@ -303,6 +464,31 @@ func main() {
     badgeService := services.NewBadgeService(badgeRepo)
     badgeHandler := handlers.NewBadgeHandler(badgeService)
 
+    storeRepo := repositories.NewStorePgRepository(db)
+    storeService := services.NewStoreService(storeRepo)
+    storeHandler := handlers.NewStoreHandler(storeService)
+
+    questRepo := repositories.NewQuestPgRepository(db)
+    questService := services.NewQuestService(questRepo, db)
+    questService.StartWeeklyQuestsWorker(context.Background())
+    questHandler := handlers.NewQuestHandler(questService)
+
+    loyaltyRepo := repositories.NewLoyaltyPgRepository(db)
+    loyaltyService := services.NewLoyaltyService(loyaltyRepo)
+    loyaltyHandler := handlers.NewLoyaltyHandler(loyaltyService)
+
+    raidRepo := repositories.NewRaidPgRepository(db)
+    raidService := services.NewRaidService(raidRepo)
+    raidHandler := handlers.NewRaidHandler(raidService)
+
+    queueRepo := repositories.NewQueuePgRepository(db)
+    queueService := services.NewQueueService(queueRepo)
+    queueHandler := handlers.NewQueueHandler(queueService)
+
+    liveRepo := repositories.NewLivePgRepository(db)
+    liveService := services.NewLiveService(liveRepo)
+    liveHandler := handlers.NewLiveHandler(liveService)
+
     app := fiber.New(fiber.Config{AppName: "RuivoBarber API v1.0"})
     app.Use(logger.New())
     app.Use(cors.New())
@@ -315,9 +501,15 @@ func main() {
         return err
     })
 
+    questHandler.RegisterRoutes(app)
     clienteHandler.RegisterRoutes(app)
     claHandler.RegisterRoutes(app)
     badgeHandler.RegisterRoutes(app)
+    storeHandler.RegisterRoutes(app)
+    loyaltyHandler.RegisterRoutes(app)
+    raidHandler.RegisterRoutes(app)
+    queueHandler.RegisterRoutes(app)
+    liveHandler.RegisterRoutes(app)
 
     port := os.Getenv("PORT")
     if port == "" {
