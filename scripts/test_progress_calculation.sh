@@ -40,6 +40,14 @@ db_exec "INSERT INTO ProgressoCliente (clienteid, xpatual, nivelatual, barraperc
 # Cliente 4 começa com 1050 XP (Já está no nível máximo)
 db_exec "INSERT INTO ProgressoCliente (clienteid, xpatual, nivelatual, barrapercentual) VALUES ($CLI4_ID, 1050, 4, 100.00);"
 
+# Pre-insert badges to avoid interference from the badge system (XP bonuses)
+db_exec "INSERT INTO UsuarioBadges (usuarioid, badgeid) VALUES ($CLI1_ID, 1), ($CLI1_ID, 3);"
+db_exec "INSERT INTO UsuarioBadges (usuarioid, badgeid) VALUES ($CLI2_ID, 1), ($CLI2_ID, 3), ($CLI2_ID, 4);"
+db_exec "INSERT INTO UsuarioBadges (usuarioid, badgeid) VALUES ($CLI3_ID, 1), ($CLI3_ID, 3), ($CLI3_ID, 4);"
+db_exec "INSERT INTO UsuarioBadges (usuarioid, badgeid) VALUES ($CLI4_ID, 1), ($CLI4_ID, 3), ($CLI4_ID, 4);"
+
+
+
 # 4. Garantir estoque de produtos para o serviço 2 (Corte + Barba, recompensa 25 XP)
 db_exec "UPDATE Produtos SET quantidade = 100;"
 

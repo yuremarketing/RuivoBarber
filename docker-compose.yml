@@ -8,6 +8,7 @@ services:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: secretpassword
       POSTGRES_DB: ruivobarber
+      TZ: America/Sao_Paulo
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -32,6 +33,7 @@ services:
       - DB_PASSWORD=secretpassword
       - DB_NAME=ruivobarber
       - PORT=8080
+      - TZ=America/Sao_Paulo
     restart: unless-stopped
 
   frontend:

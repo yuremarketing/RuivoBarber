@@ -35,6 +35,8 @@ services:
         value: require
       - key: JWT_SECRET
         generateValue: true
+      - key: TZ
+        value: America/Sao_Paulo
 
   # Frontend React Static Site
   - type: web

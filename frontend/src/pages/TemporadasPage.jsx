@@ -234,7 +234,7 @@ export default function TemporadasPage() {
                     </div>
 
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      📅 <strong>Início:</strong> {new Date(t.dataInicio).toLocaleDateString('pt-BR')} | <strong>Fim:</strong> {new Date(t.dataFim).toLocaleDateString('pt-BR')} ({totalDias} dias)
+                      📅 <strong>Início:</strong> {new Date(t.dataInicio).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} | <strong>Fim:</strong> {new Date(t.dataFim).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} ({totalDias} dias)
                     </div>
 
                     {isAdmin && (
