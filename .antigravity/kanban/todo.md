@@ -6,7 +6,6 @@
 ## ⚙️ Backend (Lógica Go e Banco de Dados)
 - [ ] [TASK-038-D] [Feature] Backend e Banco de Dados para Gorjeta Digital via Pix (Chave Pix e QR Code) (Issue #16)
 - [ ] [TASK-038-E/040] [Feature] Banco de Dados e Rota Unificada do "Último Corte" com flag de Avaliação Pendente (Issues #5 e #17)
-- [ ] [TASK-061] [PDV-DB] Modelagem e Tabelas do Fluxo Financeiro (SQL) (Issue #18)
 - [ ] [TASK-062] [PDV-BE] Controle de Sessão de Caixa (Abertura/Fechamento) (Issue #19)
 - [ ] [TASK-063] [PDV-BE] Processamento de Venda e Integração de Fidelidade (Issue #20)
 
