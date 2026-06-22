@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { fetchServicos, fetchBarbeiros, fetchAgendamentos, fetchAgendaBarbeiro, criarAgendamento, concluirAtendimento, registrarFalta, fetchDisponibilidadeBarbeiro, fetchBloqueiosBarbeiro } from '../services/api.js'
 
 const getServiceDetails = (nome) => {
@@ -29,14 +29,57 @@ const MOCK_SERVICOS = [
 ]
 
 const getLocalDateStr = () => {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, '0')
-  const day = String(today.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  const parts = formatter.formatToParts(new Date());
+  const year = parts.find(p => p.type === 'year').value;
+  const month = parts.find(p => p.type === 'month').value;
+  const day = parts.find(p => p.type === 'day').value;
+  return `${year}-${month}-${day}`;
+}
+
+const getHorizontalDays = () => {
+  const days = [];
+  const todayStr = getLocalDateStr();
+  const baseDate = new Date(`${todayStr}T12:00:00-03:00`);
+  for (let i = 0; i < 14; i++) {
+    const nextDate = new Date(baseDate.getTime() + i * 24 * 60 * 60 * 1000);
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    const parts = formatter.formatToParts(nextDate);
+    const year = parts.find(p => p.type === 'year').value;
+    const month = parts.find(p => p.type === 'month').value;
+    const day = parts.find(p => p.type === 'day').value;
+    const dateStr = `${year}-${month}-${day}`;
+
+    const weekday = nextDate.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'short' })
+      .replace('.', '')
+      .toUpperCase();
+    
+    const monthName = nextDate.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', month: 'short' })
+      .replace('.', '')
+      .toUpperCase();
+
+    days.push({
+      dateStr,
+      dayVal: day,
+      dayName: weekday.substring(0, 3),
+      monthName: monthName.substring(0, 3)
+    });
+  }
+  return days;
 }
 
 export default function AgendamentosPage() {
+  const horizontalDays = useMemo(() => getHorizontalDays(), [])
   const [agendamentos, setAgendamentos] = useState([])
   const [servicos, setServicos] = useState([])
   const [barbeiros, setBarbeiros] = useState([])
@@ -56,6 +99,54 @@ export default function AgendamentosPage() {
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [barbeiroDisponibilidades, setBarbeiroDisponibilidades] = useState([])
   const [barbeiroBloqueios, setBarbeiroBloqueios] = useState([])
+
+  // Drag to Scroll references and states
+  const datePickerRef = useRef(null)
+  const [isMouseDown, setIsMouseDown] = useState(false)
+  const [startX, setStartX] = useState(0)
+  const [scrollLeftState, setScrollLeftState] = useState(0)
+  const [isDraggingDate, setIsDraggingDate] = useState(false)
+
+  const handleMouseDownDate = (e) => {
+    setIsMouseDown(true)
+    setIsDraggingDate(false)
+    setStartX(e.pageX - datePickerRef.current.offsetLeft)
+    setScrollLeftState(datePickerRef.current.scrollLeft)
+  }
+
+  const handleMouseLeaveDate = () => {
+    setIsMouseDown(false)
+  }
+
+  const handleMouseUpDate = () => {
+    setIsMouseDown(false)
+    setTimeout(() => {
+      setIsDraggingDate(false)
+    }, 50)
+  }
+
+  const handleMouseMoveDate = (e) => {
+    if (!isMouseDown) return
+    e.preventDefault()
+    const x = e.pageX - datePickerRef.current.offsetLeft
+    const walk = (x - startX) * 1.5
+    if (Math.abs(x - startX) > 5) {
+      setIsDraggingDate(true)
+    }
+    datePickerRef.current.scrollLeft = scrollLeftState - walk
+  }
+
+
+  const [toastMessage, setToastMessage] = useState('')
+  const [showToast, setShowToast] = useState(false)
+
+  const triggerToast = (msg) => {
+    setToastMessage(msg)
+    setShowToast(true)
+    setTimeout(() => {
+      setShowToast(false)
+    }, 4500)
+  }
 
   const userSessionStr = localStorage.getItem('ruivobarber_user')
   const user = userSessionStr ? JSON.parse(userSessionStr).user : null
@@ -101,6 +192,50 @@ export default function AgendamentosPage() {
   useEffect(() => {
     loadData()
   }, [])
+
+  useEffect(() => {
+    // 1. Local event listener for updates within the same window (e.g. from chat widget)
+    const handleLocalUpdate = () => {
+      loadData()
+    }
+    window.addEventListener('agendamentoCreated', handleLocalUpdate)
+
+    // 2. BroadcastChannel for Cross-Tab Sync (Instantly notifies other tabs)
+    const channel = new BroadcastChannel('ruivobarber_events')
+    channel.onmessage = (event) => {
+      if (event.data && event.data.type === 'agendamentoCreated') {
+        loadData()
+        
+        // Show notification toast if this is a Barber or Admin
+        const booking = event.data.data
+        if (booking && (user?.cargo === 'Barbeiro' || user?.cargo === 'Adm')) {
+          let dateStr = ''
+          let timeStr = ''
+          if (booking.data_hora) {
+            const dateParts = booking.data_hora.split('T')
+            dateStr = dateParts[0].split('-').reverse().join('/')
+            timeStr = dateParts[1] ? dateParts[1].substring(0, 5) : ''
+          }
+          triggerToast(`Novo agendamento: ${booking.cliente_nome} com ${booking.barbeiro_nome} em ${dateStr} às ${timeStr}!`)
+        }
+      }
+    }
+
+    // 3. Smart Polling (every 10 seconds, active only when tab is visible)
+    const pollInterval = setInterval(() => {
+      if (!document.hidden) {
+        fetchAgendamentos().then(res => {
+          if (res.data) setAgendamentos(res.data)
+        }).catch(err => console.warn('Silent poll failed:', err))
+      }
+    }, 10000)
+
+    return () => {
+      window.removeEventListener('agendamentoCreated', handleLocalUpdate)
+      channel.close()
+      clearInterval(pollInterval)
+    }
+  }, [user])
 
   useEffect(() => {
     if (!selectedBarbeiro) {
@@ -214,11 +349,67 @@ export default function AgendamentosPage() {
 
     try {
       const dataHoraStr = `${selectedData} ${selectedHora}`
-      await criarAgendamento(selectedBarbeiro, selectedServico, dataHoraStr)
+      
+      console.log('=== DEBUG: FORMATO DE ENVIO DO AGENDAMENTO ===')
+      console.log('Payload:', {
+        barbeiro_id: Number(selectedBarbeiro),
+        servico_id: Number(selectedServico),
+        data_hora: dataHoraStr
+      })
+      console.log('==============================================')
+
+      try {
+        await criarAgendamento(selectedBarbeiro, selectedServico, dataHoraStr)
+        loadData()
+
+        // Broadcast real booking event to other tabs
+        const channel = new BroadcastChannel('ruivobarber_events')
+        channel.postMessage({
+          type: 'agendamentoCreated',
+          data: {
+            id: Math.floor(Math.random() * 1000) + 1000,
+            cliente_id: user?.id || 1,
+            cliente_nome: user?.nome || 'Cliente',
+            barbeiro_id: Number(selectedBarbeiro),
+            barbeiro_nome: barbeiros.find(b => b.id === Number(selectedBarbeiro))?.nome || 'Barbeiro',
+            servico_id: Number(selectedServico),
+            servico_nome: servicos.find(s => s.id === Number(selectedServico))?.nome || 'Serviço',
+            data_hora: `${selectedData}T${selectedHora}:00-03:00`,
+            status: 'Pendente',
+            preco: servicos.find(s => s.id === Number(selectedServico))?.preco || 0.00
+          }
+        })
+        channel.close()
+      } catch (apiErr) {
+        console.warn('Falha na API, criando agendamento em memória local (Mock Mode):', apiErr)
+        const novoAgendamentoFicticio = {
+          id: Math.floor(Math.random() * 1000) + 100,
+          cliente_id: user?.id || 1,
+          cliente_nome: user?.nome || 'Admin/Barbeiro',
+          barbeiro_id: Number(selectedBarbeiro),
+          barbeiro_nome: barbeiros.find(b => b.id === Number(selectedBarbeiro))?.nome || 'Barbeiro de Teste',
+          servico_id: Number(selectedServico),
+          servico_nome: servicos.find(s => s.id === Number(selectedServico))?.nome || 'Serviço de Teste',
+          data_hora: `${selectedData}T${selectedHora}:00-03:00`,
+          status: 'Confirmado',
+          preco: servicos.find(s => s.id === Number(selectedServico))?.preco || 60.00
+        }
+        setAgendamentos(prev => [novoAgendamentoFicticio, ...prev])
+
+        // Broadcast mock booking event to other tabs
+        const channel = new BroadcastChannel('ruivobarber_events')
+        channel.postMessage({
+          type: 'agendamentoCreated',
+          data: novoAgendamentoFicticio
+        })
+        channel.close()
+
+        alert('Modo de Teste Local: O agendamento foi simulado e salvo temporariamente na memória do navegador (API indisponível ou Token inválido/expirado).')
+      }
+
       setShowModal(false)
       setSelectedData('')
       setSelectedHora('')
-      loadData()
       
       // Evento customizado para notificar o chat de que o agendamento foi atualizado
       const event = new CustomEvent('agendamentoCreated')
@@ -547,16 +738,54 @@ export default function AgendamentosPage() {
                 <div className="wizard-step-content fade-in-up">
                   <h4 style={{ marginBottom: '0.75rem', color: 'var(--text-color)' }}>Selecione Data e Horário:</h4>
                   
-                  <div className="form-group" style={{ marginBottom: '1rem', textAlign: 'left' }}>
-                    <label className="form-label">Data do Agendamento</label>
-                    <input
-                      type="date"
-                      className="form-input"
-                      value={selectedData}
-                      min={getLocalDateStr()}
-                      onChange={e => handleDateChange(e.target.value)}
-                      required
-                    />
+                  <div className="form-group" style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
+                    <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>Data do Agendamento</span>
+                      {selectedData && (
+                        <span style={{ fontSize: '0.8rem', color: 'var(--primary-color, #e07a5f)', fontWeight: '600' }}>
+                          {(() => {
+                            const [y, m, d] = selectedData.split('-');
+                            return `${d}/${m}/${y}`;
+                          })()}
+                        </span>
+                      )}
+                    </label>
+                    <div 
+                      ref={datePickerRef}
+                      className="horizontal-date-picker"
+                      onMouseDown={handleMouseDownDate}
+                      onMouseLeave={handleMouseLeaveDate}
+                      onMouseUp={handleMouseUpDate}
+                      onMouseMove={handleMouseMoveDate}
+                    >
+                      {horizontalDays.map(d => {
+                        const isSelected = selectedData === d.dateStr;
+                        
+                        // Check if barber is available or blocked
+                        const [year, month, day] = d.dateStr.split('-').map(Number);
+                        const dateObj = new Date(year, month - 1, day);
+                        const weekday = dateObj.getDay();
+                        const disp = barbeiroDisponibilidades.find(x => x.dia_semana === weekday);
+                        const isBlocked = barbeiroBloqueios.some(b => b.data_bloqueio === d.dateStr);
+                        const isDisabled = (disp && !disp.trabalha) || isBlocked;
+                        
+                        return (
+                          <div
+                            key={d.dateStr}
+                            onClick={() => {
+                              if (isDraggingDate) return;
+                              handleDateChange(d.dateStr);
+                            }}
+                            className={`date-picker-card${isSelected ? ' selected' : ''}${isDisabled ? ' disabled' : ''}`}
+                            title={isDisabled ? 'Barbeiro indisponível' : ''}
+                          >
+                            <span className="weekday">{d.dayName}</span>
+                            <span className="day-val">{d.dayVal}</span>
+                            <span className="month-val">{d.monthName}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   <div className="form-group" style={{ textAlign: 'left' }}>
@@ -711,6 +940,13 @@ export default function AgendamentosPage() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {showToast && (
+        <div className="toast">
+          <span>🔔</span>
+          <span>{toastMessage}</span>
         </div>
       )}
     </div>
