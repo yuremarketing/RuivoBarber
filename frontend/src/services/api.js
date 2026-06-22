@@ -103,6 +103,9 @@ export const fetchBloqueiosBarbeiro = (barbeiroId) => api.get(`/barbeiros/${barb
 export const adicionarBloqueioBarbeiro = (barbeiroId, data, motivo) => api.post(`/barbeiros/${barbeiroId}/bloqueios`, { data, motivo })
 export const removerBloqueioBarbeiro = (barbeiroId, data) => api.delete(`/barbeiros/${barbeiroId}/bloqueios/${data}`)
 
+// Badges / Conquistas
+export const fetchMeusBadges = () => api.get('/badges/me')
+
 export const salvarChavePixBarbeiro = (barbeiroId, chavePix) => api.post(`/barbeiros/${barbeiroId}/chave-pix`, { chave_pix: chavePix })
 export const criarGorjeta = (barbeiroId, valor, agendamentoId = null) => api.post('/gorjetas', {
   barbeiro_id: Number(barbeiroId),
@@ -112,7 +115,12 @@ export const criarGorjeta = (barbeiroId, valor, agendamentoId = null) => api.pos
 export const confirmarPagamentoGorjeta = (gorjetaId) => api.post(`/gorjetas/${gorjetaId}/confirmar`)
 export const fetchGorjetasBarbeiro = (barbeiroId) => api.get(`/barbeiros/${barbeiroId}/gorjetas`)
 
-
+// PDV / Controle de Caixa
+export const abrirCaixa = (saldoInicial) => api.post('/pdv/caixa/abrir', { saldo_inicial: Number(saldoInicial) })
+export const fecharCaixa = (saldoInformado) => api.post('/pdv/caixa/fechar', { saldo_informado: Number(saldoInformado) })
+export const fetchStatusCaixa = () => api.get('/pdv/caixa/status')
+export const movimentarCaixa = (tipo, valor, motivo) => api.post('/pdv/caixa/movimentar', { tipo, valor: Number(valor), motivo })
+export const processarVenda = (dadosVenda) => api.post('/pdv/venda', dadosVenda)
 
 export const streamChat = async (message, history, onChunk, onError, onDone) => {
   try {

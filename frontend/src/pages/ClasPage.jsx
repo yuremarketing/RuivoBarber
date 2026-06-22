@@ -210,7 +210,7 @@ export default function ClasPage() {
   const formatData = (dateStr) => {
     if (!dateStr) return ''
     const d = new Date(dateStr)
-    return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    return d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) + ' ' + d.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' })
   }
 
   // VIEW: User has NO clan

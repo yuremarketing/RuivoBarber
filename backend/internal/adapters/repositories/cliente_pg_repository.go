@@ -793,6 +793,29 @@ func (r *ClientePgRepository) ListarBarbeiros() ([]domain.Barbeiro, error) {
 	return barbeiros, nil
 }
 
+func (r *ClientePgRepository) ObterAgendamentoPorID(id int) (*domain.Agendamento, error) {
+	query := `
+		SELECT a.id, a.clienteid, u.nome, a.barbeiroid, b.nome, a.servicoid, s.nome, s.duracaominutos, a.datahora, a.status
+		FROM Agendamentos a
+		JOIN Usuarios u ON a.clienteid = u.id
+		JOIN Usuarios b ON a.barbeiroid = b.id
+		JOIN Servicos s ON a.servicoid = s.id
+		WHERE a.id = $1
+	`
+	var a domain.Agendamento
+	err := r.db.QueryRow(query, id).Scan(
+		&a.ID, &a.ClienteID, &a.ClienteNome, &a.BarbeiroID, &a.BarbeiroNome,
+		&a.ServicoID, &a.ServicoNome, &a.DuracaoMinutos, &a.DataHora, &a.Status,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &a, nil
+}
+
 func (r *ClientePgRepository) ListarAgendamentos(data string) ([]domain.Agendamento, error) {
 	query := `
 		SELECT a.id, a.clienteid, u.nome, a.barbeiroid, b.nome, a.servicoid, s.nome, s.duracaominutos, a.datahora, a.status
@@ -815,6 +838,9 @@ func (r *ClientePgRepository) ListarAgendamentos(data string) ([]domain.Agendame
 		if err := rows.Scan(&a.ID, &a.ClienteID, &a.ClienteNome, &a.BarbeiroID, &a.BarbeiroNome, &a.ServicoID, &a.ServicoNome, &a.DuracaoMinutos, &a.DataHora, &a.Status); err != nil {
 			return nil, err
 		}
+		a.DataHora = time.Date(a.DataHora.Year(), a.DataHora.Month(), a.DataHora.Day(),
+			a.DataHora.Hour(), a.DataHora.Minute(), a.DataHora.Second(),
+			a.DataHora.Nanosecond(), time.Local)
 		agendamentos = append(agendamentos, a)
 	}
 	return agendamentos, nil
@@ -852,6 +878,9 @@ func (r *ClientePgRepository) ListarAgendamentosDoBarbeiro(barbeiroID int, data 
 		if err := rows.Scan(&a.ID, &a.ClienteID, &a.ClienteNome, &a.BarbeiroID, &a.BarbeiroNome, &a.ServicoID, &a.ServicoNome, &a.DuracaoMinutos, &a.DataHora, &a.Status); err != nil {
 			return nil, err
 		}
+		a.DataHora = time.Date(a.DataHora.Year(), a.DataHora.Month(), a.DataHora.Day(),
+			a.DataHora.Hour(), a.DataHora.Minute(), a.DataHora.Second(),
+			a.DataHora.Nanosecond(), time.Local)
 		agendamentos = append(agendamentos, a)
 	}
 	return agendamentos, nil
@@ -893,6 +922,9 @@ func (r *ClientePgRepository) ListarAgendamentosDoCliente(clienteID int) ([]doma
 		if err := rows.Scan(&a.ID, &a.ClienteID, &a.ClienteNome, &a.BarbeiroID, &a.BarbeiroNome, &a.ServicoID, &a.ServicoNome, &a.DuracaoMinutos, &a.DataHora, &a.Status); err != nil {
 			return nil, err
 		}
+		a.DataHora = time.Date(a.DataHora.Year(), a.DataHora.Month(), a.DataHora.Day(),
+			a.DataHora.Hour(), a.DataHora.Minute(), a.DataHora.Second(),
+			a.DataHora.Nanosecond(), time.Local)
 		agendamentos = append(agendamentos, a)
 	}
 	return agendamentos, nil

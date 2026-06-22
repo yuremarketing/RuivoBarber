@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react'
 import PlayerCard from '../components/PlayerCard.jsx'
 import RpgProgressBar from '../components/RpgProgressBar.jsx'
 import RedeemCouponManager from '../components/RedeemCouponManager.jsx'
-import { buscarCliente, listarClientes, fetchTemporadaAtiva } from '../services/api.js'
+import BadgeShowcase from '../components/BadgeShowcase.jsx'
+import { buscarCliente, listarClientes, fetchTemporadaAtiva, fetchMeusBadges } from '../services/api.js'
 
 
 const stats = [
@@ -26,6 +27,8 @@ export default function DashboardPage() {
   const [ranking, setRanking] = useState([])
   const [loading, setLoading] = useState(false)
   const [temporadaAtiva, setTemporadaAtiva] = useState(null)
+  const [badges, setBadges] = useState([])
+  const [loadingBadges, setLoadingBadges] = useState(false)
  
   const isClient = user.cargo === 'Cliente'
   const hoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -67,14 +70,30 @@ export default function DashboardPage() {
   useEffect(() => {
     loadRealTimeClientData()
     loadRanking()
-    
+
     fetchTemporadaAtiva()
-      .then(res => {
-        setTemporadaAtiva(res.data)
-      })
-      .catch(err => {
-        console.log('Sem temporada ativa cadastrada ou erro:', err)
-      })
+      .then(res => setTemporadaAtiva(res.data))
+      .catch(err => console.log('Sem temporada ativa cadastrada ou erro:', err))
+
+    if (isClient) {
+      setLoadingBadges(true)
+      fetchMeusBadges()
+        .then(res => {
+          const data = Array.isArray(res.data) ? res.data : []
+          setBadges(data)
+        })
+        .catch(err => {
+          console.error('Erro ao buscar badges:', err)
+          // Fallback: mostra os badges do sistema todos bloqueados
+          setBadges([
+            { id: 1, nome: 'Primeiro Sangue', descricao: 'Conclua seu 1º atendimento', xpBonus: 50, desbloqueada: false, desbloqueadaEm: null },
+            { id: 2, nome: 'Fiel da Navalha', descricao: 'Conclua 5 atendimentos', xpBonus: 50, desbloqueada: false, desbloqueadaEm: null },
+            { id: 3, nome: 'Barba de Respeito', descricao: 'Alcance o nível 2', xpBonus: 50, desbloqueada: false, desbloqueadaEm: null },
+            { id: 4, nome: 'Lenda Viva', descricao: 'Alcance o nível 3 (patente máxima)', xpBonus: 50, desbloqueada: false, desbloqueadaEm: null },
+          ])
+        })
+        .finally(() => setLoadingBadges(false))
+    }
   }, [])
 
 
@@ -130,7 +149,7 @@ export default function DashboardPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h4 style={{ color: '#f5a623', margin: 0, fontSize: '0.95rem' }}>⏳ Temporada Ativa: {temporadaAtiva.nome}</h4>
                   <span style={{ fontSize: '0.72rem', color: '#e94560', fontWeight: 'bold' }}>
-                    Término: {new Date(temporadaAtiva.dataFim).toLocaleDateString('pt-BR')}
+                    Término: {new Date(temporadaAtiva.dataFim).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                   </span>
                 </div>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem', marginBottom: 0 }}>
@@ -150,6 +169,9 @@ export default function DashboardPage() {
                 ℹ️ Nenhuma temporada ativa no momento. Aproveite para subir de nível e acumular XP base!
               </div>
             )}
+
+            {/* Vitrine de Conquistas */}
+            <BadgeShowcase badges={badges} loading={loadingBadges} />
           </div>
         </div>
 
