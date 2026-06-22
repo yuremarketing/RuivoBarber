@@ -144,7 +144,7 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 - [ ] [Checkout] Task 38-D-FE: Painel do Admin para Cadastrar Chave Pix e Modal de Gorjeta para Clientes (Issue #16)
 - [ ] [Review/Rewards] Task 38-E/40-FE: Modal de Avaliação Pós-Atendimento e Card do "Último Corte" no Portal do Cliente (Issues #5 e #17)
 - [x] [PDV-FE] Task 64: Tela de Abertura/Fechamento e Painel do Caixa (Issue #21)
-- [ ] [PDV-FE] Task 65: Tela de Checkout / Caixa Registradora (Interface PDV) (Issue #22)
+- [x] [PDV-FE] Task 65: Tela de Checkout / Caixa Registradora (Interface PDV) (Issue #22)
 - [ ] [PDV-FE/BE] Task 66: Relatório Financeiro e Comissões dos Barbeiros (Issue #23)
 - [ ] [Queue] Task 41: Controle de Presença (Check-in/Check-out) e Tempo Médio
   - [x] Backend: Gerenciamento do status "Em Cadeira" e cálculo automático de tempo médio do corte.
