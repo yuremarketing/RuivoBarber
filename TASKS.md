@@ -150,7 +150,7 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
   - [x] Backend: Gerenciamento do status "Em Cadeira" e cálculo automático de tempo médio do corte.
   - [ ] Frontend: Painel operacional administrativo para controle físico da fila da barbearia (Issue #6)
 - [ ] [Badges] Task 52: Vitrine de Badges no PlayerCard do Cliente
-- [ ] [Store] Task 50: Inventário do Cliente no Frontend (Bolsa de Itens/Poções)
+- [x] [Store] Task 50: Inventário do Cliente no Frontend (Bolsa de Itens/Poções)
 - [ ] [Fame] Task 57: Galeria Histórica de Lendários (Hall of Fame)
 
 ### 🎨 UX (Experiência, Animações e Mídias)
