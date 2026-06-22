@@ -20,6 +20,11 @@ db_exec "DELETE FROM Agendamentos WHERE clienteid IN (SELECT id FROM Usuarios WH
 db_exec "DELETE FROM ProgressoCliente WHERE clienteid IN (SELECT id FROM Usuarios WHERE login IN ('lider_lvlup', 'membro_lvlup'));"
 db_exec "DELETE FROM Usuarios WHERE login IN ('lider_lvlup', 'membro_lvlup', 'admin_lvlup');"
 
+CURRENT_WEEK=$(date +'%Y-W%V')
+ACTIVE_MISSIONS=$(db_exec "SELECT missaoid FROM ClaMissoesSemanais WHERE semanaano = '$CURRENT_WEEK';" || echo "")
+db_exec "DELETE FROM ClaMissoesSemanais WHERE semanaano = '$CURRENT_WEEK';"
+
+
 # 2. Registrar usuários e obter tokens
 echo "[+] Criando usuário Líder..."
 LIDER_RESP=$(curl -s -X POST -H "Content-Type: application/json" \
@@ -133,5 +138,11 @@ db_exec "DELETE FROM Agendamentos WHERE clienteid IN ($LIDER_ID, $MEMBRO_ID);"
 db_exec "DELETE FROM ProgressoCliente WHERE clienteid IN ($LIDER_ID, $MEMBRO_ID);"
 db_exec "DELETE FROM Usuarios WHERE id IN ($LIDER_ID, $MEMBRO_ID);"
 db_exec "DELETE FROM Usuarios WHERE login = 'admin_lvlup';"
+
+if [ -n "$ACTIVE_MISSIONS" ]; then
+    for missao_id in $ACTIVE_MISSIONS; do
+        db_exec "INSERT INTO ClaMissoesSemanais (semanaano, missaoid) VALUES ('$CURRENT_WEEK', $missao_id);"
+    done
+fi
 
 echo "===== TESTE DE SUBIDA DE NÍVEL DE CLÃS PASSOU COM SUCESSO! ====="

@@ -1,32 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { fetchServicos, fetchBarbeiros, fetchAgendamentos, fetchAgendaBarbeiro, criarAgendamento, concluirAtendimento, registrarFalta, fetchDisponibilidadeBarbeiro, fetchBloqueiosBarbeiro } from '../services/api.js'
+import BookingWizard from '../components/BookingWizard.jsx'
 
-const getServiceDetails = (nome) => {
-  const n = nome.toLowerCase()
-  if (n.includes('corte') && n.includes('barba')) {
-    return { icon: '💈', desc: 'Combo completo: corte estilizado + barba na navalha' }
-  } else if (n.includes('corte')) {
-    return { icon: '✂️', desc: 'Corte masculino clássico com máquina e tesoura' }
-  } else if (n.includes('barba')) {
-    return { icon: '🧔', desc: 'Barba com toalha quente, navalha e hidratação' }
-  } else if (n.includes('hidra')) {
-    return { icon: '💧', desc: 'Tratamento profundo para cabelos danificados' }
-  }
-  return { icon: '✨', desc: 'Serviço personalizado de alta qualidade' }
-}
-
-const MOCK_BARBEIROS = [
-  { id: 1, nome: 'Vitor Navalha (Mock)' },
-  { id: 2, nome: 'Thiago Barba (Mock)' },
-  { id: 3, nome: 'Yure Estilo (Mock)' }
-]
-
-const MOCK_SERVICOS = [
-  { id: 1, nome: 'Corte Simples', preco: 35.00, xpRecompensa: 10, duracaoMinutos: 30 },
-  { id: 2, nome: 'Corte + Barba', preco: 60.00, xpRecompensa: 25, duracaoMinutos: 60 },
-  { id: 3, nome: 'Barba Completa', preco: 40.00, xpRecompensa: 15, duracaoMinutos: 45 },
-  { id: 4, nome: 'Hidratação Capilar', preco: 50.00, xpRecompensa: 20, duracaoMinutos: 40 }
-]
 
 const getLocalDateStr = () => {
   const formatter = new Intl.DateTimeFormat('en-US', {
@@ -88,7 +63,6 @@ export default function AgendamentosPage() {
   
   const [filtroStatus, setFiltroStatus] = useState('Todos')
   const [showModal, setShowModal] = useState(false)
-  const [step, setStep] = useState(1)
 
   // Form states
   const [selectedServico, setSelectedServico] = useState('')
@@ -97,8 +71,6 @@ export default function AgendamentosPage() {
   const [selectedHora, setSelectedHora] = useState('')
   const [availableSlots, setAvailableSlots] = useState([])
   const [loadingSlots, setLoadingSlots] = useState(false)
-  const [barbeiroDisponibilidades, setBarbeiroDisponibilidades] = useState([])
-  const [barbeiroBloqueios, setBarbeiroBloqueios] = useState([])
 
   // Drag to Scroll references and states
   const datePickerRef = useRef(null)
@@ -157,33 +129,28 @@ export default function AgendamentosPage() {
     setError(null)
     try {
       const [resAgendamentos, resServicos, resBarbeiros] = await Promise.all([
-        fetchAgendamentos().catch(err => {
-          console.warn('Erro ao buscar agendamentos, usando vazio:', err)
-          return { data: [] }
-        }),
-        fetchServicos().catch(err => {
-          console.warn('Erro ao buscar servicos, usando mock:', err)
-          return { data: MOCK_SERVICOS }
-        }),
-        fetchBarbeiros().catch(err => {
-          console.warn('Erro ao buscar barbeiros, usando mock:', err)
-          return { data: MOCK_BARBEIROS }
-        })
+        fetchAgendamentos(),
+        fetchServicos(),
+        isClient ? Promise.resolve({ data: [] }) : fetchBarbeiros()
       ])
       
       setAgendamentos(resAgendamentos.data || [])
+      setServicos(resServicos.data || [])
       
-      const servicosData = resServicos.data && resServicos.data.length > 0 ? resServicos.data : MOCK_SERVICOS
-      setServicos(servicosData)
-      
-      const barbeirosData = resBarbeiros.data && resBarbeiros.data.length > 0 ? resBarbeiros.data : MOCK_BARBEIROS
-      setBarbeiros(barbeirosData)
+      const listBarbeiros = resBarbeiros.data || []
+      setBarbeiros(listBarbeiros)
 
-      if (servicosData.length > 0) setSelectedServico(servicosData[0].id)
-      if (barbeirosData.length > 0) setSelectedBarbeiro(barbeirosData[0].id)
+      if (resServicos.data?.length > 0) setSelectedServico(resServicos.data[0].id)
+      if (listBarbeiros.length > 0) setSelectedBarbeiro(listBarbeiros[0].id)
+      else if (isClient) {
+        // Para clientes, buscar lista de barbeiros de qualquer forma para selecionar no form
+        const fallbackBarbeiros = await fetchBarbeiros()
+        setBarbeiros(fallbackBarbeiros.data || [])
+        if (fallbackBarbeiros.data?.length > 0) setSelectedBarbeiro(fallbackBarbeiros.data[0].id)
+      }
     } catch (err) {
       console.error(err)
-      setError('Erro ao carregar os dados. Usando dados fictícios locais.')
+      setError('Erro ao carregar os dados. Verifique a ligação ao servidor.')
     } finally {
       setLoading(false)
     }
@@ -301,44 +268,6 @@ export default function AgendamentosPage() {
     fetchSlots()
   }, [selectedBarbeiro, selectedData, selectedServico])
 
-  const handleDateChange = (dateVal) => {
-    if (!dateVal) {
-      setSelectedData('')
-      setSelectedHora('')
-      return
-    }
-
-    const todayStr = getLocalDateStr()
-    if (dateVal < todayStr) {
-      alert('Não é possível selecionar uma data no passado.')
-      setSelectedData('')
-      setSelectedHora('')
-      return
-    }
-
-    const [year, month, day] = dateVal.split('-').map(Number)
-    const dateObj = new Date(year, month - 1, day)
-    const weekday = dateObj.getDay()
-
-    const disp = barbeiroDisponibilidades.find(d => d.dia_semana === weekday)
-    if (disp && !disp.trabalha) {
-      alert('Este barbeiro não possui disponibilidade para este dia. Por favor, escolha outra data!')
-      setSelectedData('')
-      setSelectedHora('')
-      return
-    }
-
-    const isBlocked = barbeiroBloqueios.some(b => b.data_bloqueio === dateVal)
-    if (isBlocked) {
-      alert('Este barbeiro não possui disponibilidade para este dia. Por favor, escolha outra data!')
-      setSelectedData('')
-      setSelectedHora('')
-      return
-    }
-
-    setSelectedData(dateVal)
-    setSelectedHora('')
-  }
 
   const handleCreateAgendamento = async (e) => {
     e.preventDefault()
@@ -459,7 +388,6 @@ export default function AgendamentosPage() {
             setSelectedData('')
             setSelectedHora('')
             setAvailableSlots([])
-            setStep(1)
             setShowModal(true)
           }}>+ Novo Agendamento</button>
         </div>
@@ -503,7 +431,7 @@ export default function AgendamentosPage() {
                     <td style={{ fontWeight: 600 }}>{a.cliente_nome || `Cliente #${a.cliente_id}`}</td>
                     <td>{a.barbeiro_nome || `Barbeiro #${a.barbeiro_id}`}</td>
                     <td>{a.servico_nome || `Serviço #${a.servico_id}`}</td>
-                    <td>{new Date(a.data_hora).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+                    <td>{new Date(a.data_hora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
                     <td style={{ fontWeight: 600 }}>R$ {a.preco ? a.preco.toFixed(2) : '35.00'}</td>
                     <td><span className={`badge badge-${a.status.toLowerCase()}`}>{a.status}</span></td>
                     <td>
@@ -535,274 +463,69 @@ export default function AgendamentosPage() {
               <h3>📅 Novo Agendamento</h3>
               <button className="btn-ghost" onClick={() => setShowModal(false)}>✕</button>
             </div>
-            <form onSubmit={handleCreateAgendamento}>
-              {/* Indicador de Progresso (Stepper) */}
-              <div className="wizard-stepper" style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '1.5rem',
-                position: 'relative',
-                padding: '0 0.5rem'
-              }}>
-                <div style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '5%',
-                  right: '5%',
-                  height: '2px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  zIndex: 1,
-                  transform: 'translateY(-50%)'
-                }}>
-                  <div style={{
-                    width: `${((step - 1) / 3) * 100}%`,
-                    height: '100%',
-                    backgroundColor: 'var(--primary-color, #e07a5f)',
-                    transition: 'width 0.3s ease'
-                  }} />
+            {isClient ? (
+              <BookingWizard
+                servicos={servicos}
+                barbeiros={barbeiros}
+                onClose={() => setShowModal(false)}
+                onSuccess={() => {
+                  setShowModal(false)
+                  loadData()
+                  // Evento customizado para notificar o chat de que o agendamento foi atualizado
+                  const event = new CustomEvent('agendamentoCreated')
+                  window.dispatchEvent(event)
+                }}
+              />
+            ) : (
+              <form onSubmit={handleCreateAgendamento}>
+                <div className="form-group">
+                  <label className="form-label">Cliente</label>
+                  <select className="form-input" disabled><option>{user?.nome || 'Admin/Barbeiro'}</option></select>
+                  <small style={{ color: 'var(--text-muted)' }}>Agendamento será criado no seu nome.</small>
                 </div>
-                {[
-                  { label: 'Barbeiro', icon: '🧔' },
-                  { label: 'Serviço', icon: '✂️' },
-                  { label: 'Data/Hora', icon: '📅' },
-                  { label: 'Confirmar', icon: '✅' }
-                ].map((s, idx) => {
-                  const currentIdx = idx + 1;
-                  const isActive = step >= currentIdx;
-                  const isCurrent = step === currentIdx;
-                  return (
-                    <div key={idx} style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      zIndex: 2,
-                      position: 'relative'
-                    }}>
-                      <div style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        backgroundColor: isCurrent 
-                          ? 'var(--primary-color, #e07a5f)' 
-                          : isActive 
-                            ? 'var(--primary-color-dark, #c96248)' 
-                            : 'rgba(255, 255, 255, 0.05)',
-                        border: `2px solid ${isCurrent ? '#fff' : isActive ? 'var(--primary-color, #e07a5f)' : 'rgba(255, 255, 255, 0.15)'}`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.9rem',
-                        color: isActive ? '#fff' : 'rgba(255, 255, 255, 0.4)',
-                        transition: 'all 0.3s ease',
-                        boxShadow: isCurrent ? '0 0 10px var(--primary-color, #e07a5f)' : 'none'
-                      }}>
-                        {s.icon}
-                      </div>
-                      <span style={{
-                        fontSize: '0.7rem',
-                        marginTop: '0.3rem',
-                        color: isCurrent 
-                          ? 'var(--primary-color, #e07a5f)' 
-                          : isActive 
-                            ? 'var(--text-color, #f4f1de)' 
-                            : 'rgba(255, 255, 255, 0.3)',
-                        fontWeight: isActive ? '600' : 'normal',
-                        transition: 'all 0.3s ease'
-                      }}>{s.label}</span>
-                    </div>
-                  )
-                })}
-              </div>
-
-              {/* Passo 1: Escolha do Barbeiro */}
-              {step === 1 && (
-                <div className="wizard-step-content fade-in-up">
-                  <h4 style={{ marginBottom: '1rem', color: 'var(--text-color)' }}>Selecione o Barbeiro:</h4>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
-                    gap: '1rem',
-                    maxHeight: '280px',
-                    overflowY: 'auto',
-                    padding: '0.25rem'
-                  }}>
-                    {barbeiros.map(b => {
-                      const isSelected = Number(selectedBarbeiro) === b.id;
-                      return (
-                        <div
-                          key={b.id}
-                          onClick={() => {
-                            setSelectedBarbeiro(b.id);
-                            setStep(2); // Avança automático
-                          }}
-                          style={{
-                            padding: '1.25rem 1rem',
-                            borderRadius: '12px',
-                            backgroundColor: isSelected ? 'rgba(224, 122, 95, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-                            border: `2px solid ${isSelected ? 'var(--primary-color, #e07a5f)' : 'rgba(255, 255, 255, 0.08)'}`,
-                            cursor: 'pointer',
-                            textAlign: 'center',
-                            transition: 'all 0.2s ease',
-                            transform: isSelected ? 'scale(1.02)' : 'none',
-                            boxShadow: isSelected ? '0 4px 15px rgba(0, 0, 0, 0.2)' : 'none'
-                          }}
-                        >
-                          <div style={{
-                            width: '44px',
-                            height: '44px',
-                            borderRadius: '50%',
-                            backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
-                            margin: '0 auto 0.5rem auto',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '1.3rem',
-                            fontWeight: 'bold',
-                            color: 'var(--primary-color, #e07a5f)'
-                          }}>
-                            {b.nome ? b.nome.charAt(0).toUpperCase() : 'B'}
-                          </div>
-                          <div style={{ fontWeight: '600', fontSize: '0.85rem', color: isSelected ? 'var(--primary-color, #e07a5f)' : 'var(--text-color)' }}>
-                            {b.nome}
-                          </div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-                            Barbeiro Oficial
-                          </div>
-                        </div>
-                      )
-                    })}
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Barbeiro</label>
+                    <select className="form-input" value={selectedBarbeiro} onChange={e => setSelectedBarbeiro(e.target.value)}>
+                      {barbeiros.map(b => (
+                        <option key={b.id} value={b.id}>{b.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Serviço</label>
+                    <select className="form-input" value={selectedServico} onChange={e => setSelectedServico(e.target.value)}>
+                      {servicos.map(s => (
+                        <option key={s.id} value={s.id}>{s.nome} - R$ {s.preco.toFixed(2)}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
-              )}
-
-              {/* Passo 2: Escolha do Serviço */}
-              {step === 2 && (
-                <div className="wizard-step-content fade-in-up">
-                  <h4 style={{ marginBottom: '1rem', color: 'var(--text-color)' }}>Selecione o Serviço:</h4>
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.75rem',
-                    maxHeight: '280px',
-                    overflowY: 'auto',
-                    padding: '0.25rem'
-                  }}>
-                    {servicos.map(s => {
-                      const isSelected = Number(selectedServico) === s.id;
-                      const details = getServiceDetails(s.nome);
-                      return (
-                        <div
-                          key={s.id}
-                          onClick={() => {
-                            setSelectedServico(s.id);
-                            setStep(3); // Avança automático
-                          }}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '0.85rem 1rem',
-                            borderRadius: '10px',
-                            backgroundColor: isSelected ? 'rgba(224, 122, 95, 0.12)' : 'rgba(255, 255, 255, 0.02)',
-                            border: `1px solid ${isSelected ? 'var(--primary-color, #e07a5f)' : 'rgba(255, 255, 255, 0.08)'}`,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            boxShadow: isSelected ? '0 2px 10px rgba(0, 0, 0, 0.15)' : 'none'
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <span style={{ fontSize: '1.3rem' }}>{details.icon}</span>
-                            <div style={{ textAlign: 'left' }}>
-                              <div style={{ fontWeight: '600', fontSize: '0.85rem', color: isSelected ? 'var(--primary-color, #e07a5f)' : 'var(--text-color)' }}>
-                                {s.nome}
-                              </div>
-                              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                                ⏱️ {s.duracaoMinutos || 30} min | ⚔️ +{s.xpRecompensa || 10} XP
-                              </div>
-                            </div>
-                          </div>
-                          <div style={{ fontWeight: '700', fontSize: '1rem', color: isSelected ? 'var(--primary-color, #e07a5f)' : 'var(--text-color)' }}>
-                            R$ {s.preco ? s.preco.toFixed(2) : '0.00'}
-                          </div>
-                        </div>
-                      )
-                    })}
+                <div className="form-row">
+                  <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                    <label className="form-label">Data</label>
+                    <input type="date" className="form-input" value={selectedData} onChange={e => {
+                      setSelectedData(e.target.value)
+                      setSelectedHora('')
+                    }} required />
                   </div>
                 </div>
-              )}
-
-              {/* Passo 3: Data e Hora */}
-              {step === 3 && (
-                <div className="wizard-step-content fade-in-up">
-                  <h4 style={{ marginBottom: '0.75rem', color: 'var(--text-color)' }}>Selecione Data e Horário:</h4>
-                  
-                  <div className="form-group" style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
-                    <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>Data do Agendamento</span>
-                      {selectedData && (
-                        <span style={{ fontSize: '0.8rem', color: 'var(--primary-color, #e07a5f)', fontWeight: '600' }}>
-                          {(() => {
-                            const [y, m, d] = selectedData.split('-');
-                            return `${d}/${m}/${y}`;
-                          })()}
-                        </span>
-                      )}
-                    </label>
-                    <div 
-                      ref={datePickerRef}
-                      className="horizontal-date-picker"
-                      onMouseDown={handleMouseDownDate}
-                      onMouseLeave={handleMouseLeaveDate}
-                      onMouseUp={handleMouseUpDate}
-                      onMouseMove={handleMouseMoveDate}
-                    >
-                      {horizontalDays.map(d => {
-                        const isSelected = selectedData === d.dateStr;
-                        
-                        // Check if barber is available or blocked
-                        const [year, month, day] = d.dateStr.split('-').map(Number);
-                        const dateObj = new Date(year, month - 1, day);
-                        const weekday = dateObj.getDay();
-                        const disp = barbeiroDisponibilidades.find(x => x.dia_semana === weekday);
-                        const isBlocked = barbeiroBloqueios.some(b => b.data_bloqueio === d.dateStr);
-                        const isDisabled = (disp && !disp.trabalha) || isBlocked;
-                        
-                        return (
-                          <div
-                            key={d.dateStr}
-                            onClick={() => {
-                              if (isDraggingDate) return;
-                              handleDateChange(d.dateStr);
-                            }}
-                            className={`date-picker-card${isSelected ? ' selected' : ''}${isDisabled ? ' disabled' : ''}`}
-                            title={isDisabled ? 'Barbeiro indisponível' : ''}
-                          >
-                            <span className="weekday">{d.dayName}</span>
-                            <span className="day-val">{d.dayVal}</span>
-                            <span className="month-val">{d.monthName}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="form-group" style={{ textAlign: 'left' }}>
-                    <label className="form-label">Horários Disponíveis</label>
+                <div className="form-row">
+                  <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                    <label className="form-label">Horários Disponíveis (Sessão de 30 min)</label>
                     {!selectedData ? (
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Selecione uma data para ver os horários.</p>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Selecione uma data para consultar os horários.</p>
                     ) : loadingSlots ? (
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Consultando agenda...</p>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Carregando horários...</p>
                     ) : availableSlots.length === 0 ? (
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Nenhum horário disponível para esta data.</p>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Nenhum slot disponível.</p>
                     ) : (
                       <div style={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(auto-fill, minmax(75px, 1fr))',
                         gap: '0.5rem',
                         marginTop: '0.5rem',
-                        maxHeight: '140px',
+                        maxHeight: '180px',
                         overflowY: 'auto',
                         padding: '0.25rem',
                         border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -816,7 +539,7 @@ export default function AgendamentosPage() {
                             disabled={!slot.available}
                             onClick={() => setSelectedHora(slot.time)}
                             style={{
-                              padding: '0.4rem 0.25rem',
+                              padding: '0.5rem 0.25rem',
                               borderRadius: '6px',
                               border: '1px solid',
                               borderColor: selectedHora === slot.time
@@ -835,7 +558,7 @@ export default function AgendamentosPage() {
                                   ? 'var(--text-color, #f4f1de)'
                                   : 'rgba(255, 255, 255, 0.2)',
                               cursor: slot.available ? 'pointer' : 'not-allowed',
-                              fontSize: '0.8rem',
+                              fontSize: '0.85rem',
                               fontWeight: '600',
                               textDecoration: slot.available ? 'none' : 'line-through',
                               transition: 'all 0.2s ease',
@@ -847,98 +570,18 @@ export default function AgendamentosPage() {
                       </div>
                     )}
                     {selectedHora && (
-                      <div style={{ marginTop: '0.75rem', fontSize: '0.85rem', color: 'var(--primary-color, #e07a5f)', fontWeight: 600 }}>
+                      <div style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: 'var(--primary-color, #e07a5f)', fontWeight: 600 }}>
                         Horário Selecionado: {selectedHora}
                       </div>
                     )}
                   </div>
                 </div>
-              )}
-
-              {/* Passo 4: Confirmação */}
-              {step === 4 && (
-                <div className="wizard-step-content fade-in-up">
-                  <h4 style={{ marginBottom: '1rem', color: 'var(--text-color)', textAlign: 'center' }}>Confirmar Agendamento</h4>
-                  
-                  <div style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    padding: '1rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.6rem',
-                    textAlign: 'left'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', paddingBottom: '0.4rem' }}>
-                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Cliente:</span>
-                      <strong style={{ color: 'var(--text-color)', fontSize: '0.85rem' }}>{isClient ? user?.nome : (user?.nome || 'Admin/Barbeiro')}</strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', paddingBottom: '0.4rem' }}>
-                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Barbeiro:</span>
-                      <strong style={{ color: 'var(--text-color)', fontSize: '0.85rem' }}>{barbeiros.find(b => b.id === Number(selectedBarbeiro))?.nome || 'Não selecionado'}</strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', paddingBottom: '0.4rem' }}>
-                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Serviço:</span>
-                      <strong style={{ color: 'var(--text-color)', fontSize: '0.85rem' }}>
-                        {servicos.find(s => s.id === Number(selectedServico))?.nome || 'Não selecionado'}
-                      </strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', paddingBottom: '0.4rem' }}>
-                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Data/Hora:</span>
-                      <strong style={{ color: 'var(--primary-color, #e07a5f)', fontSize: '0.85rem' }}>
-                        {selectedData ? new Date(selectedData + 'T12:00:00').toLocaleDateString('pt-BR') : ''} às {selectedHora}
-                      </strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', paddingBottom: '0.4rem' }}>
-                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Duração:</span>
-                      <strong style={{ color: 'var(--text-color)', fontSize: '0.85rem' }}>{servicos.find(s => s.id === Number(selectedServico))?.duracaoMinutos || 30} min</strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', paddingBottom: '0.4rem' }}>
-                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Recompensa RPG:</span>
-                      <strong style={{ color: 'var(--gold, #f39c12)', fontSize: '0.85rem' }}>+{servicos.find(s => s.id === Number(selectedServico))?.xpRecompensa || 10} XP</strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.2rem' }}>
-                      <span style={{ color: 'var(--text-color)', fontWeight: 'bold', fontSize: '0.95rem' }}>Valor do Serviço:</span>
-                      <strong style={{ color: 'var(--primary-color, #e07a5f)', fontSize: '1.05rem', fontWeight: '800' }}>
-                        R$ {servicos.find(s => s.id === Number(selectedServico))?.preco ? servicos.find(s => s.id === Number(selectedServico))?.preco.toFixed(2) : '0.00'}
-                      </strong>
-                    </div>
-                  </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
+                  <button type="submit" className="btn btn-primary">Agendar</button>
                 </div>
-              )}
-
-              {/* Botões de Rodapé do Wizard */}
-              <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.5rem' }}>
-                <div>
-                  {step > 1 && (
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setStep(step - 1)}>
-                      ⬅️ Voltar
-                    </button>
-                  )}
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {step < 4 ? (
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-sm"
-                      disabled={
-                        (step === 1 && !selectedBarbeiro) ||
-                        (step === 2 && !selectedServico) ||
-                        (step === 3 && (!selectedData || !selectedHora))
-                      }
-                      onClick={() => setStep(step + 1)}
-                    >
-                      Avançar ➡️
-                    </button>
-                  ) : (
-                    <button type="submit" className="btn btn-primary btn-sm">
-                      Confirmar Agendamento 📅
-                    </button>
-                  )}
-                </div>
-              </div>
-            </form>
+              </form>
+            )}
           </div>
         </div>
       )}
