@@ -36,8 +36,8 @@ CREATE TABLE IF NOT EXISTS ProgressoCliente (
     BarraPercentual DECIMAL(5,2) DEFAULT 0.00,
     Moedas INT DEFAULT 0,
     StreakAtual INT DEFAULT 0,
-    UltimoCheckIn TIMESTAMP,
-    UpdatedAt TIMESTAMP DEFAULT NOW()
+    UltimoCheckIn TIMESTAMPTZ,
+    UpdatedAt TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS Servicos (
@@ -60,12 +60,12 @@ CREATE TABLE IF NOT EXISTS Agendamentos (
     ClienteID INT REFERENCES Usuarios(ID),
     BarbeiroID INT REFERENCES Usuarios(ID),
     ServicoID INT REFERENCES Servicos(ID),
-    DataHora TIMESTAMP NOT NULL,
+    DataHora TIMESTAMPTZ NOT NULL,
     Status VARCHAR(20) DEFAULT 'Pendente' CHECK (Status IN ('Pendente', 'Confirmado', 'Concluido', 'Cancelado', 'Falta', 'Presente', 'EmCadeira')),
-    CheckInTime TIMESTAMP,
-    EmCadeiraTime TIMESTAMP,
-    ConcluidoTime TIMESTAMP,
-    CriadoEm TIMESTAMP DEFAULT NOW()
+    CheckInTime TIMESTAMPTZ,
+    EmCadeiraTime TIMESTAMPTZ,
+    ConcluidoTime TIMESTAMPTZ,
+    CriadoEm TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS Cupons (
@@ -111,10 +111,10 @@ CREATE TABLE IF NOT EXISTS ServicoProdutos (
 CREATE TABLE IF NOT EXISTS Temporadas (
     ID SERIAL PRIMARY KEY,
     Nome VARCHAR(100) NOT NULL,
-    DataInicio TIMESTAMP NOT NULL,
-    DataFim TIMESTAMP NOT NULL,
+    DataInicio TIMESTAMPTZ NOT NULL,
+    DataFim TIMESTAMPTZ NOT NULL,
     Ativa BOOLEAN DEFAULT FALSE,
-    CriadaEm TIMESTAMP DEFAULT NOW()
+    CriadaEm TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS Clas (

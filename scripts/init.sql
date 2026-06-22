@@ -35,8 +35,8 @@ CREATE TABLE ProgressoCliente (
     BarraPercentual DECIMAL(5,2) DEFAULT 0.00,
     Moedas INT DEFAULT 0,
     StreakAtual INT DEFAULT 0,
-    UltimoCheckIn TIMESTAMP,
-    UpdatedAt TIMESTAMP DEFAULT NOW()
+    UltimoCheckIn TIMESTAMPTZ,
+    UpdatedAt TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE Servicos (
@@ -58,12 +58,12 @@ CREATE TABLE Agendamentos (
     ClienteID INT REFERENCES Usuarios(ID),
     BarbeiroID INT REFERENCES Usuarios(ID),
     ServicoID INT REFERENCES Servicos(ID),
-    DataHora TIMESTAMP NOT NULL,
+    DataHora TIMESTAMPTZ NOT NULL,
     Status VARCHAR(20) DEFAULT 'Pendente' CHECK (Status IN ('Pendente', 'Confirmado', 'Concluido', 'Cancelado', 'Falta', 'Presente', 'EmCadeira')),
-    CheckInTime TIMESTAMP,
-    EmCadeiraTime TIMESTAMP,
-    ConcluidoTime TIMESTAMP,
-    CriadoEm TIMESTAMP DEFAULT NOW()
+    CheckInTime TIMESTAMPTZ,
+    EmCadeiraTime TIMESTAMPTZ,
+    ConcluidoTime TIMESTAMPTZ,
+    CriadoEm TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE Cupons (
@@ -108,10 +108,10 @@ CREATE TABLE ServicoProdutos (
 CREATE TABLE Temporadas (
     ID SERIAL PRIMARY KEY,
     Nome VARCHAR(100) NOT NULL,
-    DataInicio TIMESTAMP NOT NULL,
-    DataFim TIMESTAMP NOT NULL,
+    DataInicio TIMESTAMPTZ NOT NULL,
+    DataFim TIMESTAMPTZ NOT NULL,
     Ativa BOOLEAN DEFAULT FALSE,
-    CriadaEm TIMESTAMP DEFAULT NOW()
+    CriadaEm TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE Clas (
@@ -121,7 +121,7 @@ CREATE TABLE Clas (
     XPColetivo INT DEFAULT 0,
     NivelAtual INT DEFAULT 1,
     LiderID INT NOT NULL REFERENCES Usuarios(ID) ON DELETE CASCADE,
-    CriadoEm TIMESTAMP DEFAULT NOW()
+    CriadoEm TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Índice para busca rápida de clãs por líder
