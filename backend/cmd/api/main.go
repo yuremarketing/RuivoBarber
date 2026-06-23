@@ -16,6 +16,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	_ "time/tzdata"
 
 	"golang.org/x/crypto/bcrypt"
 	"ruivobarber-api/internal/adapters/handlers"
@@ -45,7 +46,7 @@ func main() {
 		sslMode = "disable"
 	}
 	dsn := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s timezone=America/Sao_Paulo",
 		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"),
 		os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_NAME"), sslMode,
@@ -60,6 +61,21 @@ func main() {
 		log.Fatalf("Banco inacessível: %v", err)
 	}
 	log.Println("✅ Conectado ao PostgreSQL com sucesso")
+
+	// Migração automática para TIMESTAMPTZ (Fuso Horário)
+	tzMigration := `
+		ALTER TABLE Agendamentos ALTER COLUMN DataHora TYPE TIMESTAMPTZ;
+		ALTER TABLE Agendamentos ALTER COLUMN CriadoEm TYPE TIMESTAMPTZ;
+		ALTER TABLE ProgressoCliente ALTER COLUMN UpdatedAt TYPE TIMESTAMPTZ;
+		ALTER TABLE Temporadas ALTER COLUMN DataInicio TYPE TIMESTAMPTZ;
+		ALTER TABLE Temporadas ALTER COLUMN DataFim TYPE TIMESTAMPTZ;
+		ALTER TABLE Temporadas ALTER COLUMN CriadaEm TYPE TIMESTAMPTZ;
+	`
+	if _, err = db.Exec(tzMigration); err != nil {
+		log.Printf("[DB] Erro ao executar migração automática para TIMESTAMPTZ: %v", err)
+	} else {
+		log.Println("✅ Migração automática: tipos de data/hora atualizados para TIMESTAMPTZ")
+	}
 
 	var tz string
 	if err := db.QueryRow("SHOW TIMEZONE").Scan(&tz); err != nil {
@@ -415,7 +431,56 @@ func main() {
 		log.Println("✅ Migração automática: tabelas e colunas de Gorjetas e Pix garantidas no banco")
 	}
 
+	// Migração automática para PDV (Pontos de Venda) e Controle Financeiro
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS Caixas (
+			ID SERIAL PRIMARY KEY,
+			OperadorID INT REFERENCES Usuarios(ID) ON DELETE SET NULL,
+			SaldoInicial DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			SaldoFinal DECIMAL(10,2) DEFAULT NULL,
+			SaldoInformado DECIMAL(10,2) DEFAULT NULL,
+			Status VARCHAR(20) NOT NULL DEFAULT 'Aberto' CHECK (Status IN ('Aberto', 'Fechado')),
+			AbertoEm TIMESTAMP DEFAULT NOW(),
+			FechadoEm TIMESTAMP DEFAULT NULL
+		);
+
+		CREATE TABLE IF NOT EXISTS Vendas (
+			ID SERIAL PRIMARY KEY,
+			CaixaID INT REFERENCES Caixas(ID) ON DELETE CASCADE,
+			ClienteID INT REFERENCES Usuarios(ID) ON DELETE SET NULL,
+			AgendamentoID INT REFERENCES Agendamentos(ID) ON DELETE SET NULL,
+			ValorBruto DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			Desconto DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			ValorLiquido DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			MetodoPagamento VARCHAR(30) NOT NULL CHECK (MetodoPagamento IN ('Dinheiro', 'Pix', 'Debito', 'Credito')),
+			CriadoEm TIMESTAMP DEFAULT NOW()
+		);
+
+		CREATE TABLE IF NOT EXISTS VendaItens (
+			ID SERIAL PRIMARY KEY,
+			VendaID INT REFERENCES Vendas(ID) ON DELETE CASCADE,
+			ServicoID INT REFERENCES Servicos(ID) ON DELETE SET NULL,
+			PrecoUnitario DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			Quantidade INT NOT NULL DEFAULT 1
+		);
+
+		CREATE TABLE IF NOT EXISTS MovimentacoesCaixa (
+			ID SERIAL PRIMARY KEY,
+			CaixaID INT REFERENCES Caixas(ID) ON DELETE CASCADE,
+			Tipo VARCHAR(20) NOT NULL CHECK (Tipo IN ('Entrada', 'Saida')),
+			Valor DECIMAL(10,2) NOT NULL CHECK (Valor > 0),
+			Motivo VARCHAR(200) NOT NULL,
+			CriadoEm TIMESTAMP DEFAULT NOW()
+		);
+	`)
+	if err != nil {
+		log.Printf("[DB] Erro ao executar migração automática para PDV: %v", err)
+	} else {
+		log.Println("✅ Migração automática: tabelas de PDV e Fluxo Financeiro garantidas no banco")
+	}
+
     // Atualizar senha do admin se for o placeholder ou plain-text legado para permitir login seguro com bcrypt
+
     var adminCount int
     err = db.QueryRow("SELECT COUNT(*) FROM Usuarios WHERE Login = 'admin'").Scan(&adminCount)
     if err == nil && adminCount > 0 {
@@ -531,8 +596,12 @@ func main() {
             servIds := []int{1, 2, 1, 2, 2, 1}
             
             // Utilizando o time package para fazer parse dos horários locais
+            saoPaulo, errTz := time.LoadLocation("America/Sao_Paulo")
+            if errTz != nil {
+                saoPaulo = time.FixedZone("America/Sao_Paulo", -3*60*60)
+            }
             for i, dStr := range dates {
-                pTime, parseErr := time.ParseInLocation("2006-01-02 15:04:05", dStr, time.Local)
+                pTime, parseErr := time.ParseInLocation("2006-01-02 15:04:05", dStr, saoPaulo)
                 if parseErr == nil {
                     _, err = db.Exec("INSERT INTO Agendamentos (ClienteID, BarbeiroID, ServicoID, DataHora, Status) VALUES ($1, $2, $3, $4, 'Confirmado')", cID, bID, servIds[i], pTime)
                     if err != nil {
@@ -586,6 +655,10 @@ func main() {
     liveService := services.NewLiveService(liveRepo)
     liveHandler := handlers.NewLiveHandler(liveService)
 
+    pdvRepo := repositories.NewPdvPgRepository(db)
+    pdvService := services.NewPdvService(pdvRepo, clienteRepo, notificationService)
+    pdvHandler := handlers.NewPdvHandler(pdvService)
+
     app := fiber.New(fiber.Config{AppName: "RuivoBarber API v1.0"})
     app.Use(logger.New())
     app.Use(cors.New())
@@ -607,6 +680,8 @@ func main() {
     raidHandler.RegisterRoutes(app)
     queueHandler.RegisterRoutes(app)
     liveHandler.RegisterRoutes(app)
+    pdvHandler.RegisterRoutes(app)
+
 
     port := os.Getenv("PORT")
     if port == "" {
