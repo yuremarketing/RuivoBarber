@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { fetchServicos, fetchBarbeiros, fetchAgendamentos, fetchAgendaBarbeiro, criarAgendamento, concluirAtendimento, registrarFalta, fetchDisponibilidadeBarbeiro, fetchBloqueiosBarbeiro } from '../services/api.js'
 import BookingWizard from '../components/BookingWizard.jsx'
+import GorjetaModal from '../components/GorjetaModal.jsx'
 
 
 const getLocalDateStr = () => {
@@ -63,6 +64,8 @@ export default function AgendamentosPage() {
   
   const [filtroStatus, setFiltroStatus] = useState('Todos')
   const [showModal, setShowModal] = useState(false)
+  const [showGorjetaModal, setShowGorjetaModal] = useState(false)
+  const [selectedAgendamentoParaGorjeta, setSelectedAgendamentoParaGorjeta] = useState(null)
 
   // Form states
   const [selectedServico, setSelectedServico] = useState('')
@@ -445,7 +448,22 @@ export default function AgendamentosPage() {
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Aguardando</span>
                       )}
                       {a.status !== 'Pendente' && (
-                        <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Finalizado</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Finalizado</span>
+                          {isClient && a.status === 'Concluido' && (
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              style={{ color: 'var(--gold)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.2rem 0.5rem', border: '1px solid rgba(245,166,35,0.2)', borderRadius: '4px' }}
+                              title="Enviar Gorjeta Pix ao Barbeiro"
+                              onClick={() => {
+                                setSelectedAgendamentoParaGorjeta(a)
+                                setShowGorjetaModal(true)
+                              }}
+                            >
+                              💸 Gorjeta
+                            </button>
+                          )}
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -584,6 +602,19 @@ export default function AgendamentosPage() {
             )}
           </div>
         </div>
+      )}
+
+      {showGorjetaModal && selectedAgendamentoParaGorjeta && (
+        <GorjetaModal
+          agendamento={selectedAgendamentoParaGorjeta}
+          onClose={() => {
+            setShowGorjetaModal(false)
+            setSelectedAgendamentoParaGorjeta(null)
+          }}
+          onSuccess={() => {
+            fetchAgendamentos().then(res => setAgendamentos(res.data || []))
+          }}
+        />
       )}
 
       {showToast && (

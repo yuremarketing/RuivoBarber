@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { fetchBarbeiros, fetchDisponibilidadeBarbeiro, salvarDisponibilidadeBarbeiro, fetchBloqueiosBarbeiro, adicionarBloqueioBarbeiro, removerBloqueioBarbeiro } from '../services/api.js'
+import { fetchBarbeiros, fetchDisponibilidadeBarbeiro, salvarDisponibilidadeBarbeiro, fetchBloqueiosBarbeiro, adicionarBloqueioBarbeiro, removerBloqueioBarbeiro, salvarChavePixBarbeiro } from '../services/api.js'
 
 const DIAS_SEMANA_NOMES = [
   'Domingo',
@@ -40,6 +40,8 @@ export default function AgendaConfigPage() {
   // Form states for new block
   const [novaData, setNovaData] = useState('')
   const [novoMotivo, setNovoMotivo] = useState('')
+  const [chavePix, setChavePix] = useState('')
+  const [loadingPix, setLoadingPix] = useState(false)
 
   const triggerToast = (msg, type = 'success') => {
     setToastMsg(msg)
@@ -48,32 +50,57 @@ export default function AgendaConfigPage() {
     setTimeout(() => setShowToast(false), 3000)
   }
 
-  // Load barbers if Admin
+  // Load barbers if Authorized (Admin or Barber)
   useEffect(() => {
     if (!isAuthorized) return
 
-    if (isAdmin) {
-      const loadBarbeiros = async () => {
-        setLoading(true)
-        try {
-          const res = await fetchBarbeiros()
-          const list = res.data || []
-          setBarbeiros(list)
-          if (list.length > 0) {
-            setSelectedBarbeiroId(list[0].id)
-          }
-        } catch (err) {
-          console.error('Erro ao buscar barbeiros:', err)
-          triggerToast('Erro ao carregar lista de barbeiros.', 'error')
-        } finally {
-          setLoading(false)
+    const loadBarbeiros = async () => {
+      setLoading(true)
+      try {
+        const res = await fetchBarbeiros()
+        const list = res.data || []
+        setBarbeiros(list)
+        if (isAdmin && list.length > 0) {
+          setSelectedBarbeiroId(list[0].id)
+        } else if (isBarber) {
+          setSelectedBarbeiroId(user.id)
         }
+      } catch (err) {
+        console.error('Erro ao buscar barbeiros:', err)
+        triggerToast('Erro ao carregar lista de barbeiros.', 'error')
+      } finally {
+        setLoading(false)
       }
-      loadBarbeiros()
-    } else if (isBarber) {
-      setSelectedBarbeiroId(user.id)
     }
+    loadBarbeiros()
   }, [isAdmin, isBarber, isAuthorized, user?.id])
+
+  useEffect(() => {
+    if (selectedBarbeiroId && barbeiros.length > 0) {
+      const current = barbeiros.find(b => b.id === Number(selectedBarbeiroId))
+      if (current) {
+        setChavePix(current.chave_pix || '')
+      } else {
+        setChavePix('')
+      }
+    }
+  }, [selectedBarbeiroId, barbeiros])
+
+  const handleSaveChavePix = async (e) => {
+    e.preventDefault()
+    if (!selectedBarbeiroId) return
+    setLoadingPix(true)
+    try {
+      await salvarChavePixBarbeiro(selectedBarbeiroId, chavePix)
+      triggerToast('Chave Pix de gorjetas salva com sucesso!')
+      setBarbeiros(prev => prev.map(b => b.id === Number(selectedBarbeiroId) ? { ...b, chave_pix: chavePix } : b))
+    } catch (err) {
+      console.error(err)
+      triggerToast('Erro ao salvar Chave Pix: ' + (err.response?.data?.error || err.message), 'error')
+    } finally {
+      setLoadingPix(false)
+    }
+  }
 
   // Load selected barber's schedule and blocks
   const loadBarberData = async (barberId) => {
@@ -284,6 +311,32 @@ export default function AgendaConfigPage() {
 
           {/* Bloqueios e Folgas Card */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            
+            {/* Configuração de Chave Pix para Gorjetas */}
+            <div className="card">
+              <div className="card-header" style={{ marginBottom: '1rem' }}>
+                <h3>🔑 Recebimento de Gorjetas (Pix)</h3>
+              </div>
+              <form onSubmit={handleSaveChavePix} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="form-group" style={{ textAlign: 'left' }}>
+                  <label className="form-label">Chave Pix do Barbeiro</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Ex: CPF, E-mail, Celular ou Chave Aleatória"
+                    value={chavePix}
+                    onChange={(e) => setChavePix(e.target.value)}
+                    required
+                  />
+                  <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                    Esta chave será utilizada para gerar o QR Code de gorjetas digitais Pix para os clientes.
+                  </small>
+                </div>
+                <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loadingPix}>
+                  {loadingPix ? 'Salvar...' : 'Salvar Chave Pix'}
+                </button>
+              </form>
+            </div>
             
             {/* Adicionar Bloqueio */}
             <div className="card">
