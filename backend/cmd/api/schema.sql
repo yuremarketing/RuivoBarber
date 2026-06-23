@@ -36,8 +36,8 @@ CREATE TABLE IF NOT EXISTS ProgressoCliente (
     BarraPercentual DECIMAL(5,2) DEFAULT 0.00,
     Moedas INT DEFAULT 0,
     StreakAtual INT DEFAULT 0,
-    UltimoCheckIn TIMESTAMP,
-    UpdatedAt TIMESTAMP DEFAULT NOW()
+    UltimoCheckIn TIMESTAMPTZ,
+    UpdatedAt TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS Servicos (
@@ -60,12 +60,12 @@ CREATE TABLE IF NOT EXISTS Agendamentos (
     ClienteID INT REFERENCES Usuarios(ID),
     BarbeiroID INT REFERENCES Usuarios(ID),
     ServicoID INT REFERENCES Servicos(ID),
-    DataHora TIMESTAMP NOT NULL,
+    DataHora TIMESTAMPTZ NOT NULL,
     Status VARCHAR(20) DEFAULT 'Pendente' CHECK (Status IN ('Pendente', 'Confirmado', 'Concluido', 'Cancelado', 'Falta', 'Presente', 'EmCadeira')),
-    CheckInTime TIMESTAMP,
-    EmCadeiraTime TIMESTAMP,
-    ConcluidoTime TIMESTAMP,
-    CriadoEm TIMESTAMP DEFAULT NOW()
+    CheckInTime TIMESTAMPTZ,
+    EmCadeiraTime TIMESTAMPTZ,
+    ConcluidoTime TIMESTAMPTZ,
+    CriadoEm TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS Cupons (
@@ -111,10 +111,10 @@ CREATE TABLE IF NOT EXISTS ServicoProdutos (
 CREATE TABLE IF NOT EXISTS Temporadas (
     ID SERIAL PRIMARY KEY,
     Nome VARCHAR(100) NOT NULL,
-    DataInicio TIMESTAMP NOT NULL,
-    DataFim TIMESTAMP NOT NULL,
+    DataInicio TIMESTAMPTZ NOT NULL,
+    DataFim TIMESTAMPTZ NOT NULL,
     Ativa BOOLEAN DEFAULT FALSE,
-    CriadaEm TIMESTAMP DEFAULT NOW()
+    CriadaEm TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS Clas (
@@ -302,6 +302,46 @@ CREATE TABLE IF NOT EXISTS Avaliacoes (
     BarbeiroID INT REFERENCES Usuarios(ID) ON DELETE CASCADE,
     Nota INT NOT NULL CHECK (Nota >= 1 AND Nota <= 5),
     Comentario TEXT,
+    CriadoEm TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS Caixas (
+    ID SERIAL PRIMARY KEY,
+    OperadorID INT REFERENCES Usuarios(ID) ON DELETE SET NULL,
+    SaldoInicial DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    SaldoFinal DECIMAL(10,2) DEFAULT NULL,
+    SaldoInformado DECIMAL(10,2) DEFAULT NULL,
+    Status VARCHAR(20) NOT NULL DEFAULT 'Aberto' CHECK (Status IN ('Aberto', 'Fechado')),
+    AbertoEm TIMESTAMP DEFAULT NOW(),
+    FechadoEm TIMESTAMP DEFAULT NULL
+);
+
+CREATE TABLE IF NOT EXISTS Vendas (
+    ID SERIAL PRIMARY KEY,
+    CaixaID INT REFERENCES Caixas(ID) ON DELETE CASCADE,
+    ClienteID INT REFERENCES Usuarios(ID) ON DELETE SET NULL,
+    AgendamentoID INT REFERENCES Agendamentos(ID) ON DELETE SET NULL,
+    ValorBruto DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    Desconto DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    ValorLiquido DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    MetodoPagamento VARCHAR(30) NOT NULL CHECK (MetodoPagamento IN ('Dinheiro', 'Pix', 'Debito', 'Credito')),
+    CriadoEm TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS VendaItens (
+    ID SERIAL PRIMARY KEY,
+    VendaID INT REFERENCES Vendas(ID) ON DELETE CASCADE,
+    ServicoID INT REFERENCES Servicos(ID) ON DELETE SET NULL,
+    PrecoUnitario DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    Quantidade INT NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS MovimentacoesCaixa (
+    ID SERIAL PRIMARY KEY,
+    CaixaID INT REFERENCES Caixas(ID) ON DELETE CASCADE,
+    Tipo VARCHAR(20) NOT NULL CHECK (Tipo IN ('Entrada', 'Saida')),
+    Valor DECIMAL(10,2) NOT NULL CHECK (Valor > 0),
+    Motivo VARCHAR(200) NOT NULL,
     CriadoEm TIMESTAMP DEFAULT NOW()
 );
 

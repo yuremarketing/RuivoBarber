@@ -793,6 +793,29 @@ func (r *ClientePgRepository) ListarBarbeiros() ([]domain.Barbeiro, error) {
 	return barbeiros, nil
 }
 
+func (r *ClientePgRepository) ObterAgendamentoPorID(id int) (*domain.Agendamento, error) {
+	query := `
+		SELECT a.id, a.clienteid, u.nome, a.barbeiroid, b.nome, a.servicoid, s.nome, s.duracaominutos, a.datahora, a.status
+		FROM Agendamentos a
+		JOIN Usuarios u ON a.clienteid = u.id
+		JOIN Usuarios b ON a.barbeiroid = b.id
+		JOIN Servicos s ON a.servicoid = s.id
+		WHERE a.id = $1
+	`
+	var a domain.Agendamento
+	err := r.db.QueryRow(query, id).Scan(
+		&a.ID, &a.ClienteID, &a.ClienteNome, &a.BarbeiroID, &a.BarbeiroNome,
+		&a.ServicoID, &a.ServicoNome, &a.DuracaoMinutos, &a.DataHora, &a.Status,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &a, nil
+}
+
 func (r *ClientePgRepository) ListarAgendamentos(data string) ([]domain.Agendamento, error) {
 	query := `
 		SELECT a.id, a.clienteid, u.nome, a.barbeiroid, b.nome, a.servicoid, s.nome, s.duracaominutos, a.datahora, a.status
