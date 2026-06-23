@@ -107,6 +107,12 @@ export const removerBloqueioBarbeiro = (barbeiroId, data) => api.delete(`/barbei
 // Badges / Conquistas
 export const fetchMeusBadges = () => api.get('/badges/me')
 
+// Loja / Cosméticos RPG
+export const fetchLojaItens = () => api.get('/loja/itens')
+export const comprarItem = (id) => api.post(`/loja/itens/${id}/comprar`)
+export const equiparItem = (id) => api.post(`/loja/itens/${id}/equipar`)
+export const desequiparItem = (id) => api.post(`/loja/itens/${id}/desequipar`)
+
 export const salvarChavePixBarbeiro = (barbeiroId, chavePix) => api.post(`/barbeiros/${barbeiroId}/chave-pix`, { chave_pix: chavePix })
 export const criarGorjeta = (barbeiroId, valor, agendamentoId = null) => api.post('/gorjetas', {
   barbeiro_id: Number(barbeiroId),

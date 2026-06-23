@@ -16,6 +16,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	_ "time/tzdata"
 
 	"golang.org/x/crypto/bcrypt"
 	"ruivobarber-api/internal/adapters/handlers"
@@ -45,7 +46,7 @@ func main() {
 		sslMode = "disable"
 	}
 	dsn := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s timezone=America/Sao_Paulo",
 		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"),
 		os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_NAME"), sslMode,
@@ -60,6 +61,21 @@ func main() {
 		log.Fatalf("Banco inacessível: %v", err)
 	}
 	log.Println("✅ Conectado ao PostgreSQL com sucesso")
+
+	// Migração automática para TIMESTAMPTZ (Fuso Horário)
+	tzMigration := `
+		ALTER TABLE Agendamentos ALTER COLUMN DataHora TYPE TIMESTAMPTZ;
+		ALTER TABLE Agendamentos ALTER COLUMN CriadoEm TYPE TIMESTAMPTZ;
+		ALTER TABLE ProgressoCliente ALTER COLUMN UpdatedAt TYPE TIMESTAMPTZ;
+		ALTER TABLE Temporadas ALTER COLUMN DataInicio TYPE TIMESTAMPTZ;
+		ALTER TABLE Temporadas ALTER COLUMN DataFim TYPE TIMESTAMPTZ;
+		ALTER TABLE Temporadas ALTER COLUMN CriadaEm TYPE TIMESTAMPTZ;
+	`
+	if _, err = db.Exec(tzMigration); err != nil {
+		log.Printf("[DB] Erro ao executar migração automática para TIMESTAMPTZ: %v", err)
+	} else {
+		log.Println("✅ Migração automática: tipos de data/hora atualizados para TIMESTAMPTZ")
+	}
 
 	var tz string
 	if err := db.QueryRow("SHOW TIMEZONE").Scan(&tz); err != nil {
@@ -580,8 +596,12 @@ func main() {
             servIds := []int{1, 2, 1, 2, 2, 1}
             
             // Utilizando o time package para fazer parse dos horários locais
+            saoPaulo, errTz := time.LoadLocation("America/Sao_Paulo")
+            if errTz != nil {
+                saoPaulo = time.FixedZone("America/Sao_Paulo", -3*60*60)
+            }
             for i, dStr := range dates {
-                pTime, parseErr := time.ParseInLocation("2006-01-02 15:04:05", dStr, time.Local)
+                pTime, parseErr := time.ParseInLocation("2006-01-02 15:04:05", dStr, saoPaulo)
                 if parseErr == nil {
                     _, err = db.Exec("INSERT INTO Agendamentos (ClienteID, BarbeiroID, ServicoID, DataHora, Status) VALUES ($1, $2, $3, $4, 'Confirmado')", cID, bID, servIds[i], pTime)
                     if err != nil {

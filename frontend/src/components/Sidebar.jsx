@@ -20,6 +20,7 @@ export default function Sidebar() {
         { path: '/temporadas', icon: '⏳', label: 'Temporadas RPG' },
         { path: '/clas', icon: '🛡️', label: 'Clãs & Guildas' },
         { path: '/lives', icon: '📺', label: 'Assista ao Vivo' },
+        { path: '/loja', icon: '🎒', label: 'Loja & Inventário' },
         { path: '/hall-of-fame', icon: '🏆', label: 'Hall of Fame' },
         { section: 'Serviços' },
         { path: '/agendamentos', icon: '📅', label: 'Agendar Horário' },
