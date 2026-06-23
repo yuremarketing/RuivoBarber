@@ -40,5 +40,10 @@ type ClienteRepository interface {
 	CriarGorjeta(g *domain.Gorjeta) (int, error)
 	ConfirmarPagamentoGorjeta(id int) error
 	ObterGorjetasDoBarbeiro(barbeiroID int) ([]domain.Gorjeta, error)
+	ObterUltimoCorteConcluido(clienteID int) (*domain.Agendamento, error)
+	BuscarAvaliacaoPorAgendamento(agendamentoID int) (*domain.Avaliacao, error)
+	CriarAvaliacao(a *domain.Avaliacao) error
+	RecalcularAvaliacaoMediaBarbeiro(barbeiroID int) error
+	BuscarAgendamentoPorID(id int) (*domain.Agendamento, error)
 }
 
