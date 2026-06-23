@@ -18,6 +18,14 @@ import (
 	"ruivobarber-api/internal/infra"
 )
 
+func getSaoPauloLocation() *time.Location {
+	loc, err := time.LoadLocation("America/Sao_Paulo")
+	if err != nil {
+		return time.FixedZone("America/Sao_Paulo", -3*60*60)
+	}
+	return loc
+}
+
 type ClienteHandler struct {
 	service *services.ClienteService
 }
@@ -403,9 +411,13 @@ func (h *ClienteHandler) CriarAgendamento(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "corpo inválido"})
 	}
 
-	parsedTime, err := time.ParseInLocation("2006-01-02 15:04", req.DataHora, time.Local)
+	saoPaulo := getSaoPauloLocation()
+	parsedTime, err := time.ParseInLocation("2006-01-02 15:04", req.DataHora, saoPaulo)
 	if err != nil {
 		parsedTime, err = time.Parse(time.RFC3339, req.DataHora)
+		if err == nil {
+			parsedTime = parsedTime.In(saoPaulo)
+		}
 	}
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "formato de data/hora inválido. Use YYYY-MM-DD HH:MM ou RFC3339"})
