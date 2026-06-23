@@ -1389,6 +1389,77 @@ func (s *ClienteService) CriarGorjeta(agendamentoID *int, clienteID *int, barbei
 	return g, nil
 }
 
+func (s *ClienteService) ObterUltimoCorteComStatusAvaliacao(clienteID int) (*domain.UltimoCorteResponse, error) {
+	ultimoCorte, err := s.repo.ObterUltimoCorteConcluido(clienteID)
+	if err != nil {
+		return nil, err
+	}
+	if ultimoCorte == nil {
+		return nil, nil
+	}
+
+	avaliacao, err := s.repo.BuscarAvaliacaoPorAgendamento(ultimoCorte.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &domain.UltimoCorteResponse{
+		AgendamentoID:     ultimoCorte.ID,
+		DataHora:          ultimoCorte.DataHora,
+		BarbeiroID:        ultimoCorte.BarbeiroID,
+		BarbeiroNome:      ultimoCorte.BarbeiroNome,
+		ServicoNome:       ultimoCorte.ServicoNome,
+		AvaliacaoPendente: avaliacao == nil,
+	}
+	return res, nil
+}
+
+func (s *ClienteService) SalvarAvaliacao(agendamentoID int, clienteID int, nota int, comentario string) error {
+	if nota < 1 || nota > 5 {
+		return errors.New("a nota deve ser entre 1 e 5")
+	}
+
+	agendamento, err := s.repo.BuscarAgendamentoPorID(agendamentoID)
+	if err != nil {
+		return err
+	}
+	if agendamento == nil {
+		return errors.New("agendamento não encontrado")
+	}
+
+	if agendamento.ClienteID != clienteID {
+		return errors.New("este agendamento não pertence a você")
+	}
+
+	if agendamento.Status != "Concluido" {
+		return errors.New("só é possível avaliar atendimentos concluídos")
+	}
+
+	avaliacaoExistente, err := s.repo.BuscarAvaliacaoPorAgendamento(agendamentoID)
+	if err != nil {
+		return err
+	}
+	if avaliacaoExistente != nil {
+		return errors.New("este atendimento já foi avaliado")
+	}
+
+	avaliacao := &domain.Avaliacao{
+		AgendamentoID: agendamentoID,
+		ClienteID:     clienteID,
+		BarbeiroID:    agendamento.BarbeiroID,
+		Nota:          nota,
+		Comentario:    comentario,
+	}
+
+	err = s.repo.CriarAvaliacao(avaliacao)
+	if err != nil {
+		return err
+	}
+
+	return s.repo.RecalcularAvaliacaoMediaBarbeiro(agendamento.BarbeiroID)
+}
+
+
 
 
 

@@ -27,5 +27,7 @@ Tarefas finalizadas e prontas para validação:
 - [x] [TASK-057] [Fame] Galeria Histórica de Lendários (Hall of Fame) (Backend & Frontend)
 - [x] [TASK-050] [Store] Inventário do Cliente no Frontend (Bolsa de Itens/Poções) (Frontend)
 - [x] [TASK-038-BC] [Wizard/Profile] Banco de Dados e Backend para Perfis de Barbeiros (Foto e Avaliação Média) (Issue #15)
+- [x] [TASK-038-E/040] [Feature] Banco de Dados e Rota Unificada do "Último Corte" com flag de Avaliação Pendente (Issues #5 e #17)
+- [x] [TASK-038-E/040-FE] [Feature] Modal de Avaliação Pós-Atendimento e Card do "Último Corte" no Portal do Cliente (Issues #5 e #17)
 - [x] [TASK-038-D-FE] [Feature] Painel do Admin para Cadastrar Chave Pix e Modal de Gorjeta para Clientes (Issue #16)
 - [x] [TASK-061] [PDV-DB] Modelagem e Tabelas do Fluxo Financeiro (SQL) (Issue #18)

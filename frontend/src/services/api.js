@@ -121,6 +121,9 @@ export const criarGorjeta = (barbeiroId, valor, agendamentoId = null) => api.pos
 })
 export const confirmarPagamentoGorjeta = (gorjetaId) => api.post(`/gorjetas/${gorjetaId}/confirmar`)
 export const fetchGorjetasBarbeiro = (barbeiroId) => api.get(`/barbeiros/${barbeiroId}/gorjetas`)
+export const fetchUltimoCorte = () => api.get('/clientes/me/ultimo-corte')
+export const enviarAvaliacao = (agendamentoId, nota, comentario) => api.post(`/atendimentos/${agendamentoId}/avaliar`, { nota: Number(nota), comentario })
+
 
 // PDV / Controle de Caixa
 export const abrirCaixa = (saldoInicial) => api.post('/pdv/caixa/abrir', { saldo_inicial: Number(saldoInicial) })
