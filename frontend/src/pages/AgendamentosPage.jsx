@@ -238,7 +238,7 @@ export default function AgendamentosPage() {
       return
     }
 
-    const todayStr = new Date().toISOString().split('T')[0]
+    const todayStr = getLocalDateStr()
     if (dateVal < todayStr) {
       alert('Não é possível selecionar uma data no passado.')
       setSelectedData('')
@@ -568,7 +568,7 @@ export default function AgendamentosPage() {
                       type="date"
                       className="form-input"
                       value={selectedData}
-                      min={new Date().toISOString().split('T')[0]}
+                      min={getLocalDateStr()}
                       onChange={e => handleDateChange(e.target.value)}
                       required
                     />
