@@ -45,6 +45,7 @@ export const loginComGoogle = (idToken) => api.post('/auth/google', { id_token: 
 export const listarClientes = () => api.get('/clientes')
 export const cadastrarCliente = (nome, login, senha) => api.post('/clientes', { nome, login, senha })
 export const buscarCliente = (id) => api.get(`/clientes/${id}`)
+export const fetchHallOfFame = () => api.get('/games/hall-of-fame')
 export const healthCheck = () => api.get('/health')
 export const resgatarCupom = (clienteId, nivelId) => api.post('/cupons/resgatar', { cliente_id: Number(clienteId), nivel_id: Number(nivelId) })
 export const validarCupom = (codigo) => api.post('/cupons/validar', { codigo })

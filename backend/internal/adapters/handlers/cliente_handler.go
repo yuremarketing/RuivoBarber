@@ -114,6 +114,7 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
 	api.Post("/clientes", JWTMiddleware, RequireCargo("Adm"), h.CadastrarCliente)
 	api.Get("/clientes/:id", JWTMiddleware, h.BuscarCliente)
 	api.Put("/clientes/:id/perfil", JWTMiddleware, h.AtualizarPerfil)
+	api.Get("/games/hall-of-fame", JWTMiddleware, h.ObterHallOfFame)
 
 	// Rotas de Atendimentos (Protegidas)
 	api.Post("/atendimentos/concluir", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.ConcluirAtendimento)
@@ -191,6 +192,18 @@ func (h *ClienteHandler) ListarClientes(c *fiber.Ctx) error {
 	}
 
 	clientes, err := h.service.ListarClientes()
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(clientes)
+}
+
+func (h *ClienteHandler) ObterHallOfFame(c *fiber.Ctx) error {
+	if err := infra.Wait(context.Background()); err != nil {
+		return c.Status(429).JSON(fiber.Map{"error": "Too Many Requests"})
+	}
+
+	clientes, err := h.service.ObterHallOfFame()
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}

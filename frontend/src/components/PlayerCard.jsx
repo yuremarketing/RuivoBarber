@@ -1,6 +1,14 @@
 import React from 'react'
 
-function PlayerCard({ nome = 'Cliente', nivel = 'Corte Iniciante', xp = 0, avatarUrl = '' }) {
+function PlayerCard({ 
+  nome = 'Cliente', 
+  nivel = 'Corte Iniciante', 
+  xp = 0, 
+  avatarUrl = '', 
+  molduraEquipada = '', 
+  fundoEquipado = '', 
+  efeitoEquipado = '' 
+}) {
   const getPatenteInfo = (nivelNome) => {
     const nomeNormalizado = (nivelNome || '').trim()
     switch (nomeNormalizado) {
@@ -15,7 +23,9 @@ function PlayerCard({ nome = 'Cliente', nivel = 'Corte Iniciante', xp = 0, avata
     }
   }
 
-  const { frameClass, crown, color, badgeEmoji } = getPatenteInfo(nivel)
+  const { frameClass: defaultFrameClass, crown, color, badgeEmoji } = getPatenteInfo(nivel)
+  const frameClass = molduraEquipada || defaultFrameClass
+  
   const iniciais = nome
     .split(' ')
     .map((n) => n[0])
@@ -23,7 +33,7 @@ function PlayerCard({ nome = 'Cliente', nivel = 'Corte Iniciante', xp = 0, avata
     .join('')
 
   return (
-    <div className="player-card-rpg">
+    <div className={`player-card-rpg ${fundoEquipado} ${efeitoEquipado}`}>
       <div className="avatar-rpg-container">
         {crown && <div className="badge-crown-rpg">👑</div>}
         <div className={`avatar-rpg-wrapper ${frameClass}`}>
@@ -58,3 +68,4 @@ function PlayerCard({ nome = 'Cliente', nivel = 'Corte Iniciante', xp = 0, avata
 }
 
 export default PlayerCard
+
