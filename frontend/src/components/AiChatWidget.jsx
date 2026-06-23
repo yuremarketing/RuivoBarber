@@ -11,7 +11,8 @@ export default function AiChatWidget() {
   const chatEndRef = useRef(null)
 
   const userSessionStr = localStorage.getItem('ruivobarber_user')
-  const user = userSessionStr ? JSON.parse(userSessionStr).user : null
+  const session = userSessionStr ? JSON.parse(userSessionStr) : null
+  const user = session?.user || session
 
   // Só mostra se houver usuário logado
   if (!user) return null

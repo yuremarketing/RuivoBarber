@@ -126,7 +126,8 @@ export default function AgendamentosPage() {
   }
 
   const userSessionStr = localStorage.getItem('ruivobarber_user')
-  const user = userSessionStr ? JSON.parse(userSessionStr).user : null
+  const session = userSessionStr ? JSON.parse(userSessionStr) : null
+  const user = session?.user || session
   const isClient = user?.cargo === 'Cliente'
 
   const loadData = async () => {

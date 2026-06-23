@@ -1,5 +1,55 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { fetchAgendaBarbeiro, criarAgendamento, fetchDisponibilidadeBarbeiro, fetchBloqueiosBarbeiro } from '../services/api.js'
+
+const getLocalDateStr = () => {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  const parts = formatter.formatToParts(new Date());
+  const year = parts.find(p => p.type === 'year').value;
+  const month = parts.find(p => p.type === 'month').value;
+  const day = parts.find(p => p.type === 'day').value;
+  return `${year}-${month}-${day}`;
+}
+
+const getHorizontalDays = () => {
+  const days = [];
+  const todayStr = getLocalDateStr();
+  const baseDate = new Date(`${todayStr}T12:00:00-03:00`);
+  for (let i = 0; i < 14; i++) {
+    const nextDate = new Date(baseDate.getTime() + i * 24 * 60 * 60 * 1000);
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    const parts = formatter.formatToParts(nextDate);
+    const year = parts.find(p => p.type === 'year').value;
+    const month = parts.find(p => p.type === 'month').value;
+    const day = parts.find(p => p.type === 'day').value;
+    const dateStr = `${year}-${month}-${day}`;
+
+    const weekday = nextDate.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'short' })
+      .replace('.', '')
+      .toUpperCase();
+
+    const monthName = nextDate.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', month: 'short' })
+      .replace('.', '')
+      .toUpperCase();
+
+    days.push({
+      dateStr,
+      dayVal: day,
+      dayName: weekday.substring(0, 3),
+      monthName: monthName.substring(0, 3)
+    });
+  }
+  return days;
+}
 
 export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess }) {
   const [step, setStep] = useState(1)
@@ -13,6 +63,44 @@ export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess 
   const [error, setError] = useState(null)
   const [barbeiroDisponibilidades, setBarbeiroDisponibilidades] = useState([])
   const [barbeiroBloqueios, setBarbeiroBloqueios] = useState([])
+
+  const horizontalDays = useMemo(() => getHorizontalDays(), [])
+
+  // Drag to Scroll references and states
+  const datePickerRef = useRef(null)
+  const [isMouseDown, setIsMouseDown] = useState(false)
+  const [startX, setStartX] = useState(0)
+  const [scrollLeftState, setScrollLeftState] = useState(0)
+  const [isDraggingDate, setIsDraggingDate] = useState(false)
+
+  const handleMouseDownDate = (e) => {
+    setIsMouseDown(true)
+    setIsDraggingDate(false)
+    setStartX(e.pageX - datePickerRef.current.offsetLeft)
+    setScrollLeftState(datePickerRef.current.scrollLeft)
+  }
+
+  const handleMouseLeaveDate = () => {
+    setIsMouseDown(false)
+  }
+
+  const handleMouseUpDate = () => {
+    setIsMouseDown(false)
+    setTimeout(() => {
+      setIsDraggingDate(false)
+    }, 50)
+  }
+
+  const handleMouseMoveDate = (e) => {
+    if (!isMouseDown) return
+    e.preventDefault()
+    const x = e.pageX - datePickerRef.current.offsetLeft
+    const walk = (x - startX) * 1.5
+    if (Math.abs(x - startX) > 5) {
+      setIsDraggingDate(true)
+    }
+    datePickerRef.current.scrollLeft = scrollLeftState - walk
+  }
 
   // Mapear fotos padrão (avatares RPG) se foto_url estiver vazia
   const getBarberPhoto = (barber) => {
@@ -51,15 +139,6 @@ export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess 
         </span>
       </div>
     )
-  }
-
-  // Obter fuso horário local seguro (evita o bug do toISOString pular dia)
-  const getLocalDateStr = () => {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const day = String(today.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
   }
 
   // Carregar disponibilidade e bloqueios ao selecionar o barbeiro
@@ -400,17 +479,54 @@ export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess 
           <div className="fade-in-up">
             <h4 style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>Escolha a Data e o Horário:</h4>
             
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label className="form-label">Data do Agendamento</label>
-              <input
-                type="date"
-                className="form-input"
-                value={selectedData}
-                min={getLocalDateStr()}
-                onChange={e => handleDateChange(e.target.value)}
-                required
-                style={{ maxWidth: '300px' }}
-              />
+            <div className="form-group" style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
+              <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Data do Agendamento</span>
+                {selectedData && (
+                  <span style={{ fontSize: '0.8rem', color: 'var(--primary-color, #e07a5f)', fontWeight: '600' }}>
+                    {(() => {
+                      const [y, m, d] = selectedData.split('-');
+                      return `${d}/${m}/${y}`;
+                    })()}
+                  </span>
+                )}
+              </label>
+              <div
+                ref={datePickerRef}
+                className="horizontal-date-picker"
+                onMouseDown={handleMouseDownDate}
+                onMouseLeave={handleMouseLeaveDate}
+                onMouseUp={handleMouseUpDate}
+                onMouseMove={handleMouseMoveDate}
+              >
+                {horizontalDays.map(d => {
+                  const isSelected = selectedData === d.dateStr;
+
+                  // Check if barber is available or blocked
+                  const [year, month, day] = d.dateStr.split('-').map(Number);
+                  const dateObj = new Date(year, month - 1, day);
+                  const weekday = dateObj.getDay();
+                  const disp = barbeiroDisponibilidades.find(x => x.dia_semana === weekday);
+                  const isBlocked = barbeiroBloqueios.some(b => b.data_bloqueio === d.dateStr);
+                  const isDisabled = (disp && !disp.trabalha) || isBlocked;
+
+                  return (
+                    <div
+                      key={d.dateStr}
+                      onClick={() => {
+                        if (isDraggingDate) return;
+                        handleDateChange(d.dateStr);
+                      }}
+                      className={`date-picker-card${isSelected ? ' selected' : ''}${isDisabled ? ' disabled' : ''}`}
+                      title={isDisabled ? 'Barbeiro indisponível' : ''}
+                    >
+                      <span className="weekday">{d.dayName}</span>
+                      <span className="day-val">{d.dayVal}</span>
+                      <span className="month-val">{d.monthName}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="form-group">
