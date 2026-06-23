@@ -141,7 +141,7 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 
 ### 🖥️ Frontend (Telas React)
 - [ ] [Wizard] Task 38-BC-FE: Wizard de Agendamento Passo a Passo (BookingWizard) com Fotos e Estrelas Reais (Issue #14/15)
-- [ ] [Checkout] Task 38-D-FE: Painel do Admin para Cadastrar Chave Pix e Modal de Gorjeta para Clientes (Issue #16)
+- [x] [Checkout] Task 38-D-FE: Painel do Admin para Cadastrar Chave Pix e Modal de Gorjeta para Clientes (Issue #16)
 - [ ] [Review/Rewards] Task 38-E/40-FE: Modal de Avaliação Pós-Atendimento e Card do "Último Corte" no Portal do Cliente (Issues #5 e #17)
 - [x] [PDV-FE] Task 64: Tela de Abertura/Fechamento e Painel do Caixa (Issue #21)
 - [x] [PDV-FE] Task 65: Tela de Checkout / Caixa Registradora (Interface PDV) (Issue #22)

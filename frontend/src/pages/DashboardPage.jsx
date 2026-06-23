@@ -3,7 +3,7 @@ import PlayerCard from '../components/PlayerCard.jsx'
 import RpgProgressBar from '../components/RpgProgressBar.jsx'
 import RedeemCouponManager from '../components/RedeemCouponManager.jsx'
 import BadgeShowcase from '../components/BadgeShowcase.jsx'
-import { buscarCliente, listarClientes, fetchTemporadaAtiva, fetchMeusBadges } from '../services/api.js'
+import { buscarCliente, listarClientes, fetchTemporadaAtiva, fetchMeusBadges, fetchGorjetasBarbeiro, confirmarPagamentoGorjeta } from '../services/api.js'
 
 
 const stats = [
@@ -29,6 +29,8 @@ export default function DashboardPage() {
   const [temporadaAtiva, setTemporadaAtiva] = useState(null)
   const [badges, setBadges] = useState([])
   const [loadingBadges, setLoadingBadges] = useState(false)
+  const [gorjetas, setGorjetas] = useState([])
+  const [loadingGorjetas, setLoadingGorjetas] = useState(false)
  
   const isClient = user.cargo === 'Cliente'
   const hoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -48,6 +50,30 @@ export default function DashboardPage() {
         { nome: 'Pedro Santos', nivel: 'Lenda da Navalha', xp: 580 },
         { nome: 'André Costa', nivel: 'Corte Iniciante', xp: 75 },
       ])
+    }
+  }
+
+  const loadGorjetas = async () => {
+    try {
+      setLoadingGorjetas(true)
+      const res = await fetchGorjetasBarbeiro(user.id)
+      setGorjetas(res.data || [])
+    } catch (err) {
+      console.error('Erro ao carregar gorjetas:', err)
+    } finally {
+      setLoadingGorjetas(false)
+    }
+  }
+
+  const handleConfirmarGorjeta = async (gorjetaId) => {
+    if (!window.confirm('Deseja confirmar o recebimento desta gorjeta Pix?')) return
+    try {
+      await confirmarPagamentoGorjeta(gorjetaId)
+      alert('Gorjeta confirmada com sucesso!')
+      loadGorjetas()
+    } catch (err) {
+      console.error('Erro ao confirmar gorjeta:', err)
+      alert('Erro ao confirmar pagamento: ' + (err.response?.data?.error || err.message))
     }
   }
 
@@ -84,7 +110,6 @@ export default function DashboardPage() {
         })
         .catch(err => {
           console.error('Erro ao buscar badges:', err)
-          // Fallback: mostra os badges do sistema todos bloqueados
           setBadges([
             { id: 1, nome: 'Primeiro Sangue', descricao: 'Conclua seu 1º atendimento', xpBonus: 50, desbloqueada: false, desbloqueadaEm: null },
             { id: 2, nome: 'Fiel da Navalha', descricao: 'Conclua 5 atendimentos', xpBonus: 50, desbloqueada: false, desbloqueadaEm: null },
@@ -93,6 +118,8 @@ export default function DashboardPage() {
           ])
         })
         .finally(() => setLoadingBadges(false))
+    } else {
+      loadGorjetas()
     }
   }, [])
 
@@ -305,6 +332,62 @@ export default function DashboardPage() {
               })
             )}
           </div>
+        </div>
+      </div>
+      
+      {/* Seção de Gorjetas Pix Recebidas */}
+      <div className="card" style={{ marginTop: '2.5rem' }}>
+        <div className="card-header">
+          <h3>💸 Registro de Gorjetas Pix Recebidas</h3>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{gorjetas.length} total</span>
+        </div>
+        <div className="table-container" style={{ marginTop: '1rem' }}>
+          {loadingGorjetas ? (
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>Carregando gorjetas...</p>
+          ) : gorjetas.length === 0 ? (
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>Nenhuma gorjeta recebida.</p>
+          ) : (
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Data</th>
+                  <th>Cliente</th>
+                  <th>Valor</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {gorjetas.map(g => (
+                  <tr key={g.id}>
+                    <td>#{g.id}</td>
+                    <td>{new Date(g.criado_em).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+                    <td style={{ fontWeight: 500 }}>{g.cliente_nome || `Cliente #${g.cliente_id}`}</td>
+                    <td style={{ fontWeight: 'bold', color: 'var(--gold)' }}>R$ {g.valor ? g.valor.toFixed(2) : '0.00'}</td>
+                    <td>
+                      <span className={`badge badge-${g.status.toLowerCase()}`}>
+                        {g.status}
+                      </span>
+                    </td>
+                    <td>
+                      {g.status === 'Pendente' ? (
+                        <button 
+                          className="btn btn-primary btn-sm" 
+                          onClick={() => handleConfirmarGorjeta(g.id)}
+                          style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
+                        >
+                          Confirmar Recebimento
+                        </button>
+                      ) : (
+                        <span style={{ color: 'var(--green)', fontSize: '0.85rem' }}>Confirmado</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

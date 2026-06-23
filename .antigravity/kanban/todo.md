@@ -11,7 +11,6 @@
 
 ## 🖥️ Frontend (Telas React)
 - [ ] [TASK-038-BC-FE] [Feature] Wizard de Agendamento Passo a Passo (BookingWizard) com Fotos e Estrelas Reais (Issue #14/15)
-- [ ] [TASK-038-D-FE] [Feature] Painel do Admin para Cadastrar Chave Pix e Modal de Gorjeta para Clientes (Issue #16)
 - [ ] [TASK-038-E/040-FE] [Feature] Modal de Avaliação Pós-Atendimento e Card do "Último Corte" no Portal do Cliente (Issues #5 e #17)
 - [ ] [TASK-064] [PDV-FE] Tela de Abertura/Fechamento e Painel do Caixa (Issue #21)
 - [ ] [TASK-065] [PDV-FE] Tela de Checkout / Caixa Registradora (Interface PDV) (Issue #22)
