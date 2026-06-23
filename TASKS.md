@@ -135,23 +135,23 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 - [x] [Wizard/Profile] Task 38-BC: Banco de Dados e Backend para Perfis de Barbeiros (Foto e Avaliação Média) (Issue #15)
 - [x] [Checkout] Task 38-D: Backend e Banco de Dados para Gorjeta Digital via Pix (Chave Pix e QR Code) (Issue #16)
 - [ ] [Review/Rewards] Task 38-E/40: Banco de Dados e Rota Unificada do "Último Corte" com flag de Avaliação Pendente (Issues #5 e #17)
-- [ ] [PDV-DB] Task 61: Modelagem e Tabelas do Fluxo Financeiro (SQL) (Issue #18)
-- [ ] [PDV-BE] Task 62: Controle de Sessão de Caixa (Abertura/Fechamento) (Issue #19)
-- [ ] [PDV-BE] Task 63: Processamento de Venda e Integração de Fidelidade (Issue #20)
+- [x] [PDV-DB] Task 61: Modelagem e Tabelas do Fluxo Financeiro (SQL) (Issue #18)
+- [x] [PDV-BE] Task 62: Controle de Sessão de Caixa (Abertura/Fechamento) (Issue #19)
+- [x] [PDV-BE] Task 63: Processamento de Venda e Integração de Fidelidade (Issue #20)
 
 ### 🖥️ Frontend (Telas React)
 - [ ] [Wizard] Task 38-BC-FE: Wizard de Agendamento Passo a Passo (BookingWizard) com Fotos e Estrelas Reais (Issue #14/15)
 - [x] [Checkout] Task 38-D-FE: Painel do Admin para Cadastrar Chave Pix e Modal de Gorjeta para Clientes (Issue #16)
 - [ ] [Review/Rewards] Task 38-E/40-FE: Modal de Avaliação Pós-Atendimento e Card do "Último Corte" no Portal do Cliente (Issues #5 e #17)
-- [ ] [PDV-FE] Task 64: Tela de Abertura/Fechamento e Painel do Caixa (Issue #21)
-- [ ] [PDV-FE] Task 65: Tela de Checkout / Caixa Registradora (Interface PDV) (Issue #22)
+- [x] [PDV-FE] Task 64: Tela de Abertura/Fechamento e Painel do Caixa (Issue #21)
+- [x] [PDV-FE] Task 65: Tela de Checkout / Caixa Registradora (Interface PDV) (Issue #22)
 - [ ] [PDV-FE/BE] Task 66: Relatório Financeiro e Comissões dos Barbeiros (Issue #23)
 - [ ] [Queue] Task 41: Controle de Presença (Check-in/Check-out) e Tempo Médio
   - [x] Backend: Gerenciamento do status "Em Cadeira" e cálculo automático de tempo médio do corte.
   - [ ] Frontend: Painel operacional administrativo para controle físico da fila da barbearia (Issue #6)
 - [ ] [Badges] Task 52: Vitrine de Badges no PlayerCard do Cliente
-- [ ] [Store] Task 50: Inventário do Cliente no Frontend (Bolsa de Itens/Poções)
-- [ ] [Fame] Task 57: Galeria Histórica de Lendários (Hall of Fame)
+- [x] [Store] Task 50: Inventário do Cliente no Frontend (Bolsa de Itens/Poções)
+- [x] [Fame] Task 57: Galeria Histórica de Lendários (Hall of Fame)
 
 ### 🎨 UX (Experiência, Animações e Mídias)
 - [ ] [UX-Audio] Task 55: Efeitos Sonoros e Efeitos Visuais de Level Up no Frontend

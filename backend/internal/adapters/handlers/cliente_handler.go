@@ -18,6 +18,14 @@ import (
 	"ruivobarber-api/internal/infra"
 )
 
+func getSaoPauloLocation() *time.Location {
+	loc, err := time.LoadLocation("America/Sao_Paulo")
+	if err != nil {
+		return time.FixedZone("America/Sao_Paulo", -3*60*60)
+	}
+	return loc
+}
+
 type ClienteHandler struct {
 	service *services.ClienteService
 }
@@ -106,6 +114,7 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
 	api.Post("/clientes", JWTMiddleware, RequireCargo("Adm"), h.CadastrarCliente)
 	api.Get("/clientes/:id", JWTMiddleware, h.BuscarCliente)
 	api.Put("/clientes/:id/perfil", JWTMiddleware, h.AtualizarPerfil)
+	api.Get("/games/hall-of-fame", JWTMiddleware, h.ObterHallOfFame)
 
 	// Rotas de Atendimentos (Protegidas)
 	api.Post("/atendimentos/concluir", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.ConcluirAtendimento)
@@ -183,6 +192,18 @@ func (h *ClienteHandler) ListarClientes(c *fiber.Ctx) error {
 	}
 
 	clientes, err := h.service.ListarClientes()
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(clientes)
+}
+
+func (h *ClienteHandler) ObterHallOfFame(c *fiber.Ctx) error {
+	if err := infra.Wait(context.Background()); err != nil {
+		return c.Status(429).JSON(fiber.Map{"error": "Too Many Requests"})
+	}
+
+	clientes, err := h.service.ObterHallOfFame()
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -390,9 +411,13 @@ func (h *ClienteHandler) CriarAgendamento(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "corpo inválido"})
 	}
 
-	parsedTime, err := time.ParseInLocation("2006-01-02 15:04", req.DataHora, time.Local)
+	saoPaulo := getSaoPauloLocation()
+	parsedTime, err := time.ParseInLocation("2006-01-02 15:04", req.DataHora, saoPaulo)
 	if err != nil {
 		parsedTime, err = time.Parse(time.RFC3339, req.DataHora)
+		if err == nil {
+			parsedTime = parsedTime.In(saoPaulo)
+		}
 	}
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "formato de data/hora inválido. Use YYYY-MM-DD HH:MM ou RFC3339"})

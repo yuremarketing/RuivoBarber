@@ -45,6 +45,7 @@ export const loginComGoogle = (idToken) => api.post('/auth/google', { id_token: 
 export const listarClientes = () => api.get('/clientes')
 export const cadastrarCliente = (nome, login, senha) => api.post('/clientes', { nome, login, senha })
 export const buscarCliente = (id) => api.get(`/clientes/${id}`)
+export const fetchHallOfFame = () => api.get('/games/hall-of-fame')
 export const healthCheck = () => api.get('/health')
 export const resgatarCupom = (clienteId, nivelId) => api.post('/cupons/resgatar', { cliente_id: Number(clienteId), nivel_id: Number(nivelId) })
 export const validarCupom = (codigo) => api.post('/cupons/validar', { codigo })
@@ -106,6 +107,12 @@ export const removerBloqueioBarbeiro = (barbeiroId, data) => api.delete(`/barbei
 // Badges / Conquistas
 export const fetchMeusBadges = () => api.get('/badges/me')
 
+// Loja / Cosméticos RPG
+export const fetchLojaItens = () => api.get('/loja/itens')
+export const comprarItem = (id) => api.post(`/loja/itens/${id}/comprar`)
+export const equiparItem = (id) => api.post(`/loja/itens/${id}/equipar`)
+export const desequiparItem = (id) => api.post(`/loja/itens/${id}/desequipar`)
+
 export const salvarChavePixBarbeiro = (barbeiroId, chavePix) => api.post(`/barbeiros/${barbeiroId}/chave-pix`, { chave_pix: chavePix })
 export const criarGorjeta = (barbeiroId, valor, agendamentoId = null) => api.post('/gorjetas', {
   barbeiro_id: Number(barbeiroId),
@@ -114,6 +121,13 @@ export const criarGorjeta = (barbeiroId, valor, agendamentoId = null) => api.pos
 })
 export const confirmarPagamentoGorjeta = (gorjetaId) => api.post(`/gorjetas/${gorjetaId}/confirmar`)
 export const fetchGorjetasBarbeiro = (barbeiroId) => api.get(`/barbeiros/${barbeiroId}/gorjetas`)
+
+// PDV / Controle de Caixa
+export const abrirCaixa = (saldoInicial) => api.post('/pdv/caixa/abrir', { saldo_inicial: Number(saldoInicial) })
+export const fecharCaixa = (saldoInformado) => api.post('/pdv/caixa/fechar', { saldo_informado: Number(saldoInformado) })
+export const fetchStatusCaixa = () => api.get('/pdv/caixa/status')
+export const movimentarCaixa = (tipo, valor, motivo) => api.post('/pdv/caixa/movimentar', { tipo, valor: Number(valor), motivo })
+export const processarVenda = (dadosVenda) => api.post('/pdv/venda', dadosVenda)
 
 export const streamChat = async (message, history, onChunk, onError, onDone) => {
   try {
