@@ -13,6 +13,7 @@ type ClienteRepository interface {
 	Save(c *domain.Cliente, hashedSenha string) error
 	Update(c *domain.Cliente, hashedSenha string) error
 	ConcluirAtendimento(agendamentoID int) (*NotificationEvent, error)
+	ObterAgendamentoPorID(id int) (*domain.Agendamento, error)
 	RegistrarFalta(agendamentoID int) error
 	ResgatarCupom(clienteID, nivelID int) (*domain.Cupom, error)
 	ValidarCupom(codigo string) (*domain.Cupom, error)

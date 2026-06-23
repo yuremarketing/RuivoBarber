@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"strings"
 	"time"
 	"golang.org/x/crypto/bcrypt"
@@ -30,9 +31,28 @@ func NewClienteService(repo ports.ClienteRepository, notifier ports.Notification
 	return &ClienteService{repo: repo, notifier: notifier, temporadaRepo: temporadaRepo}
 }
 
+func getSaoPauloLocation() *time.Location {
+	loc, err := time.LoadLocation("America/Sao_Paulo")
+	if err != nil {
+		return time.FixedZone("America/Sao_Paulo", -3*60*60)
+	}
+	return loc
+}
+
 
 func (s *ClienteService) ListarClientes() ([]domain.Cliente, error) {
 	return s.repo.FindAll()
+}
+
+func (s *ClienteService) ObterHallOfFame() ([]domain.Cliente, error) {
+	clientes, err := s.repo.FindAll()
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(clientes, func(i, j int) bool {
+		return clientes[i].XP > clientes[j].XP
+	})
+	return clientes, nil
 }
 
 func (s *ClienteService) BuscarCliente(id int) (*domain.Cliente, error) {
@@ -186,6 +206,14 @@ func (s *ClienteService) RemoverBloqueioBarbeiro(barbeiroID int, data string) er
 }
 
 func (s *ClienteService) CriarAgendamento(clienteID, barbeiroID, servicoID int, dataHora time.Time) (int, error) {
+	saoPaulo := getSaoPauloLocation()
+	dataHora = dataHora.In(saoPaulo)
+
+	// Validação de horário retroativo
+	if dataHora.Before(time.Now().In(saoPaulo)) {
+		return 0, errors.New("não é possível criar um agendamento em horário retroativo")
+	}
+
 	// 1. Fetch service to get its duration
 	servico, err := s.repo.BuscarServico(servicoID)
 	if err != nil {
@@ -235,8 +263,8 @@ func (s *ClienteService) CriarAgendamento(clienteID, barbeiroID, servicoID int, 
 	fmt.Sscanf(startHourStr, "%d:%d", &startHour, &startMin)
 	fmt.Sscanf(endHourStr, "%d:%d", &endHour, &endMin)
 
-	workStart := time.Date(dataHora.Year(), dataHora.Month(), dataHora.Day(), startHour, startMin, 0, 0, time.Local)
-	workEnd := time.Date(dataHora.Year(), dataHora.Month(), dataHora.Day(), endHour, endMin, 0, 0, time.Local)
+	workStart := time.Date(dataHora.Year(), dataHora.Month(), dataHora.Day(), startHour, startMin, 0, 0, saoPaulo)
+	workEnd := time.Date(dataHora.Year(), dataHora.Month(), dataHora.Day(), endHour, endMin, 0, 0, saoPaulo)
 
 	newStart := dataHora
 	newEnd := dataHora.Add(time.Duration(servico.DuracaoMinutos) * time.Minute)
@@ -273,17 +301,19 @@ func (s *ClienteService) ObterAgendaBarbeiro(barbeiroID int, dataStr string, ser
 		}
 	}
 
-	// 2. Parse the date in local location
-	parsedDate, err := time.ParseInLocation("2006-01-02", dataStr, time.Local)
+	// 2. Parse the date in Sao Paulo location
+	saoPaulo := getSaoPauloLocation()
+	parsedDate, err := time.ParseInLocation("2006-01-02", dataStr, saoPaulo)
 	if err != nil {
 		return nil, errors.New("formato de data inválido. Use YYYY-MM-DD")
 	}
 
 	// 3. Verificar bloqueios pontuais
+	dateStr := parsedDate.Format("2006-01-02")
 	bloqueios, err := s.repo.ObterBloqueiosBarbeiro(barbeiroID)
 	if err == nil {
 		for _, b := range bloqueios {
-			if b.DataBloqueio == dataStr {
+			if b.DataBloqueio == dateStr {
 				// Dia totalmente bloqueado
 				return []domain.AgendaSlot{}, nil
 			}
@@ -311,7 +341,7 @@ func (s *ClienteService) ObterAgendaBarbeiro(barbeiroID int, dataStr string, ser
 	}
 
 	// 5. Fetch existing appointments
-	agendamentos, err := s.repo.ListarAgendamentosDoBarbeiro(barbeiroID, dataStr)
+	agendamentos, err := s.repo.ListarAgendamentosDoBarbeiro(barbeiroID, dateStr)
 	if err != nil {
 		return nil, err
 	}
@@ -330,24 +360,28 @@ func (s *ClienteService) ObterAgendaBarbeiro(barbeiroID int, dataStr string, ser
 	fmt.Sscanf(startHourStr, "%d:%d", &startHour, &startMin)
 	fmt.Sscanf(endHourStr, "%d:%d", &endHour, &endMin)
 
-	workStart := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), startHour, startMin, 0, 0, time.Local)
-	workEnd := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), endHour, endMin, 0, 0, time.Local)
+	workStart := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), startHour, startMin, 0, 0, saoPaulo)
+	workEnd := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), endHour, endMin, 0, 0, saoPaulo)
 
 	var slots []domain.AgendaSlot
+	now := time.Now().In(saoPaulo)
 
 	// Generate 30-minute interval slots
 	for currentSlot := workStart; currentSlot.Before(workEnd); currentSlot = currentSlot.Add(30 * time.Minute) {
 		slotEnd := currentSlot.Add(time.Duration(duracao) * time.Minute)
 		
 		available := true
-		// Check if it exceeds the working hours
-		if slotEnd.After(workEnd) {
+		// Check if it's in the past
+		if currentSlot.Before(now) {
+			available = false
+		} else if slotEnd.After(workEnd) {
+			// Check if it exceeds the working hours
 			available = false
 		} else {
 			// Check conflict with existing appointments using formula:
 			// newStart < existingEnd AND newEnd > existingStart
 			for _, existing := range agendamentos {
-				existingStart := existing.DataHora
+				existingStart := existing.DataHora.In(saoPaulo)
 				existingEnd := existingStart.Add(time.Duration(existing.DuracaoMinutos) * time.Minute)
 				if currentSlot.Before(existingEnd) && slotEnd.After(existingStart) {
 					available = false
@@ -500,7 +534,7 @@ func (s *ClienteService) simularChat(clienteID int, clienteNome string, userMsg 
 		if servicoID > 0 && barbeiroID > 0 {
 			// Simular data: vamos agendar para hoje + 2 dias às 15:30
 			targetDate := time.Now().AddDate(0, 0, 2)
-			targetTime := time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), 15, 30, 0, 0, time.Local)
+			targetTime := time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), 15, 30, 0, 0, getSaoPauloLocation())
 			
 			id, err := s.CriarAgendamento(clienteID, barbeiroID, servicoID, targetTime)
 			if err != nil {
@@ -747,10 +781,13 @@ func (s *ClienteService) resolverFunctionCall(apiKey string, clienteID int, reqB
 		if !ok1 || !ok2 || !ok3 {
 			functionResult = map[string]interface{}{"erro": "parâmetros 'barbeiro_id', 'servico_id' e 'data_hora' são obrigatórios"}
 		} else {
-			// Parse do formato "YYYY-MM-DD HH:MM"
-			parsedTime, parseErr := time.ParseInLocation("2006-01-02 15:04", dataHoraStr, time.Local)
+			saoPaulo := getSaoPauloLocation()
+			parsedTime, parseErr := time.ParseInLocation("2006-01-02 15:04", dataHoraStr, saoPaulo)
 			if parseErr != nil {
 				parsedTime, parseErr = time.Parse(time.RFC3339, dataHoraStr)
+				if parseErr == nil {
+					parsedTime = parsedTime.In(saoPaulo)
+				}
 			}
 
 			if parseErr != nil {
@@ -1135,9 +1172,13 @@ func (s *ClienteService) resolverFunctionCallSincrono(ctx context.Context, apiKe
 		} else if clienteID <= 0 {
 			functionResult = map[string]interface{}{"erro": "você precisa estar cadastrado com este número de telefone na barbearia para poder agendar"}
 		} else {
-			parsedTime, parseErr := time.ParseInLocation("2006-01-02 15:04", dataHoraStr, time.Local)
+			saoPaulo := getSaoPauloLocation()
+			parsedTime, parseErr := time.ParseInLocation("2006-01-02 15:04", dataHoraStr, saoPaulo)
 			if parseErr != nil {
 				parsedTime, parseErr = time.Parse(time.RFC3339, dataHoraStr)
+				if parseErr == nil {
+					parsedTime = parsedTime.In(saoPaulo)
+				}
 			}
 
 			if parseErr != nil {

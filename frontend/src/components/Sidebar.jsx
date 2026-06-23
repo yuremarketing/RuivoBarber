@@ -20,6 +20,8 @@ export default function Sidebar() {
         { path: '/temporadas', icon: '⏳', label: 'Temporadas RPG' },
         { path: '/clas', icon: '🛡️', label: 'Clãs & Guildas' },
         { path: '/lives', icon: '📺', label: 'Assista ao Vivo' },
+        { path: '/loja', icon: '🎒', label: 'Loja & Inventário' },
+        { path: '/hall-of-fame', icon: '🏆', label: 'Hall of Fame' },
         { section: 'Serviços' },
         { path: '/agendamentos', icon: '📅', label: 'Agendar Horário' },
         { path: '/configuracoes', icon: '⚙️', label: 'Minha Conta' },
@@ -32,8 +34,13 @@ export default function Sidebar() {
         { path: '/dashboard', icon: '📊', label: 'Dashboard' },
         { path: '/agendamentos', icon: '📅', label: 'Agendamentos' },
         { path: '/clientes', icon: '👥', label: 'Clientes' },
+        { section: 'Vendas (PDV)' },
+        { path: '/caixa', icon: '💵', label: 'Meu Caixa' },
+        { path: '/checkout', icon: '🛒', label: 'PDV / Vender' },
+        { section: 'Sistema' },
         { path: '/agenda-config', icon: '⚙️', label: 'Escala & Agenda' },
         { path: '/lives', icon: '📺', label: 'Transmissões ao Vivo' },
+        { path: '/hall-of-fame', icon: '🏆', label: 'Hall of Fame' },
       ]
     }
 
@@ -47,6 +54,10 @@ export default function Sidebar() {
       { path: '/servicos', icon: '✂️', label: 'Serviços' },
       { path: '/cupons', icon: '🎟️', label: 'Cupons' },
       { path: '/agenda-config', icon: '🗓️', label: 'Escalas de Trabalho' },
+      { section: 'PDV & Finanças' },
+      { path: '/caixa', icon: '💵', label: 'Controle de Caixas' },
+      { path: '/checkout', icon: '🛒', label: 'Checkout PDV' },
+      { path: '/hall-of-fame', icon: '🏆', label: 'Hall of Fame' },
       { section: 'Sistema' },
       { path: '/niveis', icon: '⚔️', label: 'Níveis RPG' },
       { path: '/temporadas', icon: '⏳', label: 'Temporadas RPG' },
