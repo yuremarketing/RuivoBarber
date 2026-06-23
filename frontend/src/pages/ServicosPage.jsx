@@ -29,7 +29,8 @@ export default function ServicosPage() {
   const [xp, setXp] = useState(10)
 
   const userSessionStr = localStorage.getItem('ruivobarber_user')
-  const user = userSessionStr ? JSON.parse(userSessionStr).user : null
+  const session = userSessionStr ? JSON.parse(userSessionStr) : null
+  const user = session?.user || session
   const isAdmin = user?.cargo === 'Adm'
 
   const loadServicos = async () => {

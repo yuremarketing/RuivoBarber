@@ -1,30 +1,65 @@
 <system_constraints>
-  <directive>DIRETRIZ DE AGENTE: RUIVOBARBER PROJECT (ROOT CONTEXT)</directive>
+
+  <goal>
+    Executar tarefas no projeto RuivoBarber com máxima eficiência de tokens,
+    lendo o mínimo necessário e mantendo a arquitetura correta.
+  </goal>
+
+  <priorities>
+    <item>Minimizar uso de tokens</item>
+    <item>Ler apenas o essencial</item>
+    <item>Evitar retrabalho e loops</item>
+    <item>Manter arquitetura hexagonal</item>
+  </priorities>
+
   <context_boundary>
-    <rule>Isolamento Absoluto: Este projeto (RuivoBarber) é a raiz do contexto. Desconsidere e ignore qualquer diretriz, regra, variável de ambiente ou arquivo herdado de diretórios superiores ou de caminhos externos como '/home/mark/Dev/petwork'.</rule>
-    <rule>Foco de Varredura: Limite o escopo de leitura e pesquisa estritamente a '/home/mark/Dev/ruivobarber/'. Não acesse ou referencie arquivos fora deste caminho.</rule>
-    <rule>Prioridade de Memória: Sempre priorizar regras locais do RuivoBarber sobre qualquer memória anterior da sessão ou contexto previamente carregado.</rule>
+    <rule>Escopo: /home/mark/Dev/ruivobarber/</rule>
+    <rule>Ignorar qualquer contexto externo</rule>
   </context_boundary>
-  <execution_flow>
-    <rule>Pausa de Ação Obrigatória: Pare imediatamente após apresentar um plano de implementação (implementation_plan.md) e aguarde aprovação explícita e manual do usuário no chat para prosseguir. Respeite o cooldown de 5 minutos antes de qualquer execução.</rule>
-    <rule>Controle de Sub-agentes: Não inicie mais de 3 sub-agentes simultâneos. Prefira processamento sequencial.</rule>
-    <rule>Tratamento de Rate Limit: Pause por 15 segundos em caso de erro HTTP 429.</rule>
-    <rule>Branch Target Rule: É expressamente proibido realizar commits, pushes ou merges direcionados diretamente às branches 'develop' ou 'main'. O agente deve sempre criar uma branch de feature dedicada (ex: feature/TASK-XXX), fazer push para essa branch de feature e instruir o usuário a abrir um Pull Request no GitHub para integração.</rule>
-  </execution_flow>
-  <coding_standards>
-    <architecture>
-      <rule>Backend (Go): Siga estritamente a Arquitetura Hexagonal (Ports e Adapters). Lógicas de negócio (XP, comissões, level up) devem residir apenas em 'backend/internal/core/services'. Handlers jamais devem conter código SQL direto.</rule>
-      <rule>Frontend (React/Vite): Isole regras de negócio em services ou hooks customizados. Sem chamadas diretas de requisição (Axios) misturadas em arquivos JSX.</rule>
-      <rule>Segurança: Criptografia e hashing seguro de senhas via bcrypt no backend Go. Nunca trafegue ou salve senhas em texto puro.</rule>
-    </architecture>
-    <style>
-      <rule>Nomenclatura: Variáveis, funções e arquivos devem ser nomeados em português (ex: listarClientes, cliente_service.go). Rotas da API REST devem ser inteiramente em minúsculo.</rule>
-    </style>
-  </coding_standards>
-  <resource_management>
-    <defense_rules>
-      <rule>Directory Shield: NUNCA leia ou faça buscas em 'frontend/node_modules/', 'frontend/dist/' ou no executável binário 'backend/main'.</rule>
-      <rule>Context Economy: Não leia a pasta 'docs/' proativamente; acesse-a somente quando solicitado pelo usuário.</rule>
-    </defense_rules>
-  </resource_management>
+
+  <execution_policy>
+    <rule>Usar 1 agente por padrão</rule>
+    <rule>Evitar paralelismo desnecessário</rule>
+    <rule>Evitar loops e retries complexos</rule>
+    <rule>Pausar apenas em mudanças grandes ou arquiteturais</rule>
+    <rule>Em erro 429: no máximo 1 retry simples</rule>
+  </execution_policy>
+
+  <file_policy>
+    <rule>Ler apenas arquivos necessários</rule>
+    <rule>Evitar node_modules, dist e binários</rule>
+    <rule>Evitar varredura global</rule>
+  </file_policy>
+
+  <architecture>
+    <backend>
+      <rule>Arquitetura hexagonal obrigatória</rule>
+      <rule>Regras de negócio em core/services</rule>
+      <rule>Handlers sem SQL direto</rule>
+    </backend>
+    <frontend>
+      <rule>Lógica em hooks/services</rule>
+      <rule>JSX apenas UI</rule>
+      <rule>Sem HTTP direto nos componentes</rule>
+    </frontend>
+  </architecture>
+
+  <security>
+    <rule>Senhas com bcrypt</rule>
+    <rule>Nunca usar plaintext</rule>
+  </security>
+
+  <git>
+    <rule>Permitido realizar commits e pushes diretamente na branch 'develop' (dev)</rule>
+    <rule>Evitar commits diretos na branch 'main' (produção)</rule>
+    <rule>Fluxo: commit → push direto na develop</rule>
+  </git>
+
+  <strategy>
+    <rule>Resolver pelo menor caminho possível</rule>
+    <rule>Evitar overthinking</rule>
+    <rule>Expandir contexto só se necessário</rule>
+  </strategy>
+
 </system_constraints>
+``
