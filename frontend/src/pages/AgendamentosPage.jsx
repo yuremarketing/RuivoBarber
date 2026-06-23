@@ -74,6 +74,8 @@ export default function AgendamentosPage() {
   const [selectedHora, setSelectedHora] = useState('')
   const [availableSlots, setAvailableSlots] = useState([])
   const [loadingSlots, setLoadingSlots] = useState(false)
+  const [barbeiroDisponibilidades, setBarbeiroDisponibilidades] = useState([])
+  const [barbeiroBloqueios, setBarbeiroBloqueios] = useState([])
 
   // Drag to Scroll references and states
   const datePickerRef = useRef(null)
@@ -227,6 +229,45 @@ export default function AgendamentosPage() {
     }
     loadBarberConfigs()
   }, [selectedBarbeiro])
+
+  const handleDateChange = (dateVal) => {
+    if (!dateVal) {
+      setSelectedData('')
+      setSelectedHora('')
+      return
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0]
+    if (dateVal < todayStr) {
+      alert('Não é possível selecionar uma data no passado.')
+      setSelectedData('')
+      setSelectedHora('')
+      return
+    }
+
+    const [year, month, day] = dateVal.split('-').map(Number)
+    const dateObj = new Date(year, month - 1, day)
+    const weekday = dateObj.getDay()
+
+    const disp = barbeiroDisponibilidades.find(d => d.dia_semana === weekday)
+    if (disp && !disp.trabalha) {
+      alert('Este barbeiro não possui disponibilidade para este dia. Por favor, escolha outra data!')
+      setSelectedData('')
+      setSelectedHora('')
+      return
+    }
+
+    const isBlocked = barbeiroBloqueios.some(b => b.data_bloqueio === dateVal)
+    if (isBlocked) {
+      alert('Este barbeiro não possui disponibilidade para este dia. Por favor, escolha outra data!')
+      setSelectedData('')
+      setSelectedHora('')
+      return
+    }
+
+    setSelectedData(dateVal)
+    setSelectedHora('')
+  }
 
   useEffect(() => {
     if (!selectedBarbeiro || !selectedData || !selectedServico) {
@@ -522,10 +563,14 @@ export default function AgendamentosPage() {
                 <div className="form-row">
                   <div className="form-group" style={{ gridColumn: 'span 2' }}>
                     <label className="form-label">Data</label>
-                    <input type="date" className="form-input" value={selectedData} onChange={e => {
-                      setSelectedData(e.target.value)
-                      setSelectedHora('')
-                    }} required />
+                    <input
+                      type="date"
+                      className="form-input"
+                      value={selectedData}
+                      min={new Date().toISOString().split('T')[0]}
+                      onChange={e => handleDateChange(e.target.value)}
+                      required
+                    />
                   </div>
                 </div>
                 <div className="form-row">
