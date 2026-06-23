@@ -16,6 +16,7 @@ import ClasPage from './pages/ClasPage.jsx'
 import AgendaConfigPage from './pages/AgendaConfigPage.jsx'
 import CaixaPage from './pages/CaixaPage.jsx'
 import CheckoutPage from './pages/CheckoutPage.jsx'
+import HallOfFamePage from './pages/HallOfFamePage.jsx'
 import LojaPage from './pages/LojaPage.jsx'
 
 
@@ -42,6 +43,7 @@ export default function App() {
           <Route path="/agenda-config" element={<AgendaConfigPage />} />
           <Route path="/caixa" element={<CaixaPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/hall-of-fame" element={<HallOfFamePage />} />
           <Route path="/loja" element={<LojaPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

@@ -423,6 +423,267 @@ a { color: inherit; text-decoration: none; }
   .form-row { grid-template-columns: 1fr; }
 }
 
+/* ── Custom Equipped Store Items ── */
+.bg-neon-fire {
+  background: linear-gradient(135deg, rgba(233, 69, 96, 0.9), rgba(245, 166, 35, 0.9)) !important;
+  color: #fff;
+  border-color: #f5a623 !important;
+}
+.bg-neon-ice {
+  background: linear-gradient(135deg, rgba(15, 76, 129, 0.9), rgba(0, 242, 254, 0.9)) !important;
+  color: #fff;
+  border-color: #00f2fe !important;
+}
+.glow-pulsing {
+  box-shadow: 0 0 15px rgba(233, 69, 96, 0.6);
+  animation: glow-pulse-anim 2s infinite alternate !important;
+}
+@keyframes glow-pulse-anim {
+  0% { box-shadow: 0 0 10px rgba(233, 69, 96, 0.4); }
+  100% { box-shadow: 0 0 25px rgba(233, 69, 96, 0.8), 0 0 10px rgba(245, 166, 35, 0.4); }
+}
+
+/* ── Hall of Fame Page Styling ── */
+.hof-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  padding-bottom: 3rem;
+}
+.hof-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+.hof-header h2 {
+  font-size: 2.2rem;
+  color: var(--gold);
+  text-shadow: 0 0 12px rgba(245, 166, 35, 0.3);
+  margin-bottom: 0.5rem;
+}
+.hof-podium {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 2rem;
+  margin: 2rem 0;
+  flex-wrap: wrap;
+}
+.hof-podium-spot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.3s ease;
+}
+.hof-podium-spot:hover {
+  transform: translateY(-8px);
+}
+.hof-podium-spot.first {
+  order: 2;
+  margin-bottom: 1.5rem;
+}
+.hof-podium-spot.second {
+  order: 1;
+}
+.hof-podium-spot.third {
+  order: 3;
+}
+.hof-podium-card {
+  width: 250px;
+  background: rgba(22, 33, 62, 0.8);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.hof-podium-spot.first .hof-podium-card {
+  border-color: var(--gold);
+  box-shadow: 0 8px 32px rgba(245, 166, 35, 0.25);
+  transform: scale(1.08);
+}
+.hof-podium-spot.second .hof-podium-card {
+  border-color: #a0a0b8;
+  box-shadow: 0 4px 20px rgba(160, 160, 184, 0.15);
+}
+.hof-podium-spot.third .hof-podium-card {
+  border-color: #cd7f32;
+  box-shadow: 0 4px 20px rgba(205, 127, 50, 0.15);
+}
+.hof-pedestal {
+  width: 100%;
+  height: 50px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -5px;
+  position: relative;
+  z-index: 2;
+}
+.hof-podium-spot.first .hof-pedestal {
+  border-color: var(--gold);
+  background: linear-gradient(180deg, rgba(245, 166, 35, 0.15) 0%, rgba(245, 166, 35, 0.02) 100%);
+  height: 70px;
+}
+.hof-podium-spot.second .hof-pedestal {
+  border-color: #a0a0b8;
+  background: linear-gradient(180deg, rgba(160, 160, 184, 0.15) 0%, rgba(160, 160, 184, 0.02) 100%);
+  height: 55px;
+}
+.hof-podium-spot.third .hof-pedestal {
+  border-color: #cd7f32;
+  background: linear-gradient(180deg, rgba(205, 127, 50, 0.15) 0%, rgba(205, 127, 50, 0.02) 100%);
+  height: 45px;
+}
+.hof-rank-num {
+  font-size: 1.8rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hof-podium-spot.first .hof-rank-num { color: var(--gold); text-shadow: 0 0 10px rgba(245,166,35,0.5); }
+.hof-podium-spot.second .hof-rank-num { color: #a0a0b8; }
+.hof-podium-spot.third .hof-rank-num { color: #cd7f32; }
+
+.search-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+.search-input-wrapper {
+  position: relative;
+  max-width: 450px;
+  width: 100%;
+}
+.search-input-wrapper input {
+  padding-left: 2.5rem;
+}
+.search-input-wrapper .search-icon {
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.leaderboard-container {
+  background: rgba(22, 33, 62, 0.4);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.leaderboard-row {
+  display: grid;
+  grid-template-columns: 80px 80px 1fr 180px 120px;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition);
+}
+.leaderboard-row:hover {
+  background: rgba(255,255,255,0.02);
+}
+.leaderboard-row.header {
+  background: rgba(22, 33, 62, 0.8);
+  font-weight: bold;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.leaderboard-row.header:hover {
+  background: rgba(22, 33, 62, 0.8);
+}
+.leaderboard-row:last-child {
+  border-bottom: none;
+}
+.leaderboard-rank {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--text-secondary);
+}
+.leaderboard-rank.top-rank {
+  color: var(--gold);
+}
+.leaderboard-avatar-col {
+  display: flex;
+  align-items: center;
+}
+.leaderboard-mini-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: linear-gradient(135deg, var(--border), var(--bg-card-hover));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.95rem;
+  overflow: hidden;
+}
+.leaderboard-mini-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.leaderboard-name {
+  font-weight: 600;
+  font-size: 1rem;
+}
+.leaderboard-xp {
+  font-weight: bold;
+  color: var(--gold);
+}
+@media (max-width: 768px) {
+  .hof-podium {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .hof-podium-spot {
+    width: 100%;
+    max-width: 280px;
+  }
+  .hof-podium-spot.first {
+    order: 1;
+    margin-bottom: 0;
+  }
+  .hof-podium-spot.second {
+    order: 2;
+  }
+  .hof-podium-spot.third {
+    order: 3;
+  }
+  .hof-podium-spot.first .hof-podium-card {
+    transform: scale(1);
+  }
+  .hof-pedestal {
+    height: 30px !important;
+  }
+  .leaderboard-row {
+    grid-template-columns: 50px 60px 1fr 100px;
+  }
+  .leaderboard-row.header {
+    font-size: 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+  .leaderboard-row {
+    padding: 0.75rem 1rem;
+  }
+  .leaderboard-level-col {
+    display: none;
+  }
+}
+
 /* ── Horizontal Date Picker (Premium Scrollable) ─── */
 .horizontal-date-picker {
   display: flex;
