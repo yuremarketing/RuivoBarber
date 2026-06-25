@@ -54,10 +54,8 @@ Para iniciar e concluir qualquer tarefa, siga este fluxo rígido no terminal:
     ```bash
     git checkout -b feature/TASK-XXX-nome-da-tarefa
     ```
-3.  **Desenvolver e registrar**:
-    *   Codificar a funcionalidade.
-    *   Criar o arquivo de log local em `.antigravity/logs/log-task-XXX.md` detalhando as alterações.
-    *   Marcar a tarefa como concluída no Kanban local (`.antigravity/kanban/done.md`).
+3.  **Desenvolver a funcionalidade**:
+    *   Codificar a funcionalidade seguindo os padrões do projeto.
 4.  **Commitar e subir para o GitHub**:
     ```bash
     git add .

@@ -2,7 +2,6 @@
 
 ## 📌 Contexto e Governança
 Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arquitetura Hexagonal (Ports and Adapters)** no backend (Go) e o isolamento de regras de negócios via **Services/Hooks** no frontend (React). 
-> **Regra para Agentes de IA:** Sempre leia este arquivo antes de iniciar uma tarefa, escolha uma tarefa não marcada, implemente-a seguindo as regras de `.antigravityrules`, e ao final, marque a caixa com `[x]`.
 
 ---
 
