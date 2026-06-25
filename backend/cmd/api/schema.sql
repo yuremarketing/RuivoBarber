@@ -269,7 +269,8 @@ CREATE TABLE IF NOT EXISTS BarbeiroBloqueios (
     BarbeiroID INT REFERENCES Usuarios(ID) ON DELETE CASCADE,
     DataBloqueio DATE NOT NULL,
     Motivo VARCHAR(150),
-    UNIQUE(BarbeiroID, DataBloqueio)
+    HoraInicio TIME DEFAULT NULL,
+    HoraFim TIME DEFAULT NULL
 );
 
 -- Popular dados padrão de exemplo (Todos os dias das 09:00 às 19:00) para todos os Barbeiros cadastrados

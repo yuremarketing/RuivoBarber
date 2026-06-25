@@ -40,6 +40,8 @@ export default function AgendaConfigPage() {
   // Form states for new block
   const [novaData, setNovaData] = useState('')
   const [novoMotivo, setNovoMotivo] = useState('')
+  const [novaHoraInicio, setNovaHoraInicio] = useState('')
+  const [novaHoraFim, setNovaHoraFim] = useState('')
 
   const triggerToast = (msg, type = 'success') => {
     setToastMsg(msg)
@@ -130,14 +132,16 @@ export default function AgendaConfigPage() {
     }
 
     try {
-      await adicionarBloqueioBarbeiro(selectedBarbeiroId, novaData, novoMotivo)
-      triggerToast('Dia bloqueado com sucesso!')
+      await adicionarBloqueioBarbeiro(selectedBarbeiroId, novaData, novaHoraInicio, novaHoraFim, novoMotivo)
+      triggerToast('Bloqueio adicionado com sucesso!')
       setNovaData('')
       setNovoMotivo('')
+      setNovaHoraInicio('')
+      setNovaHoraFim('')
       loadBarberData(selectedBarbeiroId)
     } catch (err) {
       console.error(err)
-      triggerToast('Erro ao bloquear dia: ' + (err.response?.data?.error || err.message), 'error')
+      triggerToast('Erro ao bloquear: ' + (err.response?.data?.error || err.message), 'error')
     }
   }
 
@@ -302,6 +306,28 @@ export default function AgendaConfigPage() {
                     required
                   />
                 </div>
+                
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div className="form-group" style={{ textAlign: 'left', flex: 1 }}>
+                    <label className="form-label">Início (Opcional)</label>
+                    <input
+                      type="time"
+                      className="form-input"
+                      value={novaHoraInicio}
+                      onChange={(e) => setNovaHoraInicio(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group" style={{ textAlign: 'left', flex: 1 }}>
+                    <label className="form-label">Término (Opcional)</label>
+                    <input
+                      type="time"
+                      className="form-input"
+                      value={novaHoraFim}
+                      onChange={(e) => setNovaHoraFim(e.target.value)}
+                    />
+                  </div>
+                </div>
+
                 <div className="form-group" style={{ textAlign: 'left' }}>
                   <label className="form-label">Motivo (Feriado, Férias, Folga...)</label>
                   <input
@@ -331,7 +357,7 @@ export default function AgendaConfigPage() {
                 <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
                   {bloqueios.map(b => (
                     <div
-                      key={b.data_bloqueio}
+                      key={b.id || `${b.data_bloqueio}_${b.hora_inicio || ''}`}
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
@@ -346,9 +372,10 @@ export default function AgendaConfigPage() {
                       <div style={{ textAlign: 'left' }}>
                         <div style={{ fontWeight: '600', fontSize: '0.85rem' }}>
                           {new Date(b.data_bloqueio + 'T00:00:00').toLocaleDateString('pt-BR')}
+                          {b.hora_inicio && b.hora_fim && ` (${b.hora_inicio} - ${b.hora_fim})`}
                         </div>
                         <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                          {b.motivo || 'Folga pontual'}
+                          {b.motivo || (b.hora_inicio ? 'Intervalo pontual' : 'Folga pontual')}
                         </div>
                       </div>
                       <button

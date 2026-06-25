@@ -138,6 +138,7 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 - [ ] [PDV-DB] Task 61: Modelagem e Tabelas do Fluxo Financeiro (SQL) (Issue #18)
 - [ ] [PDV-BE] Task 62: Controle de Sessão de Caixa (Abertura/Fechamento) (Issue #19)
 - [ ] [PDV-BE] Task 63: Processamento de Venda e Integração de Fidelidade (Issue #20)
+- [ ] [Agenda-Slots] Task #28 (#69): Bloqueio e Liberação de Horários Específicos do Barbeiro
 
 ### 🖥️ Frontend (Telas React)
 - [ ] [Wizard] Task 38-BC-FE: Wizard de Agendamento Passo a Passo (BookingWizard) com Fotos e Estrelas Reais (Issue #14/15)

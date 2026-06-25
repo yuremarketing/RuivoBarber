@@ -414,6 +414,18 @@ func main() {
 		log.Println("✅ Migração automática: tabelas e colunas de Gorjetas e Pix garantidas no banco")
 	}
 
+	// Migração automática para Bloqueio de Horários Parciais (Slot-Level Blocking)
+	_, err = db.Exec(`
+		ALTER TABLE BarbeiroBloqueios DROP CONSTRAINT IF EXISTS barbeirobloqueios_barbeiroid_databloqueio_key;
+		ALTER TABLE BarbeiroBloqueios ADD COLUMN IF NOT EXISTS horainicio TIME DEFAULT NULL;
+		ALTER TABLE BarbeiroBloqueios ADD COLUMN IF NOT EXISTS horafim TIME DEFAULT NULL;
+	`)
+	if err != nil {
+		log.Printf("[DB] Erro ao executar migração automática para Bloqueio de Horários Parciais: %v", err)
+	} else {
+		log.Println("✅ Migração automática: colunas de horários e drop de restrição em BarbeiroBloqueios concluídos")
+	}
+
     // Atualizar senha do admin se for o placeholder ou plain-text legado para permitir login seguro com bcrypt
     var adminCount int
     err = db.QueryRow("SELECT COUNT(*) FROM Usuarios WHERE Login = 'admin'").Scan(&adminCount)

@@ -876,8 +876,10 @@ func (h *ClienteHandler) ObterBloqueiosBarbeiro(c *fiber.Ctx) error {
 }
 
 type AddBloqueioRequest struct {
-	Data   string `json:"data"`
-	Motivo string `json:"motivo"`
+	Data       string `json:"data"`
+	HoraInicio string `json:"hora_inicio"`
+	HoraFim    string `json:"hora_fim"`
+	Motivo     string `json:"motivo"`
 }
 
 func (h *ClienteHandler) AdicionarBloqueioBarbeiro(c *fiber.Ctx) error {
@@ -900,7 +902,7 @@ func (h *ClienteHandler) AdicionarBloqueioBarbeiro(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "data é obrigatória"})
 	}
 
-	err = h.service.AdicionarBloqueioBarbeiro(id, req.Data, req.Motivo)
+	err = h.service.AdicionarBloqueioBarbeiro(id, req.Data, req.HoraInicio, req.HoraFim, req.Motivo)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
