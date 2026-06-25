@@ -10,7 +10,19 @@ function PlayerCard({
   efeitoEquipado = '' 
 }) {
   const getPatenteInfo = (nivelNome) => {
-    const nomeNormalizado = (nivelNome || '').trim()
+    let nomeNormalizado = ''
+    if (typeof nivelNome === 'number') {
+      const mapeamento = {
+        1: 'Corte Iniciante',
+        2: 'Barba de Respeito',
+        3: 'Lenda da Navalha',
+        4: 'Rei da Cadeira'
+      }
+      nomeNormalizado = mapeamento[nivelNome] || 'Corte Iniciante'
+    } else {
+      nomeNormalizado = String(nivelNome || '').trim()
+    }
+
     switch (nomeNormalizado) {
       case 'Rei da Cadeira':
         return { frameClass: 'frame-royal', crown: true, color: '#b026ff', badgeEmoji: '👑' }
@@ -26,7 +38,7 @@ function PlayerCard({
   const { frameClass: defaultFrameClass, crown, color, badgeEmoji } = getPatenteInfo(nivel)
   const frameClass = molduraEquipada || defaultFrameClass
   
-  const iniciais = nome
+  const iniciais = (nome || '')
     .split(' ')
     .map((n) => n[0])
     .slice(0, 2)
