@@ -37,7 +37,6 @@ function PlayerCard({
 
   const { frameClass: defaultFrameClass, crown, color, badgeEmoji } = getPatenteInfo(nivel)
   const frameClass = molduraEquipada || defaultFrameClass
-  
   const iniciais = (nome || '')
     .split(' ')
     .map((n) => n[0])
