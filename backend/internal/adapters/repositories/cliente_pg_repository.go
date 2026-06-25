@@ -858,16 +858,130 @@ func (r *ClientePgRepository) ListarAgendamentosDoBarbeiro(barbeiroID int, data 
 }
 
 func (r *ClientePgRepository) CriarAgendamento(clienteID, barbeiroID, servicoID int, dataHora time.Time) (int, error) {
-	query := `
+	ctx := context.Background()
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
+	// 1. Lock do barbeiro na tabela de Usuários para garantir exclusividade atômica (Pessimistic Lock)
+	var barberExists int
+	err = tx.QueryRowContext(ctx, "SELECT id FROM Usuarios WHERE id = $1 FOR UPDATE", barbeiroID).Scan(&barberExists)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, errors.New("barbeiro não encontrado")
+		}
+		return 0, err
+	}
+
+	// 2. Buscar serviço para obter duração
+	var duracaoMinutos int
+	err = tx.QueryRowContext(ctx, "SELECT duracaominutos FROM Servicos WHERE id = $1", servicoID).Scan(&duracaoMinutos)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, errors.New("serviço não encontrado")
+		}
+		return 0, err
+	}
+
+	// 3. Verificar fuso horário (America/Sao_Paulo)
+	loc, err := time.LoadLocation("America/Sao_Paulo")
+	if err != nil {
+		loc = time.Local
+	}
+	dataHoraSaoPaulo := dataHora.In(loc)
+	dateStr := dataHoraSaoPaulo.Format("2006-01-02")
+
+	// 4. Verificar bloqueios pontuais (dia bloqueado/folga)
+	var isBlocked bool
+	err = tx.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM BarbeiroBloqueios WHERE barbeiroid = $1 AND databloqueio = $2)", barbeiroID, dateStr).Scan(&isBlocked)
+	if err != nil {
+		return 0, err
+	}
+	if isBlocked {
+		return 0, errors.New("o barbeiro não está disponível nesta data (dia bloqueado/folga)")
+	}
+
+	// 5. Verificar disponibilidade semanal (dia de trabalho e horários)
+	weekday := int(dataHoraSaoPaulo.Weekday())
+	var trabalha bool
+	var horaInicio, horaFim string
+	err = tx.QueryRowContext(ctx, `
+		SELECT trabalha, 
+		       to_char(COALESCE(horainicio, '09:00'::time), 'HH24:MI') as horainicio, 
+		       to_char(COALESCE(horafim, '19:00'::time), 'HH24:MI') as horafim
+		FROM BarbeiroDisponibilidade 
+		WHERE barbeiroid = $1 AND diasemana = $2
+	`, barbeiroID, weekday).Scan(&trabalha, &horaInicio, &horaFim)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			trabalha = false
+		} else {
+			return 0, err
+		}
+	}
+	if !trabalha {
+		return 0, errors.New("o barbeiro não trabalha neste dia da semana")
+	}
+
+	var startHour, startMin, endHour, endMin int
+	fmt.Sscanf(horaInicio, "%d:%d", &startHour, &startMin)
+	fmt.Sscanf(horaFim, "%d:%d", &endHour, &endMin)
+
+	workStart := time.Date(dataHoraSaoPaulo.Year(), dataHoraSaoPaulo.Month(), dataHoraSaoPaulo.Day(), startHour, startMin, 0, 0, loc)
+	workEnd := time.Date(dataHoraSaoPaulo.Year(), dataHoraSaoPaulo.Month(), dataHoraSaoPaulo.Day(), endHour, endMin, 0, 0, loc)
+
+	newStart := dataHoraSaoPaulo
+	newEnd := dataHoraSaoPaulo.Add(time.Duration(duracaoMinutos) * time.Minute)
+
+	if newStart.Before(workStart) || newEnd.After(workEnd) {
+		return 0, errors.New("horário escolhido está fora da jornada de trabalho do barbeiro")
+	}
+
+	// 6. Verificar conflito com agendamentos existentes (não cancelados)
+	rows, err := tx.QueryContext(ctx, `
+		SELECT a.datahora, s.duracaominutos 
+		FROM Agendamentos a
+		JOIN Servicos s ON a.servicoid = s.id
+		WHERE a.barbeiroid = $1 AND CAST(a.datahora AS DATE) = $2 AND a.status != 'Cancelado'
+	`, barbeiroID, dateStr)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var existingStart time.Time
+		var existingDuracao int
+		if err := rows.Scan(&existingStart, &existingDuracao); err != nil {
+			return 0, err
+		}
+		exStart := existingStart.In(loc)
+		exEnd := exStart.Add(time.Duration(existingDuracao) * time.Minute)
+
+		if newStart.Before(exEnd) && newEnd.After(exStart) {
+			return 0, errors.New("conflito de horário: este barbeiro já possui um agendamento neste período")
+		}
+	}
+
+	// 7. Inserir o agendamento
+	var id int
+	queryInsert := `
 		INSERT INTO Agendamentos (clienteid, barbeiroid, servicoid, datahora, status)
 		VALUES ($1, $2, $3, $4, 'Pendente')
 		RETURNING id
 	`
-	var id int
-	err := r.db.QueryRow(query, clienteID, barbeiroID, servicoID, dataHora).Scan(&id)
+	err = tx.QueryRowContext(ctx, queryInsert, clienteID, barbeiroID, servicoID, dataHoraSaoPaulo).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
+	}
+
 	return id, nil
 }
 
