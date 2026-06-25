@@ -3,6 +3,7 @@ package services
 import (
 	"strings"
 	"testing"
+	"time"
 	"ruivobarber-api/internal/core/domain"
 	"ruivobarber-api/internal/core/ports"
 )
@@ -84,15 +85,37 @@ func TestObterAgendaBarbeiro(t *testing.T) {
 			{DiaSemana: 2, Trabalha: true, HoraInicio: "09:00", HoraFim: "19:00"},
 		},
 		bloqueios: []domain.BarbeiroBloqueio{
-			{DataBloqueio: "2026-06-23", Motivo: "Feriado"}, // Terça 2026-06-23 está bloqueada
+			{DataBloqueio: "2032-06-22", Motivo: "Feriado"}, // Terça-feira (verificar dinamicamente abaixo)
 		},
 	}
 
 	service := NewClienteService(repo, nil, nil)
 
+	// Calcular dinamicamente datas futuras para Domingo (não trabalha), Segunda (trabalha) e Terça (bloqueada)
+	// Encontrar uma segunda-feira no futuro (daqui a pelo menos 1 semana)
+	importTime := javaTimeInGo()
+	_ = importTime
+	// Como já importamos time, vamos usar time diretamente
+	importTimeLoc, _ := time.LoadLocation("America/Sao_Paulo")
+	if importTimeLoc == nil {
+		importTimeLoc = time.Local
+	}
+	futuro := time.Now().In(importTimeLoc).AddDate(0, 0, 7)
+	for futuro.Weekday() != time.Monday {
+		futuro = futuro.AddDate(0, 0, 1)
+	}
+
+	segundaStr := futuro.Format("2006-01-02")
+	domingoStr := futuro.AddDate(0, 0, -1).Format("2006-01-02")
+	tercaStr := futuro.AddDate(0, 0, 1).Format("2006-01-02")
+
+	// Setar o bloqueio no mock para coincidir com a Terça-feira dinâmica calculada
+	repo.bloqueios = []domain.BarbeiroBloqueio{
+		{DataBloqueio: tercaStr, Motivo: "Feriado"},
+	}
+
 	// Teste 1: Domingo (não trabalha) -> Deve retornar slots vazios
-	// 2026-06-21 é um Domingo
-	slots, err := service.ObterAgendaBarbeiro(1, "2026-06-21", 1)
+	slots, err := service.ObterAgendaBarbeiro(1, domingoStr, 1)
 	if err != nil {
 		t.Fatalf("erro inesperado: %v", err)
 	}
@@ -101,7 +124,7 @@ func TestObterAgendaBarbeiro(t *testing.T) {
 	}
 
 	// Teste 2: Terça bloqueada -> Deve retornar slots vazios
-	slots, err = service.ObterAgendaBarbeiro(1, "2026-06-23", 1)
+	slots, err = service.ObterAgendaBarbeiro(1, tercaStr, 1)
 	if err != nil {
 		t.Fatalf("erro inesperado: %v", err)
 	}
@@ -110,13 +133,7 @@ func TestObterAgendaBarbeiro(t *testing.T) {
 	}
 
 	// Teste 3: Segunda-feira (trabalha das 09:00 às 11:00)
-	// 2026-06-22 é uma Segunda-feira. Duração é 30m.
-	// Slots gerados de 09:00 a 11:00:
-	// Slot 1: 09:00 (término 09:30)
-	// Slot 2: 09:30 (término 10:00)
-	// Slot 3: 10:00 (término 10:30)
-	// Slot 4: 10:30 (término 11:00)
-	slots, err = service.ObterAgendaBarbeiro(1, "2026-06-22", 1)
+	slots, err = service.ObterAgendaBarbeiro(1, segundaStr, 1)
 	if err != nil {
 		t.Fatalf("erro inesperado: %v", err)
 	}
@@ -133,6 +150,11 @@ func TestObterAgendaBarbeiro(t *testing.T) {
 			t.Errorf("slot %s deveria estar disponível", slot.Time)
 		}
 	}
+}
+
+// Dummy helper para evitar warnings de compilação
+func javaTimeInGo() time.Time {
+	return time.Time{}
 }
 
 func TestGerarPayloadPix(t *testing.T) {
