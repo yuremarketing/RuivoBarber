@@ -1397,10 +1397,13 @@ func (r *ClientePgRepository) SalvarDisponibilidadeBarbeiro(barbeiroID int, disp
 
 func (r *ClientePgRepository) ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.BarbeiroBloqueio, error) {
 	query := `
-		SELECT id, barbeiroid, to_char(databloqueio, 'YYYY-MM-DD') as databloqueio, COALESCE(motivo, '') as motivo
+		SELECT id, barbeiroid, to_char(databloqueio, 'YYYY-MM-DD') as databloqueio, 
+		       to_char(horainicio, 'HH24:MI') as horainicio, 
+		       to_char(horafim, 'HH24:MI') as horafim,
+		       COALESCE(motivo, '') as motivo
 		FROM BarbeiroBloqueios
 		WHERE barbeiroid = $1
-		ORDER BY databloqueio
+		ORDER BY databloqueio, horainicio
 	`
 	rows, err := r.db.Query(query, barbeiroID)
 	if err != nil {
@@ -1411,7 +1414,7 @@ func (r *ClientePgRepository) ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.B
 	var bloqueios []domain.BarbeiroBloqueio
 	for rows.Next() {
 		var b domain.BarbeiroBloqueio
-		err := rows.Scan(&b.ID, &b.BarbeiroID, &b.DataBloqueio, &b.Motivo)
+		err := rows.Scan(&b.ID, &b.BarbeiroID, &b.DataBloqueio, &b.HoraInicio, &b.HoraFim, &b.Motivo)
 		if err != nil {
 			return nil, err
 		}
@@ -1420,14 +1423,12 @@ func (r *ClientePgRepository) ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.B
 	return bloqueios, nil
 }
 
-func (r *ClientePgRepository) AdicionarBloqueioBarbeiro(barbeiroID int, data string, motivo string) error {
+func (r *ClientePgRepository) AdicionarBloqueioBarbeiro(barbeiroID int, data string, horaInicio string, horaFim string, motivo string) error {
 	query := `
-		INSERT INTO BarbeiroBloqueios (barbeiroid, databloqueio, motivo)
-		VALUES ($1, $2::date, $3)
-		ON CONFLICT (barbeiroid, databloqueio) 
-		DO UPDATE SET motivo = EXCLUDED.motivo
+		INSERT INTO BarbeiroBloqueios (barbeiroid, databloqueio, horainicio, horafim, motivo)
+		VALUES ($1, $2::date, NULLIF($3, '')::time, NULLIF($4, '')::time, $5)
 	`
-	_, err := r.db.Exec(query, barbeiroID, data, motivo)
+	_, err := r.db.Exec(query, barbeiroID, data, horaInicio, horaFim, motivo)
 	return err
 }
 

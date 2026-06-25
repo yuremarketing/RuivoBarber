@@ -197,8 +197,24 @@ func (s *ClienteService) ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.Barbei
 	return s.repo.ObterBloqueiosBarbeiro(barbeiroID)
 }
 
-func (s *ClienteService) AdicionarBloqueioBarbeiro(barbeiroID int, data string, motivo string) error {
-	return s.repo.AdicionarBloqueioBarbeiro(barbeiroID, data, motivo)
+func (s *ClienteService) AdicionarBloqueioBarbeiro(barbeiroID int, data string, horaInicio string, horaFim string, motivo string) error {
+	if (horaInicio != "" && horaFim == "") || (horaInicio == "" && horaFim != "") {
+		return errors.New("ambos os horários de início e término devem ser preenchidos para um bloqueio parcial")
+	}
+
+	if horaInicio != "" && horaFim != "" {
+		// Validar formato e ordenação
+		tInicio, err1 := time.Parse("15:04", horaInicio)
+		tFim, err2 := time.Parse("15:04", horaFim)
+		if err1 != nil || err2 != nil {
+			return errors.New("formato de hora inválido. Use HH:MM")
+		}
+		if !tInicio.Before(tFim) {
+			return errors.New("horário de início deve ser anterior ao horário de término")
+		}
+	}
+
+	return s.repo.AdicionarBloqueioBarbeiro(barbeiroID, data, horaInicio, horaFim, motivo)
 }
 
 func (s *ClienteService) RemoverBloqueioBarbeiro(barbeiroID int, data string) error {
@@ -237,13 +253,24 @@ func (s *ClienteService) ObterAgendaBarbeiro(barbeiroID int, dataStr string, ser
 	// 3. Verificar bloqueios pontuais
 	dateStr := parsedDate.Format("2006-01-02")
 	bloqueios, err := s.repo.ObterBloqueiosBarbeiro(barbeiroID)
+	var diaBloqueadoTotalmente bool
+	var bloqueiosParciais []domain.BarbeiroBloqueio
+
 	if err == nil {
 		for _, b := range bloqueios {
 			if b.DataBloqueio == dateStr {
-				// Dia totalmente bloqueado
-				return []domain.AgendaSlot{}, nil
+				if b.HoraInicio == nil || *b.HoraInicio == "" || b.HoraFim == nil || *b.HoraFim == "" {
+					diaBloqueadoTotalmente = true
+					break
+				} else {
+					bloqueiosParciais = append(bloqueiosParciais, b)
+				}
 			}
 		}
+	}
+
+	if diaBloqueadoTotalmente {
+		return []domain.AgendaSlot{}, nil
 	}
 
 	// 4. Verificar disponibilidade semanal
@@ -304,14 +331,31 @@ func (s *ClienteService) ObterAgendaBarbeiro(barbeiroID int, dataStr string, ser
 			// Check if it exceeds the working hours
 			available = false
 		} else {
-			// Check conflict with existing appointments using formula:
-			// newStart < existingEnd AND newEnd > existingStart
-			for _, existing := range agendamentos {
-				existingStart := existing.DataHora.In(saoPaulo)
-				existingEnd := existingStart.Add(time.Duration(existing.DuracaoMinutos) * time.Minute)
-				if currentSlot.Before(existingEnd) && slotEnd.After(existingStart) {
+			// Check conflict with partial blockings
+			for _, pb := range bloqueiosParciais {
+				var bhStart, bhMinStart, bhEnd, bhMinEnd int
+				fmt.Sscanf(*pb.HoraInicio, "%d:%d", &bhStart, &bhMinStart)
+				fmt.Sscanf(*pb.HoraFim, "%d:%d", &bhEnd, &bhMinEnd)
+				
+				blockStart := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), bhStart, bhMinStart, 0, 0, saoPaulo)
+				blockEnd := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), bhEnd, bhMinEnd, 0, 0, saoPaulo)
+				
+				if currentSlot.Before(blockEnd) && slotEnd.After(blockStart) {
 					available = false
 					break
+				}
+			}
+
+			if available {
+				// Check conflict with existing appointments using formula:
+				// newStart < existingEnd AND newEnd > existingStart
+				for _, existing := range agendamentos {
+					existingStart := existing.DataHora.In(saoPaulo)
+					existingEnd := existingStart.Add(time.Duration(existing.DuracaoMinutos) * time.Minute)
+					if currentSlot.Before(existingEnd) && slotEnd.After(existingStart) {
+						available = false
+						break
+					}
 				}
 			}
 		}
