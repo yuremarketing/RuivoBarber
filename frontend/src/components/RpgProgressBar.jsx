@@ -2,7 +2,19 @@ import React from 'react'
 
 function RpgProgressBar({ xpAtual = 0, nivel = 'Corte Iniciante' }) {
   const getProximoNivelXP = (nivelNome, currentXp) => {
-    const nomeNormalizado = (nivelNome || '').trim()
+    let nomeNormalizado = ''
+    if (typeof nivelNome === 'number') {
+      const mapeamento = {
+        1: 'Corte Iniciante',
+        2: 'Barba de Respeito',
+        3: 'Lenda da Navalha',
+        4: 'Rei da Cadeira'
+      }
+      nomeNormalizado = mapeamento[nivelNome] || 'Corte Iniciante'
+    } else {
+      nomeNormalizado = String(nivelNome || '').trim()
+    }
+
     switch (nomeNormalizado) {
       case 'Rei da Cadeira':
         return { nextXp: 1000, nextNivel: 'Nível Máximo', xpFaltando: 0, maxLevel: true }
