@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -58,30 +57,6 @@ func JWTMiddleware(c *fiber.Ctx) error {
 	}
 
 	tokenString := authHeader[len(prefix):]
-
-	if strings.HasPrefix(tokenString, "mocked_jwt_token_for_testing") {
-		userId := 999
-		userCargo := "Cliente"
-		userNome := "Cliente Fictício"
-
-		parts := strings.Split(tokenString, ":")
-		if len(parts) >= 4 {
-			if id, err := strconv.Atoi(parts[1]); err == nil {
-				userId = id
-			}
-			userCargo = parts[2]
-			if decoded, err := url.QueryUnescape(parts[3]); err == nil {
-				userNome = decoded
-			} else {
-				userNome = parts[3]
-			}
-		}
-
-		c.Locals("userId", userId)
-		c.Locals("userNome", userNome)
-		c.Locals("userCargo", userCargo)
-		return c.Next()
-	}
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
