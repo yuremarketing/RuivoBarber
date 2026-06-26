@@ -197,8 +197,24 @@ func (s *ClienteService) ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.Barbei
 	return s.repo.ObterBloqueiosBarbeiro(barbeiroID)
 }
 
-func (s *ClienteService) AdicionarBloqueioBarbeiro(barbeiroID int, data string, motivo string) error {
-	return s.repo.AdicionarBloqueioBarbeiro(barbeiroID, data, motivo)
+func (s *ClienteService) AdicionarBloqueioBarbeiro(barbeiroID int, data string, horaInicio string, horaFim string, motivo string) error {
+	if (horaInicio != "" && horaFim == "") || (horaInicio == "" && horaFim != "") {
+		return errors.New("ambos os horários de início e término devem ser preenchidos para um bloqueio parcial")
+	}
+
+	if horaInicio != "" && horaFim != "" {
+		// Validar formato e ordenação
+		tInicio, err1 := time.Parse("15:04", horaInicio)
+		tFim, err2 := time.Parse("15:04", horaFim)
+		if err1 != nil || err2 != nil {
+			return errors.New("formato de hora inválido. Use HH:MM")
+		}
+		if !tInicio.Before(tFim) {
+			return errors.New("horário de início deve ser anterior ao horário de término")
+		}
+	}
+
+	return s.repo.AdicionarBloqueioBarbeiro(barbeiroID, data, horaInicio, horaFim, motivo)
 }
 
 func (s *ClienteService) RemoverBloqueioBarbeiro(barbeiroID int, data string) error {
@@ -212,80 +228,6 @@ func (s *ClienteService) CriarAgendamento(clienteID, barbeiroID, servicoID int, 
 	// Validação de horário retroativo
 	if dataHora.Before(time.Now().In(saoPaulo)) {
 		return 0, errors.New("não é possível criar um agendamento em horário retroativo")
-	}
-
-	// 1. Fetch service to get its duration
-	servico, err := s.repo.BuscarServico(servicoID)
-	if err != nil {
-		return 0, errors.New("serviço não encontrado")
-	}
-
-	// 2. Verificar bloqueios pontuais
-	dateStr := dataHora.Format("2006-01-02")
-	bloqueios, err := s.repo.ObterBloqueiosBarbeiro(barbeiroID)
-	if err == nil {
-		for _, b := range bloqueios {
-			if b.DataBloqueio == dateStr {
-				return 0, errors.New("o barbeiro não está disponível nesta data (dia bloqueado/folga)")
-			}
-		}
-	}
-
-	// 3. Verificar disponibilidade semanal
-	weekday := int(dataHora.Weekday())
-	disps, err := s.repo.ObterDisponibilidadeBarbeiro(barbeiroID)
-	if err != nil {
-		return 0, err
-	}
-
-	var disp *domain.BarbeiroDisponibilidade
-	for i := range disps {
-		if disps[i].DiaSemana == weekday {
-			disp = &disps[i]
-			break
-		}
-	}
-
-	if disp == nil || !disp.Trabalha {
-		return 0, errors.New("o barbeiro não trabalha neste dia da semana")
-	}
-
-	startHourStr := disp.HoraInicio
-	if startHourStr == "" {
-		startHourStr = "09:00"
-	}
-	endHourStr := disp.HoraFim
-	if endHourStr == "" {
-		endHourStr = "19:00"
-	}
-
-	var startHour, startMin, endHour, endMin int
-	fmt.Sscanf(startHourStr, "%d:%d", &startHour, &startMin)
-	fmt.Sscanf(endHourStr, "%d:%d", &endHour, &endMin)
-
-	workStart := time.Date(dataHora.Year(), dataHora.Month(), dataHora.Day(), startHour, startMin, 0, 0, saoPaulo)
-	workEnd := time.Date(dataHora.Year(), dataHora.Month(), dataHora.Day(), endHour, endMin, 0, 0, saoPaulo)
-
-	newStart := dataHora
-	newEnd := dataHora.Add(time.Duration(servico.DuracaoMinutos) * time.Minute)
-
-	if newStart.Before(workStart) || newEnd.After(workEnd) {
-		return 0, errors.New("horário escolhido está fora da jornada de trabalho do barbeiro")
-	}
-
-	// 4. Fetch existing appointments to prevent conflict
-	existingAgendamentos, err := s.repo.ListarAgendamentosDoBarbeiro(barbeiroID, dateStr)
-	if err != nil {
-		return 0, err
-	}
-
-	// 5. Validate conflict using formula: newStart < existingEnd AND newEnd > existingStart
-	for _, existing := range existingAgendamentos {
-		existingStart := existing.DataHora
-		existingEnd := existingStart.Add(time.Duration(existing.DuracaoMinutos) * time.Minute)
-		if newStart.Before(existingEnd) && newEnd.After(existingStart) {
-			return 0, errors.New("conflito de horário: este barbeiro já possui um agendamento neste período")
-		}
 	}
 
 	return s.repo.CriarAgendamento(clienteID, barbeiroID, servicoID, dataHora)
@@ -311,13 +253,24 @@ func (s *ClienteService) ObterAgendaBarbeiro(barbeiroID int, dataStr string, ser
 	// 3. Verificar bloqueios pontuais
 	dateStr := parsedDate.Format("2006-01-02")
 	bloqueios, err := s.repo.ObterBloqueiosBarbeiro(barbeiroID)
+	var diaBloqueadoTotalmente bool
+	var bloqueiosParciais []domain.BarbeiroBloqueio
+
 	if err == nil {
 		for _, b := range bloqueios {
 			if b.DataBloqueio == dateStr {
-				// Dia totalmente bloqueado
-				return []domain.AgendaSlot{}, nil
+				if b.HoraInicio == nil || *b.HoraInicio == "" || b.HoraFim == nil || *b.HoraFim == "" {
+					diaBloqueadoTotalmente = true
+					break
+				} else {
+					bloqueiosParciais = append(bloqueiosParciais, b)
+				}
 			}
 		}
+	}
+
+	if diaBloqueadoTotalmente {
+		return []domain.AgendaSlot{}, nil
 	}
 
 	// 4. Verificar disponibilidade semanal
@@ -378,14 +331,31 @@ func (s *ClienteService) ObterAgendaBarbeiro(barbeiroID int, dataStr string, ser
 			// Check if it exceeds the working hours
 			available = false
 		} else {
-			// Check conflict with existing appointments using formula:
-			// newStart < existingEnd AND newEnd > existingStart
-			for _, existing := range agendamentos {
-				existingStart := existing.DataHora.In(saoPaulo)
-				existingEnd := existingStart.Add(time.Duration(existing.DuracaoMinutos) * time.Minute)
-				if currentSlot.Before(existingEnd) && slotEnd.After(existingStart) {
+			// Check conflict with partial blockings
+			for _, pb := range bloqueiosParciais {
+				var bhStart, bhMinStart, bhEnd, bhMinEnd int
+				fmt.Sscanf(*pb.HoraInicio, "%d:%d", &bhStart, &bhMinStart)
+				fmt.Sscanf(*pb.HoraFim, "%d:%d", &bhEnd, &bhMinEnd)
+				
+				blockStart := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), bhStart, bhMinStart, 0, 0, saoPaulo)
+				blockEnd := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), bhEnd, bhMinEnd, 0, 0, saoPaulo)
+				
+				if currentSlot.Before(blockEnd) && slotEnd.After(blockStart) {
 					available = false
 					break
+				}
+			}
+
+			if available {
+				// Check conflict with existing appointments using formula:
+				// newStart < existingEnd AND newEnd > existingStart
+				for _, existing := range agendamentos {
+					existingStart := existing.DataHora.In(saoPaulo)
+					existingEnd := existingStart.Add(time.Duration(existing.DuracaoMinutos) * time.Minute)
+					if currentSlot.Before(existingEnd) && slotEnd.After(existingStart) {
+						available = false
+						break
+					}
 				}
 			}
 		}
