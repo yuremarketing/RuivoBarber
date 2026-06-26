@@ -497,6 +497,18 @@ func main() {
 		log.Println("✅ Migração automática: tabelas de PDV e Fluxo Financeiro garantidas no banco")
 	}
 
+	// Migração automática para Bloqueio de Horários Parciais (Slot-Level Blocking)
+	_, err = db.Exec(`
+		ALTER TABLE BarbeiroBloqueios DROP CONSTRAINT IF EXISTS barbeirobloqueios_barbeiroid_databloqueio_key;
+		ALTER TABLE BarbeiroBloqueios ADD COLUMN IF NOT EXISTS horainicio TIME DEFAULT NULL;
+		ALTER TABLE BarbeiroBloqueios ADD COLUMN IF NOT EXISTS horafim TIME DEFAULT NULL;
+	`)
+	if err != nil {
+		log.Printf("[DB] Erro ao executar migração automática para Bloqueio de Horários Parciais: %v", err)
+	} else {
+		log.Println("✅ Migração automática: colunas de horários e drop de restrição em BarbeiroBloqueios concluídos")
+	}
+
     // Atualizar senha do admin se for o placeholder ou plain-text legado para permitir login seguro com bcrypt
 
     var adminCount int
@@ -539,7 +551,10 @@ func main() {
         }
     }
 
-    // Semeando as três novas contas fictícias da Task 34
+    // Se os usuários fictícios existirem com IDs errados, removemos para recriar com IDs fixos
+    db.Exec("DELETE FROM Usuarios WHERE Login IN ('admin_ruivo', 'barbeiro_ruivo', 'cliente_ruivo') AND ID NOT IN (997, 998, 999)")
+
+    // Semeando as três novas contas fictícias da Task 34 com IDs fixos para bater com o frontend
     // 1. Administrador Fictício
     var fAdminCount int
     err = db.QueryRow("SELECT COUNT(*) FROM Usuarios WHERE Login = 'admin_ruivo'").Scan(&fAdminCount)
@@ -547,7 +562,7 @@ func main() {
         log.Println("🌱 Semeando Administrador Fictício...")
         hashedBytes, err := bcrypt.GenerateFromPassword([]byte("RuivoAdmin123!"), bcrypt.DefaultCost)
         if err == nil {
-            _, err = db.Exec("INSERT INTO Usuarios (Nome, Cargo, Login, Senha) VALUES ($1, $2, $3, $4)", "Administrador Fictício", "Adm", "admin_ruivo", string(hashedBytes))
+            _, err = db.Exec("INSERT INTO Usuarios (ID, Nome, Cargo, Login, Senha) VALUES ($1, $2, $3, $4, $5)", 997, "Administrador Fictício", "Adm", "admin_ruivo", string(hashedBytes))
             if err != nil {
                 log.Printf("[SEED] Erro ao semear Administrador Fictício: %v", err)
             }
@@ -561,7 +576,7 @@ func main() {
         log.Println("🌱 Semeando Barbeiro Fictício...")
         hashedBytes, err := bcrypt.GenerateFromPassword([]byte("RuivoBarbeiro123!"), bcrypt.DefaultCost)
         if err == nil {
-            _, err = db.Exec("INSERT INTO Usuarios (Nome, Cargo, Login, Senha) VALUES ($1, $2, $3, $4)", "Barbeiro Fictício", "Barbeiro", "barbeiro_ruivo", string(hashedBytes))
+            _, err = db.Exec("INSERT INTO Usuarios (ID, Nome, Cargo, Login, Senha) VALUES ($1, $2, $3, $4, $5)", 998, "Barbeiro Fictício", "Barbeiro", "barbeiro_ruivo", string(hashedBytes))
             if err != nil {
                 log.Printf("[SEED] Erro ao semear Barbeiro Fictício: %v", err)
             }
@@ -575,7 +590,7 @@ func main() {
         log.Println("🌱 Semeando Cliente Fictício...")
         hashedBytes, err := bcrypt.GenerateFromPassword([]byte("RuivoCliente123!"), bcrypt.DefaultCost)
         if err == nil {
-            _, err = db.Exec("INSERT INTO Usuarios (Nome, Cargo, Login, Senha) VALUES ($1, $2, $3, $4)", "Cliente Fictício", "Cliente", "cliente_ruivo", string(hashedBytes))
+            _, err = db.Exec("INSERT INTO Usuarios (ID, Nome, Cargo, Login, Senha) VALUES ($1, $2, $3, $4, $5)", 999, "Cliente Fictício", "Cliente", "cliente_ruivo", string(hashedBytes))
             if err != nil {
                 log.Printf("[SEED] Erro ao semear Cliente Fictício: %v", err)
             } else {

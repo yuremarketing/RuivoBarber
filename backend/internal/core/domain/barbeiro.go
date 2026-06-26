@@ -18,9 +18,11 @@ type BarbeiroDisponibilidade struct {
 }
 
 type BarbeiroBloqueio struct {
-	ID           int    `json:"id"`
-	BarbeiroID   int    `json:"barbeiro_id"`
-	DataBloqueio string `json:"data_bloqueio"` // "YYYY-MM-DD"
-	Motivo       string `json:"motivo"`
+	ID           int     `json:"id"`
+	BarbeiroID   int     `json:"barbeiro_id"`
+	DataBloqueio string  `json:"data_bloqueio"` // "YYYY-MM-DD"
+	HoraInicio   *string `json:"hora_inicio"`   // "HH:MM" (opcional)
+	HoraFim      *string `json:"hora_fim"`      // "HH:MM" (opcional)
+	Motivo       string  `json:"motivo"`
 }
 
