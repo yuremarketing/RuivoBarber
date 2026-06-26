@@ -101,7 +101,7 @@ export const criarAgendamento = (barbeiroId, servicoId, dataHora) => api.post('/
 export const fetchDisponibilidadeBarbeiro = (barbeiroId) => api.get(`/barbeiros/${barbeiroId}/disponibilidade`)
 export const salvarDisponibilidadeBarbeiro = (barbeiroId, disps) => api.post(`/barbeiros/${barbeiroId}/disponibilidade`, disps)
 export const fetchBloqueiosBarbeiro = (barbeiroId) => api.get(`/barbeiros/${barbeiroId}/bloqueios`)
-export const adicionarBloqueioBarbeiro = (barbeiroId, data, horaInicio, horaFim, motivo) => api.post(`/barbeiros/${barbeiroId}/bloqueios`, { data, hora_inicio: horaInicio, hora_fim: horaFim, motivo })
+export const adicionarBloqueioBarbeiro = (barbeiroId, data, motivo) => api.post(`/barbeiros/${barbeiroId}/bloqueios`, { data, motivo })
 export const removerBloqueioBarbeiro = (barbeiroId, data) => api.delete(`/barbeiros/${barbeiroId}/bloqueios/${data}`)
 
 // Badges / Conquistas

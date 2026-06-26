@@ -887,130 +887,16 @@ func (r *ClientePgRepository) ListarAgendamentosDoBarbeiro(barbeiroID int, data 
 }
 
 func (r *ClientePgRepository) CriarAgendamento(clienteID, barbeiroID, servicoID int, dataHora time.Time) (int, error) {
-	ctx := context.Background()
-	tx, err := r.db.BeginTx(ctx, nil)
-	if err != nil {
-		return 0, err
-	}
-	defer tx.Rollback()
-
-	// 1. Lock do barbeiro na tabela de Usuários para garantir exclusividade atômica (Pessimistic Lock)
-	var barberExists int
-	err = tx.QueryRowContext(ctx, "SELECT id FROM Usuarios WHERE id = $1 FOR UPDATE", barbeiroID).Scan(&barberExists)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return 0, errors.New("barbeiro não encontrado")
-		}
-		return 0, err
-	}
-
-	// 2. Buscar serviço para obter duração
-	var duracaoMinutos int
-	err = tx.QueryRowContext(ctx, "SELECT duracaominutos FROM Servicos WHERE id = $1", servicoID).Scan(&duracaoMinutos)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return 0, errors.New("serviço não encontrado")
-		}
-		return 0, err
-	}
-
-	// 3. Verificar fuso horário (America/Sao_Paulo)
-	loc, err := time.LoadLocation("America/Sao_Paulo")
-	if err != nil {
-		loc = time.Local
-	}
-	dataHoraSaoPaulo := dataHora.In(loc)
-	dateStr := dataHoraSaoPaulo.Format("2006-01-02")
-
-	// 4. Verificar bloqueios pontuais (dia bloqueado/folga)
-	var isBlocked bool
-	err = tx.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM BarbeiroBloqueios WHERE barbeiroid = $1 AND databloqueio = $2)", barbeiroID, dateStr).Scan(&isBlocked)
-	if err != nil {
-		return 0, err
-	}
-	if isBlocked {
-		return 0, errors.New("o barbeiro não está disponível nesta data (dia bloqueado/folga)")
-	}
-
-	// 5. Verificar disponibilidade semanal (dia de trabalho e horários)
-	weekday := int(dataHoraSaoPaulo.Weekday())
-	var trabalha bool
-	var horaInicio, horaFim string
-	err = tx.QueryRowContext(ctx, `
-		SELECT trabalha, 
-		       to_char(COALESCE(horainicio, '09:00'::time), 'HH24:MI') as horainicio, 
-		       to_char(COALESCE(horafim, '19:00'::time), 'HH24:MI') as horafim
-		FROM BarbeiroDisponibilidade 
-		WHERE barbeiroid = $1 AND diasemana = $2
-	`, barbeiroID, weekday).Scan(&trabalha, &horaInicio, &horaFim)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			trabalha = false
-		} else {
-			return 0, err
-		}
-	}
-	if !trabalha {
-		return 0, errors.New("o barbeiro não trabalha neste dia da semana")
-	}
-
-	var startHour, startMin, endHour, endMin int
-	fmt.Sscanf(horaInicio, "%d:%d", &startHour, &startMin)
-	fmt.Sscanf(horaFim, "%d:%d", &endHour, &endMin)
-
-	workStart := time.Date(dataHoraSaoPaulo.Year(), dataHoraSaoPaulo.Month(), dataHoraSaoPaulo.Day(), startHour, startMin, 0, 0, loc)
-	workEnd := time.Date(dataHoraSaoPaulo.Year(), dataHoraSaoPaulo.Month(), dataHoraSaoPaulo.Day(), endHour, endMin, 0, 0, loc)
-
-	newStart := dataHoraSaoPaulo
-	newEnd := dataHoraSaoPaulo.Add(time.Duration(duracaoMinutos) * time.Minute)
-
-	if newStart.Before(workStart) || newEnd.After(workEnd) {
-		return 0, errors.New("horário escolhido está fora da jornada de trabalho do barbeiro")
-	}
-
-	// 6. Verificar conflito com agendamentos existentes (não cancelados)
-	rows, err := tx.QueryContext(ctx, `
-		SELECT a.datahora, s.duracaominutos 
-		FROM Agendamentos a
-		JOIN Servicos s ON a.servicoid = s.id
-		WHERE a.barbeiroid = $1 AND CAST(a.datahora AS DATE) = $2 AND a.status != 'Cancelado'
-	`, barbeiroID, dateStr)
-	if err != nil {
-		return 0, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var existingStart time.Time
-		var existingDuracao int
-		if err := rows.Scan(&existingStart, &existingDuracao); err != nil {
-			return 0, err
-		}
-		exStart := existingStart.In(loc)
-		exEnd := exStart.Add(time.Duration(existingDuracao) * time.Minute)
-
-		if newStart.Before(exEnd) && newEnd.After(exStart) {
-			return 0, errors.New("conflito de horário: este barbeiro já possui um agendamento neste período")
-		}
-	}
-
-	// 7. Inserir o agendamento
-	var id int
-	queryInsert := `
+	query := `
 		INSERT INTO Agendamentos (clienteid, barbeiroid, servicoid, datahora, status)
 		VALUES ($1, $2, $3, $4, 'Pendente')
 		RETURNING id
 	`
-	err = tx.QueryRowContext(ctx, queryInsert, clienteID, barbeiroID, servicoID, dataHoraSaoPaulo).Scan(&id)
+	var id int
+	err := r.db.QueryRow(query, clienteID, barbeiroID, servicoID, dataHora).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
-
-	err = tx.Commit()
-	if err != nil {
-		return 0, err
-	}
-
 	return id, nil
 }
 
@@ -1397,13 +1283,10 @@ func (r *ClientePgRepository) SalvarDisponibilidadeBarbeiro(barbeiroID int, disp
 
 func (r *ClientePgRepository) ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.BarbeiroBloqueio, error) {
 	query := `
-		SELECT id, barbeiroid, to_char(databloqueio, 'YYYY-MM-DD') as databloqueio, 
-		       to_char(horainicio, 'HH24:MI') as horainicio, 
-		       to_char(horafim, 'HH24:MI') as horafim,
-		       COALESCE(motivo, '') as motivo
+		SELECT id, barbeiroid, to_char(databloqueio, 'YYYY-MM-DD') as databloqueio, COALESCE(motivo, '') as motivo
 		FROM BarbeiroBloqueios
 		WHERE barbeiroid = $1
-		ORDER BY databloqueio, horainicio
+		ORDER BY databloqueio
 	`
 	rows, err := r.db.Query(query, barbeiroID)
 	if err != nil {
@@ -1414,7 +1297,7 @@ func (r *ClientePgRepository) ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.B
 	var bloqueios []domain.BarbeiroBloqueio
 	for rows.Next() {
 		var b domain.BarbeiroBloqueio
-		err := rows.Scan(&b.ID, &b.BarbeiroID, &b.DataBloqueio, &b.HoraInicio, &b.HoraFim, &b.Motivo)
+		err := rows.Scan(&b.ID, &b.BarbeiroID, &b.DataBloqueio, &b.Motivo)
 		if err != nil {
 			return nil, err
 		}
@@ -1423,12 +1306,14 @@ func (r *ClientePgRepository) ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.B
 	return bloqueios, nil
 }
 
-func (r *ClientePgRepository) AdicionarBloqueioBarbeiro(barbeiroID int, data string, horaInicio string, horaFim string, motivo string) error {
+func (r *ClientePgRepository) AdicionarBloqueioBarbeiro(barbeiroID int, data string, motivo string) error {
 	query := `
-		INSERT INTO BarbeiroBloqueios (barbeiroid, databloqueio, horainicio, horafim, motivo)
-		VALUES ($1, $2::date, NULLIF($3, '')::time, NULLIF($4, '')::time, $5)
+		INSERT INTO BarbeiroBloqueios (barbeiroid, databloqueio, motivo)
+		VALUES ($1, $2::date, $3)
+		ON CONFLICT (barbeiroid, databloqueio) 
+		DO UPDATE SET motivo = EXCLUDED.motivo
 	`
-	_, err := r.db.Exec(query, barbeiroID, data, horaInicio, horaFim, motivo)
+	_, err := r.db.Exec(query, barbeiroID, data, motivo)
 	return err
 }
 
