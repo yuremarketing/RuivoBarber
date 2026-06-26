@@ -158,24 +158,3 @@ Para atender a requisitos de alta escalabilidade, manutenibilidade e segurança,
     *   Garantir integridade referencial nas tabelas e exclusão em cascata condizente em caso de exclusão/pseudonimização de usuários (LGPD).
 *   **Critérios de Aceitação (Baseados no Impacto de Negócio)**:
     *   *Preparação para Inteligência Artificial*: Base de dados estruturada e enriquecida no padrão clássico de datasets para treinar algoritmos locais de machine learning. Isso prepara a arquitetura para plugar modelos preditivos de detecção de No-Show no futuro, auxiliando o negócio a tomar decisões proativas de confirmação de horários de alto risco.
-
----
-
-### [Task #28 (#69)] Bloqueio e Liberação de Horários Específicos do Barbeiro (Slot-Level Blocking)
-*   **Componente**: Backend & Frontend / Gestão de Horários
-*   **Status**: ⏳ Pendente
-*   **Descrição Técnica Detalhada**:
-    *   **Banco de Dados**: Alterar a tabela `BarbeiroBloqueios` para adicionar `HoraInicio TIME NULL` e `HoraFim TIME NULL`. Dropar a constraint única `UNIQUE(BarbeiroID, DataBloqueio)`.
-    *   **Backend**: 
-        *   Atualizar a estrutura e o scanner SQL do repositório para suportar os novos campos de hora nulos.
-        *   Adaptar o algoritmo `ObterAgendaBarbeiro` para que, se houver um bloqueio com horas definidas (ex: `12:00` a `13:30`), ele invalide apenas os slots de 30 minutos contidos nesse intervalo, mantendo os outros horários do dia como livres.
-        *   Caso `HoraInicio` e `HoraFim` sejam nulos, manter o comportamento de bloquear o dia completo (retrocompatibilidade).
-    *   **Frontend**:
-        *   Atualizar a tela `AgendaConfigPage.jsx` para incluir campos opcionais de hora de início e fim ao cadastrar um bloqueio.
-        *   Exibir de forma clara as faixas de horário bloqueadas na lista de bloqueios ativos.
-*   **Mecanismos de Segurança & Integridade**:
-    *   Validação no backend para garantir que `HoraInicio` seja anterior a `HoraFim`.
-    *   Validar conflito de intervalos ao criar novos bloqueios.
-*   **Critérios de Aceitação (Baseados no Impacto de Negócio)**:
-    *   *Flexibilidade de Escala*: Permitir que barbeiros agendem reuniões, intervalos de almoço ou folgas pontuais sem precisar inutilizar o dia inteiro de trabalho.
-    *   *Precisão de Oferta*: O cliente só conseguirá agendar em slots onde o profissional de fato não esteja em horário de intervalo/bloqueio.

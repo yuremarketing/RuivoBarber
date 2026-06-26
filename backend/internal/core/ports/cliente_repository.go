@@ -34,7 +34,7 @@ type ClienteRepository interface {
 	ObterDisponibilidadeBarbeiro(barbeiroID int) ([]domain.BarbeiroDisponibilidade, error)
 	SalvarDisponibilidadeBarbeiro(barbeiroID int, disps []domain.BarbeiroDisponibilidade) error
 	ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.BarbeiroBloqueio, error)
-	AdicionarBloqueioBarbeiro(barbeiroID int, data string, horaInicio string, horaFim string, motivo string) error
+	AdicionarBloqueioBarbeiro(barbeiroID int, data string, motivo string) error
 	RemoverBloqueioBarbeiro(barbeiroID int, data string) error
 	SalvarChavePixBarbeiro(barbeiroID int, chavePix string) error
 	CriarGorjeta(g *domain.Gorjeta) (int, error)

@@ -181,19 +181,16 @@ export default function LoginPage() {
     }
     
     if (cargo === 'Cliente') {
-      mockUser.id = 999
       mockUser.nome = 'Cliente Fictício'
       mockUser.login = 'cliente_ruivo'
       mockUser.xp = 120
       mockUser.nivel = 'Corte Iniciante'
     } else if (cargo === 'Barbeiro') {
-      mockUser.id = 998
       mockUser.nome = 'Barbeiro Fictício'
       mockUser.login = 'barbeiro_ruivo'
       mockUser.xp = 0
       mockUser.nivel = '-'
     } else {
-      mockUser.id = 997
       mockUser.nome = 'Administrador Fictício'
       mockUser.login = 'admin_ruivo'
       mockUser.xp = 999
@@ -202,7 +199,7 @@ export default function LoginPage() {
 
     const mockData = {
       user: mockUser,
-      token: `mocked_jwt_token_for_testing:${mockUser.id}:${mockUser.cargo}:${encodeURIComponent(mockUser.nome)}`
+      token: "mocked_jwt_token_for_testing"
     }
 
     setTimeout(() => {
