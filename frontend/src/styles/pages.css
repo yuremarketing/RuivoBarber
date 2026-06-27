@@ -1,0 +1,24 @@
+/* ── Login Page ─── */
+.login-page {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: var(--bg-body); position: relative; overflow: hidden;
+}
+.login-page::before {
+  content: ''; position: absolute; width: 600px; height: 600px;
+  background: radial-gradient(circle, var(--accent-glow), transparent 70%); top: -200px; right: -200px; pointer-events: none;
+}
+.login-page::after {
+  content: ''; position: absolute; width: 400px; height: 400px;
+  background: radial-gradient(circle, var(--gold-glow), transparent 70%); bottom: -150px; left: -100px; pointer-events: none;
+}
+.login-card {
+  background: rgba(var(--bg-card-rgb), 0.8); backdrop-filter: blur(20px); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 2.5rem; width: 100%; max-width: 420px;
+  box-shadow: var(--shadow); position: relative; z-index: 1;
+}
+.login-brand { text-align: center; margin-bottom: 2rem; }
+.login-brand .logo { font-size: 2.5rem; margin-bottom: 0.5rem; }
+.login-brand h1 { font-size: 1.8rem; font-weight: 800; color: var(--accent); }
+.login-brand p { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem; }
+.login-card .btn-primary { width: 100%; padding: 0.85rem; font-size: 0.95rem; justify-content: center; margin-top: 0.5rem; }
+ 

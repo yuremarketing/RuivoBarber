@@ -1,0 +1,107 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Inter:wght@400;500;600;700&display=swap');
+
+/* ============================================================
+   RuivoBarber — Design System (Dota 2 Theme Refactored)
+   ============================================================ */
+
+:root {
+  --bg-body: #0a0d13;
+  --bg-sidebar: #0f121a;
+  --bg-card: #161a24;
+  --bg-card-hover: #1f2430;
+  --bg-input: #090c12;
+  --bg-overlay: rgba(10, 13, 19, 0.8);
+  
+  /* Accent: Dota 2 Fire/Crimson */
+  --accent-rgb: 191, 42, 42;
+  --accent: rgb(var(--accent-rgb));
+  --accent-hover: rgb(217, 54, 54);
+  --accent-glow: rgba(var(--accent-rgb), 0.3);
+  
+  /* Gold: Dota 2 Ancient Gold */
+  --gold-rgb: 212, 178, 111;
+  --gold: rgb(var(--gold-rgb));
+  --gold-hover: rgb(235, 205, 143);
+  --gold-glow: rgba(var(--gold-rgb), 0.3);
+  
+  /* UI Colors */
+  --green: #2ecc71;
+  --blue: #3498db;
+  --red: #e74c3c;
+  --orange: #e67e22;
+  
+  /* Text */
+  --text-primary: #f0f0f5;
+  --text-secondary: #8f98a5;
+  --text-muted: #596780;
+  
+  /* Borders */
+  --border: #2b3240;
+  --border-accent: rgb(var(--accent-rgb));
+  --border-gold: #a38c5d;
+  
+  /* Layout & Sizing */
+  --sidebar-w: 260px;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-xs: 6px;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Opacity variables for styling and gradients */
+  --accent-4: rgba(var(--accent-rgb), 0.04);
+  --accent-8: rgba(var(--accent-rgb), 0.08);
+  --accent-15: rgba(var(--accent-rgb), 0.15);
+  --accent-30: rgba(var(--accent-rgb), 0.30);
+  --accent-40: rgba(var(--accent-rgb), 0.40);
+  --accent-60: rgba(var(--accent-rgb), 0.60);
+  --accent-80: rgba(var(--accent-rgb), 0.80);
+  --accent-90: rgba(var(--accent-rgb), 0.90);
+  
+  --gold-15: rgba(var(--gold-rgb), 0.15);
+  --gold-25: rgba(var(--gold-rgb), 0.25);
+  
+  --bg-card-rgb: 22, 26, 36;
+  
+  /* Fonts */
+  --font-display: 'Cinzel', Georgia, serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-body);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+a { color: inherit; text-decoration: none; }
+
+
+/* ── Animations ─── */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+@keyframes fadeInUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.fade-in-up { animation: fadeInUp 0.4s ease forwards; }
+
+/* ── Scrollbar ─── */
+:root {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) var(--bg-body);
+}
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-body); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+}

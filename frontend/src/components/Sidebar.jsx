@@ -95,13 +95,11 @@ export default function Sidebar() {
       </nav>
       <div className="sidebar-footer">
         <div className="sidebar-user">
-          <div className="sidebar-avatar" style={{
-            background: user.cargo === 'Cliente' ? 'linear-gradient(135deg, var(--gold), #ffd700)' : 'linear-gradient(135deg, var(--accent), var(--gold))'
-          }}>
+          <div className={`sidebar-avatar ${user.cargo === 'Cliente' ? 'avatar-client' : 'avatar-staff'}`}>
             {iniciais}
           </div>
           <div className="sidebar-user-info">
-            <div className="name" style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '120px' }}>
+            <div className="name">
               {user.nome}
             </div>
             <div className="role">{user.cargo === 'Cliente' ? `Nível: ${user.nivel || 'Cliente'}` : user.cargo}</div>
