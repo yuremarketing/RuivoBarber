@@ -518,8 +518,8 @@ export default function AgendamentosPage() {
 
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
+          <div className="modal" style={isClient ? { height: '650px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' } : {}} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={isClient ? { flexShrink: 0 } : {}}>
               <h3>📅 Novo Agendamento</h3>
               <button className="btn-ghost" onClick={() => setShowModal(false)}>✕</button>
             </div>

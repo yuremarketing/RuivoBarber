@@ -303,7 +303,14 @@ export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess 
   }
 
   return (
-    <div style={{ padding: '0.5rem 0' }}>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      flex: 1,
+      minHeight: 0,
+      justifyContent: 'space-between',
+      padding: '0.5rem 0'
+    }}>
       {/* Indicador de Etapas */}
       <div style={{
         display: 'flex',
@@ -313,7 +320,8 @@ export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess 
         padding: '0.75rem',
         backgroundColor: 'rgba(255, 255, 255, 0.02)',
         borderRadius: '12px',
-        border: '1px solid rgba(255, 255, 255, 0.05)'
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        flexShrink: 0
       }}>
         {[
           { num: 1, label: 'Serviço' },
@@ -363,7 +371,7 @@ export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess 
       )}
 
       {/* Conteúdo das Etapas */}
-      <div style={{ minHeight: '300px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', paddingRight: '6px', minHeight: '300px', marginBottom: '1rem' }}>
         
         {/* ETAPA 1: SELECIONAR SERVIÇO */}
         {step === 1 && (
@@ -680,9 +688,10 @@ export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess 
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
-        marginTop: '2rem',
+        marginTop: '1rem',
         borderTop: '1px solid rgba(255,255,255,0.05)',
-        paddingTop: '1rem'
+        paddingTop: '1rem',
+        flexShrink: 0
       }}>
         <button
           type="button"
