@@ -440,7 +440,7 @@ export default function AgendamentosPage() {
 
       {error && <div className="banner error">{error}</div>}
 
-      <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+      <div className="stats-grid agendamentos-stats-grid">
         {[{ s: 'Pendente', v: getCount('Pendente'), i: '⏳' },
           { s: 'Confirmado', v: getCount('Confirmado'), i: '✅' },
           { s: 'Concluido', v: getCount('Concluido'), i: '🏁' },
@@ -453,7 +453,7 @@ export default function AgendamentosPage() {
         ))}
       </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+      <div className="agendamentos-filters">
         {statuses.map(s => (
           <button key={s} className={`btn ${filtroStatus === s ? 'btn-primary' : 'btn-secondary'} btn-sm`}
             onClick={() => setFiltroStatus(s)}>{s}</button>
@@ -462,9 +462,9 @@ export default function AgendamentosPage() {
 
       <div className="card">
         {loading ? (
-          <p style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>A carregar agendamentos...</p>
+          <p className="agendamentos-empty">A carregar agendamentos...</p>
         ) : filtered.length === 0 ? (
-          <p style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Nenhum agendamento encontrado.</p>
+          <p className="agendamentos-empty">Nenhum agendamento encontrado.</p>
         ) : (
           <div className="table-container">
             <table className="data-table">
@@ -473,11 +473,11 @@ export default function AgendamentosPage() {
                 {filtered.map(a => (
                   <tr key={a.id}>
                     <td style={{ color: 'var(--text-muted)' }}>#{a.id}</td>
-                    <td style={{ fontWeight: 600 }}>{a.cliente_nome || `Cliente #${a.cliente_id}`}</td>
+                    <td className="agendamentos-table-strong">{a.cliente_nome || `Cliente #${a.cliente_id}`}</td>
                     <td>{a.barbeiro_nome || `Barbeiro #${a.barbeiro_id}`}</td>
                     <td>{a.servico_nome || `Serviço #${a.servico_id}`}</td>
                     <td>{new Date(a.data_hora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
-                    <td style={{ fontWeight: 600 }}>R$ {a.preco ? a.preco.toFixed(2) : '35.00'}</td>
+                    <td className="agendamentos-table-strong">R$ {a.preco ? a.preco.toFixed(2) : '35.00'}</td>
                     <td><span className={`badge badge-${a.status.toLowerCase()}`}>{a.status}</span></td>
                     <td>
                       {!isClient && a.status === 'Pendente' && (

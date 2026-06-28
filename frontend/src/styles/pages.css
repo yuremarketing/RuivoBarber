@@ -61,3 +61,12 @@
 .dashboard-rule-card { background: rgba(255,255,255,0.02); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border); }
 .dashboard-rule-title { display: block; margin-bottom: 0.25rem; font-weight: bold; }
 .dashboard-rule-desc { font-size: 0.82rem; color: var(--text-secondary); } 
+
+/* ── Agendamentos Page ─── */
+.agendamentos-stats-grid { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 768px) {
+  .agendamentos-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.agendamentos-filters { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.agendamentos-empty { padding: 2rem; text-align: center; color: var(--text-muted); }
+.agendamentos-table-strong { font-weight: 600; }
