@@ -155,6 +155,7 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 - [x] [Fame] Task 57: Galeria Histórica de Lendários (Hall of Fame)
 
 ### 🎨 UX (Experiência, Animações e Mídias)
+- [x] [UX-Themes] Task 70: Implementação de Sistema de Temas com Popover e Hover Preview (Dark, Light, Royal, Frostbite, Forest, Bloodmoon, Mystic)
 - [ ] [UX-Audio] Task 55: Efeitos Sonoros e Efeitos Visuais de Level Up no Frontend
   - [ ] Frontend: Integrar transições com sons arcade e confetes ao subir de nível ou resgatar cupons.
 

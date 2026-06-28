@@ -12,10 +12,10 @@
   --bg-input: #090c12;
   --bg-overlay: rgba(10, 13, 19, 0.8);
   
-  /* Accent: Dota 2 Fire/Crimson */
-  --accent-rgb: 191, 42, 42;
+  /* Accent: Dota 2 Fire/Crimson (Lightened for a11y) */
+  --accent-rgb: 225, 75, 75;
   --accent: rgb(var(--accent-rgb));
-  --accent-hover: rgb(217, 54, 54);
+  --accent-hover: rgb(240, 90, 90);
   --accent-glow: rgba(var(--accent-rgb), 0.3);
   
   /* Gold: Dota 2 Ancient Gold */
@@ -27,16 +27,17 @@
   /* UI Colors */
   --green: #2ecc71;
   --blue: #3498db;
-  --red: #e74c3c;
+  --red: #ff6b6b;
   --orange: #e67e22;
   
   /* Text */
   --text-primary: #f0f0f5;
-  --text-secondary: #8f98a5;
-  --text-muted: #596780;
+  --text-secondary: #9ba8b8;
+  --text-muted: #7383a1;
   
   /* Borders */
   --border: #2b3240;
+  --border-subtle: rgba(255, 255, 255, 0.03);
   --border-accent: rgb(var(--accent-rgb));
   --border-gold: #a38c5d;
   
@@ -91,8 +92,8 @@ a { color: inherit; text-decoration: none; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-@keyframes fadeInUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-.fade-in-up { animation: fadeInUp 0.4s ease forwards; }
+@keyframes fadeInUp { from { transform: translateY(10px); opacity: 0.5; } to { transform: translateY(0); opacity: 1; } }
+.fade-in-up { animation: fadeInUp 0.25s ease-out forwards; }
 
 /* ── Scrollbar ─── */
 :root {
@@ -104,4 +105,149 @@ a { color: inherit; text-decoration: none; }
   ::-webkit-scrollbar-track { background: var(--bg-body); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+}
+
+/* ── Light Theme ─── */
+.light-theme {
+  --bg-body: #f4f5f7;
+  --bg-sidebar: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --bg-input: #ffffff;
+  --bg-overlay: rgba(255, 255, 255, 0.8);
+  
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  
+  --border: #e2e8f0;
+  --border-subtle: rgba(0, 0, 0, 0.05);
+  --border-accent: #dc2626;
+  --border-gold: #b8860b;
+  
+  /* Slightly darker accent for better contrast on white */
+  --accent-rgb: 220, 38, 38;
+  --gold-rgb: 184, 134, 11;
+  --bg-card-rgb: 255, 255, 255;
+  
+  /* Ensure shadows look softer on light theme */
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+/* ── Royal Prestige Theme ─── */
+.royal-theme {
+  --bg-body: #0a0514;
+  --bg-sidebar: #10081e;
+  --bg-card: #170d2b;
+  --bg-card-hover: #1f113a;
+  --bg-input: #0a0514;
+  --bg-overlay: rgba(10, 5, 20, 0.8);
+  
+  --text-primary: #f0e6ff;
+  --text-secondary: #b3a1cc;
+  --text-muted: #837199;
+  
+  --border: #2d1b4e;
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  --border-accent: #ffd700;
+  --border-gold: #b8860b;
+  
+  /* Rich Gold Accent */
+  --accent-rgb: 255, 215, 0;
+  --gold-rgb: 218, 165, 32;
+  
+  --bg-card-rgb: 23, 13, 43;
+}
+
+/* ── Frostbite Theme ─── */
+.frostbite-theme {
+  --bg-body: #050a14;
+  --bg-sidebar: #081020;
+  --bg-card: #0d162b;
+  --bg-card-hover: #141f3b;
+  --bg-input: #050a14;
+  --bg-overlay: rgba(5, 10, 20, 0.8);
+  
+  --text-primary: #e6f0ff;
+  --text-secondary: #a1b8cc;
+  --text-muted: #738a99;
+  
+  --border: #1b2840;
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  --border-accent: #00e5ff;
+  --border-gold: #c0c0c0;
+  
+  --accent-rgb: 0, 229, 255;
+  --gold-rgb: 192, 192, 192;
+  --bg-card-rgb: 13, 22, 43;
+}
+
+/* ── Radiant Forest Theme ─── */
+.forest-theme {
+  --bg-body: #06120b;
+  --bg-sidebar: #091a10;
+  --bg-card: #0d2115;
+  --bg-card-hover: #142e1d;
+  --bg-input: #06120b;
+  --bg-overlay: rgba(6, 18, 11, 0.8);
+  
+  --text-primary: #e8f5e9;
+  --text-secondary: #a5cbb0;
+  --text-muted: #7a9c84;
+  
+  --border: #1a3824;
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  --border-accent: #2ecc71;
+  --border-gold: #ffd700;
+  
+  --accent-rgb: 46, 204, 113;
+  --gold-rgb: 255, 215, 0;
+  --bg-card-rgb: 13, 33, 21;
+}
+
+/* ── Blood Moon Theme ─── */
+.bloodmoon-theme {
+  --bg-body: #000000;
+  --bg-sidebar: #050000;
+  --bg-card: #0a0000;
+  --bg-card-hover: #140000;
+  --bg-input: #000000;
+  --bg-overlay: rgba(0, 0, 0, 0.9);
+  
+  --text-primary: #ffebf0;
+  --text-secondary: #cc8b99;
+  --text-muted: #995c6a;
+  
+  --border: #330000;
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-accent: #ff003c;
+  --border-gold: #990024;
+  
+  --accent-rgb: 255, 0, 60;
+  --gold-rgb: 153, 0, 36;
+  --bg-card-rgb: 10, 0, 0;
+}
+
+/* ── Mystic Faerie Theme (Feminino) ─── */
+.mystic-theme {
+  --bg-body: #fae6e9;
+  --bg-sidebar: #f3d4db;
+  --bg-card: #fff6f8;
+  --bg-card-hover: #faecef;
+  --bg-input: #fae6e9;
+  --bg-overlay: rgba(250, 230, 233, 0.8);
+  
+  --text-primary: #5c3546;
+  --text-secondary: #87596d;
+  --text-muted: #a67c8f;
+  
+  --border: #e8c3cd;
+  --border-subtle: rgba(232, 195, 205, 0.3);
+  --border-accent: #d76c8c;
+  --border-gold: #e8a0b7;
+  
+  /* Creamy Pink / Rose Accent */
+  --accent-rgb: 215, 108, 140;
+  --gold-rgb: 232, 160, 183;
+  --bg-card-rgb: 255, 246, 248;
 }

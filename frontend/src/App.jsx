@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Sidebar from './components/Sidebar.jsx'
 import AiChatWidget from './components/AiChatWidget.jsx'
@@ -23,10 +23,32 @@ import LojaPage from './pages/LojaPage.jsx'
 export default function App() {
   const location = useLocation()
   const isLogin = location.pathname === '/login'
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('theme') || 'dark'
+  })
+  const [previewTheme, setPreviewTheme] = useState(null)
+
+  useEffect(() => {
+    const allThemes = ['light', 'royal', 'frostbite', 'forest', 'bloodmoon', 'mystic']
+    document.body.classList.remove(...allThemes.map(t => `${t}-theme`))
+    
+    const activeTheme = previewTheme || theme
+    if (activeTheme !== 'dark') {
+      document.body.classList.add(`${activeTheme}-theme`)
+    }
+    localStorage.setItem('theme', theme)
+  }, [theme, previewTheme])
 
   return (
-    <div className="app">
-      {!isLogin && <Sidebar />}
+    <div className={`app ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      {!isLogin && <Sidebar 
+        collapsed={sidebarCollapsed} 
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} 
+        theme={theme}
+        onSetTheme={setTheme}
+        onPreviewTheme={setPreviewTheme}
+      />}
       <main className={isLogin ? 'main-full' : 'main-content'}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
