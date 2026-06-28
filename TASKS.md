@@ -159,8 +159,12 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 - [ ] [UX-Audio] Task 55: Efeitos Sonoros e Efeitos Visuais de Level Up no Frontend
   - [ ] Frontend: Integrar transições com sons arcade e confetes ao subir de nível ou resgatar cupons.
 
+### 🛡️ Auditoria do Admin (Tasks Geradas)
+- [ ] [Admin-Dashboard] Task 71: Criar rota backend `/api/v1/dashboard` e integrar no `DashboardPage.jsx` para remover os mocks de KPIs e Agendamentos.
+- [ ] [Admin-Agenda] Task 72: Revisar os contrastes das labels de Status (Concluído, Falta, Pendente) nos novos temas dinâmicos (AgendamentosPage).
+- [ ] [Admin-Users] Task 73: Revisar listagem de Clientes e Barbeiros, garantindo edição completa e responsividade de tabelas.
+- [ ] [Admin-Finance] Task 74: Fluxo de Abertura/Fechamento de Caixa e validação de relatórios com os dados recém semeados.
+
 ### 🚀 DevOps / Infraestrutura (CI/CD)
 - [ ] [DevOps] Task 60: Implantação do Harness.io (CI/CD)
-
-
 
