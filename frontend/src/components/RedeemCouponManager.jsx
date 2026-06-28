@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { resgatarCupom } from '../services/api.js'
 
 const rewards = [
-  { id: 2, name: 'Barba de Respeito', cost: 300, benefit: '5% de Desconto', icon: '🛡️' },
+  { id: 2, name: 'Barba de Respeito', cost: 300, benefit: '5% de Desconto', icon: '' },
   { id: 3, name: 'Lenda da Navalha', cost: 600, benefit: '10% de Desconto', icon: '⚡' },
   { id: 4, name: 'Rei da Cadeira', cost: 1000, benefit: '1 Corte Grátis', icon: '👑' }
 ]
@@ -46,7 +46,7 @@ function RedeemCouponManager({ clienteId, xpAtual = 0, onRedeemSuccess }) {
   return (
     <div style={{ width: '100%', marginTop: '1.25rem' }}>
       <h3 style={{ color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem', textAlign: 'left' }}>
-        ⚔️ Recompensas RPG Disponíveis
+        Recompensas RPG Disponíveis
       </h3>
 
       {error && (
@@ -111,7 +111,7 @@ function RedeemCouponManager({ clienteId, xpAtual = 0, onRedeemSuccess }) {
                     onClick={() => handleRedeem(r.id)}
                     style={{ padding: '0.4rem 0.85rem' }}
                   >
-                    {isRedeeming ? '⏳...' : 'Resgatar'}
+                    {isRedeeming ? '...' : 'Resgatar'}
                   </button>
                 ) : (
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>

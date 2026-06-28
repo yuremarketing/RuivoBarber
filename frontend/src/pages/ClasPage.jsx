@@ -239,7 +239,7 @@ export default function ClasPage() {
             {/* Create Clan */}
             <div className="card">
               <div className="card-header" style={{ marginBottom: '1rem' }}>
-                <h3>⚔️ Fundar Nova Guilda</h3>
+                <h3>Fundar Nova Guilda</h3>
               </div>
               <form onSubmit={handleCriarCla} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div className="form-group">
@@ -266,7 +266,7 @@ export default function ClasPage() {
                   />
                 </div>
                 <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-end' }} disabled={loading}>
-                  🛡️ Fundar Clã
+                  Fundar Clã
                 </button>
               </form>
             </div>
@@ -330,7 +330,7 @@ export default function ClasPage() {
           {/* Right Column: Leaderboard / List */}
           <div className="card">
             <div className="card-header" style={{ marginBottom: '1rem' }}>
-              <h3>🏆 Ranking de Guildas</h3>
+              <h3>Ranking de Guildas</h3>
             </div>
             
             {ranking.length === 0 ? (
@@ -413,7 +413,7 @@ export default function ClasPage() {
       >
         <div>
           <span className="rpg-level-badge" style={{ fontSize: '0.8rem', padding: '0.25rem 0.6rem', background: 'var(--gold)', color: '#000', fontWeight: 'bold' }}>
-            🛡️ GUILDA NÍVEL {meuCla.nivelAtual}
+            GUILDA NÍVEL {meuCla.nivelAtual}
           </span>
           <h2 style={{ marginTop: '0.5rem', color: '#fff', fontSize: '1.75rem' }}>{meuCla.nome}</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.25rem', italic: 'true' }}>
@@ -445,9 +445,9 @@ export default function ClasPage() {
       {/* Tabs Menu */}
       <div className="tab-menu" style={{ display: 'flex', borderBottom: '1px solid var(--border)', gap: '1rem', marginBottom: '1.5rem' }}>
         {[
-          { id: 'painel', label: '⚔️ Painel do Clã' },
+          { id: 'painel', label: 'Painel do Clã' },
           { id: 'mural', label: '📜 Mural de Recados' },
-          { id: 'ranking', label: '🏆 Leaderboard' }
+          { id: 'ranking', label: 'Leaderboard' }
         ].map(tab => (
           <button
             key={tab.id}
@@ -475,7 +475,7 @@ export default function ClasPage() {
           {/* Members list */}
           <div className="card">
             <div className="card-header" style={{ marginBottom: '1.25rem' }}>
-              <h3>👥 Guerreiros do Clã</h3>
+              <h3>Guerreiros do Clã</h3>
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -608,7 +608,7 @@ export default function ClasPage() {
           {/* Quests list */}
           <div className="card">
             <div className="card-header" style={{ marginBottom: '1.25rem' }}>
-              <h3>⏳ Missões Semanais da Guilda</h3>
+              <h3>Missões Semanais da Guilda</h3>
             </div>
 
             {missoes.length === 0 ? (
@@ -743,7 +743,7 @@ export default function ClasPage() {
       {activeTab === 'ranking' && (
         <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>
           <div className="card-header" style={{ marginBottom: '1.25rem' }}>
-            <h3>🏆 Classificação Geral das Guildas</h3>
+            <h3>Classificação Geral das Guildas</h3>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>

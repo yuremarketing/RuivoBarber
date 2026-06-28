@@ -12,6 +12,7 @@ type ClienteRepository interface {
 	GetPasswordHashByLogin(login string) (string, error)
 	Save(c *domain.Cliente, hashedSenha string) error
 	Update(c *domain.Cliente, hashedSenha string) error
+	Delete(id int) error
 	ConcluirAtendimento(agendamentoID int) (*NotificationEvent, error)
 	ObterAgendamentoPorID(id int) (*domain.Agendamento, error)
 	RegistrarFalta(agendamentoID int) error

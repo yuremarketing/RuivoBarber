@@ -29,7 +29,7 @@ function PlayerCard({
       case 'Lenda da Navalha':
         return { frameClass: 'frame-gold', crown: false, color: 'var(--gold)', badgeEmoji: '⚡' }
       case 'Barba de Respeito':
-        return { frameClass: 'frame-silver', crown: false, color: '#a0a0b8', badgeEmoji: '🛡️' }
+        return { frameClass: 'frame-silver', crown: false, color: '#a0a0b8', badgeEmoji: '' }
       default:
         return { frameClass: 'frame-bronze', crown: false, color: '#8a5a36', badgeEmoji: '🪵' }
     }

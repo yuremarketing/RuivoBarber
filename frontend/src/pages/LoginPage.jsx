@@ -214,7 +214,7 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-card fade-in-up">
         <div className="login-brand">
-          <div className="logo" style={{ fontSize: '3rem', textShadow: '0 0 10px rgba(233,69,96,0.5)' }}>✂️</div>
+          <div className="logo" style={{ fontSize: '3rem', textShadow: '0 0 10px rgba(233,69,96,0.5)' }}></div>
           <h1 style={{ background: 'linear-gradient(90deg, #e94560, #f5a623)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 800 }}>RuivoBarber</h1>
           <p>Sistema de Gestão com Gamificação RPG</p>
         </div>
@@ -268,7 +268,7 @@ export default function LoginPage() {
               <select className="form-input" value={cargo} onChange={e => setCargo(e.target.value)}>
                 <option value="Cliente">👤 Cliente</option>
                 <option value="Barbeiro">💈 Barbeiro</option>
-                <option value="Adm">🛡️ Administrador</option>
+                <option value="Adm">Administrador</option>
               </select>
             </div>
             <div className="form-group">
@@ -294,7 +294,7 @@ export default function LoginPage() {
               />
             </div>
             <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.8rem' }} disabled={loading}>
-              {loading ? '⏳ Entrando...' : '🔐 Entrar no Sistema'}
+              {loading ? 'Entrando...' : 'Entrar no Sistema'}
             </button>
             {showTestButton && (
               <button 
@@ -357,7 +357,7 @@ export default function LoginPage() {
               />
             </div>
             <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.8rem' }} disabled={loading}>
-              {loading ? '⏳ Cadastrando...' : '🚀 Criar Minha Conta'}
+              {loading ? 'Cadastrando...' : 'Criar Minha Conta'}
             </button>
           </form>
         )}

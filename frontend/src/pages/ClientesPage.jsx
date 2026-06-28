@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { listarClientes, cadastrarCliente } from '../services/api.js'
+import { listarClientes, cadastrarCliente, atualizarPerfil, deletarCliente } from '../services/api.js'
 import PlayerCard from '../components/PlayerCard.jsx'
 import RpgProgressBar from '../components/RpgProgressBar.jsx'
 import RedeemCouponManager from '../components/RedeemCouponManager.jsx'
@@ -12,36 +12,79 @@ export default function ClientesPage() {
   const [selectedCliente, setSelectedCliente] = useState(null)
   const [error, setError] = useState(null)
 
-  // Estados para o cadastro de novo cliente
+  // Estados para o cadastro/edição de cliente
   const [nomeNovo, setNomeNovo] = useState('')
   const [loginNovo, setLoginNovo] = useState('')
   const [senhaNovo, setSenhaNovo] = useState('')
+  const [cargoNovo, setCargoNovo] = useState('Cliente')
+  const [editingCliente, setEditingCliente] = useState(null)
   const [modalError, setModalError] = useState(null)
   const [modalSaving, setModalSaving] = useState(false)
 
   const handleOpenModal = () => {
+    setEditingCliente(null)
     setNomeNovo('')
     setLoginNovo('')
     setSenhaNovo('')
+    setCargoNovo('Cliente')
     setModalError(null)
     setShowModal(true)
   }
 
+  const handleOpenEditModal = (c) => {
+    setEditingCliente(c)
+    setNomeNovo(c.nome || '')
+    setLoginNovo(c.login || '')
+    setSenhaNovo('')
+    setCargoNovo(c.cargo || 'Cliente')
+    setModalError(null)
+    setShowModal(true)
+  }
+
+  const handleDeletarCliente = async (id) => {
+    if (!window.confirm('Tem certeza de que deseja excluir este usuário? Esta ação não pode ser desfeita.')) {
+      return
+    }
+    try {
+      await deletarCliente(id)
+      fetchClientes()
+    } catch (err) {
+      console.error('Erro ao excluir usuário:', err)
+      alert(err.response?.data?.error || 'Erro ao excluir usuário.')
+    }
+  }
+
   const handleSalvarCliente = async () => {
-    if (!nomeNovo || !loginNovo || !senhaNovo) {
-      setModalError('Todos os campos são obrigatórios.')
+    if (!nomeNovo || !loginNovo) {
+      setModalError('Nome e Login são obrigatórios.')
+      return
+    }
+    if (!editingCliente && !senhaNovo) {
+      setModalError('A senha é obrigatória para novos usuários.')
       return
     }
     try {
       setModalSaving(true)
       setModalError(null)
       
-      await cadastrarCliente(nomeNovo, loginNovo, senhaNovo)
+      if (editingCliente) {
+        // Modo Edição
+        await atualizarPerfil(editingCliente.id, {
+          nome: nomeNovo,
+          login: loginNovo,
+          senha: senhaNovo || undefined,
+          cargo: cargoNovo
+        })
+      } else {
+        // Modo Cadastro
+        await cadastrarCliente(nomeNovo, loginNovo, senhaNovo, cargoNovo)
+      }
+      
       setShowModal(false)
       fetchClientes()
     } catch (err) {
-      console.error('Erro ao cadastrar cliente:', err)
-      const msg = err.response?.data?.error || 'Erro ao cadastrar cliente. Verifique os dados e tente novamente.'
+      console.error('Erro ao salvar cliente:', err)
+      const msg = err.response?.data?.error || 'Erro ao salvar cliente. Verifique os dados e tente novamente.'
       setModalError(msg)
     } finally {
       setModalSaving(false)
@@ -79,10 +122,10 @@ export default function ClientesPage() {
       <div className="page-header">
         <div className="page-header-actions">
           <div>
-            <h2>Clientes</h2>
-            <p>Gestão de clientes e progresso RPG</p>
+            <h2>Usuários</h2>
+            <p>Gestão de contas e permissões do sistema</p>
           </div>
-          <button className="btn btn-primary" onClick={handleOpenModal}>+ Novo Cliente</button>
+          <button className="btn btn-primary" onClick={handleOpenModal}>+ Novo Usuário</button>
         </div>
       </div>
 
@@ -95,18 +138,18 @@ export default function ClientesPage() {
       <div style={{ marginBottom: '1.5rem' }}>
         <div className="search-bar">
           <span className="search-icon">🔍</span>
-          <input type="text" placeholder="Buscar cliente..." value={busca} onChange={e => setBusca(e.target.value)} />
+          <input type="text" placeholder="Buscar usuário..." value={busca} onChange={e => setBusca(e.target.value)} />
         </div>
       </div>
       <div className="card">
         {loading ? (
           <div className="empty-state"><p>A carregar...</p></div>
         ) : filtered.length === 0 ? (
-          <div className="empty-state"><p>Nenhum cliente encontrado.</p></div>
+          <div className="empty-state"><p>Nenhum usuário encontrado.</p></div>
         ) : (
           <div className="table-container">
             <table className="data-table">
-              <thead><tr><th>ID</th><th>Nome</th><th>Login</th><th>Nível</th><th>XP</th><th>Progresso</th><th>Ações</th></tr></thead>
+              <thead><tr><th>ID</th><th>Nome</th><th>Login</th><th>Cargo / Nível</th><th>XP</th><th>Progresso</th><th>Ações</th></tr></thead>
               <tbody>
                 {filtered.map(c => {
                   if (!c) return null
@@ -119,14 +162,29 @@ export default function ClientesPage() {
                       <td style={{ color: 'var(--text-muted)' }}>#{c.id}</td>
                       <td style={{ fontWeight: 600 }}>{c.nome || 'Sem Nome'}</td>
                       <td style={{ color: 'var(--text-secondary)' }}>{c.login || 'sem-login'}</td>
-                      <td><span className="rpg-level-badge" style={{ fontSize: '0.6rem' }}>{nivelNome}</span></td>
-                      <td style={{ color: 'var(--gold)', fontWeight: 600 }}>{c.xp || 0} XP</td>
+                      <td>
+                        {c.cargo === 'Adm' ? (
+                          <span className="badge badge-adm" style={{ fontSize: '0.75rem', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>Adm</span>
+                        ) : c.cargo === 'Barbeiro' ? (
+                          <span className="badge badge-barbeiro" style={{ fontSize: '0.75rem', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>Barbeiro</span>
+                        ) : (
+                          <span className="rpg-level-badge" style={{ fontSize: '0.65rem' }}>{nivelNome}</span>
+                        )}
+                      </td>
+                      <td style={{ color: c.cargo === 'Cliente' ? 'var(--gold)' : 'var(--text-muted)', fontWeight: 600 }}>
+                        {c.cargo === 'Cliente' ? `${c.xp || 0} XP` : '-'}
+                      </td>
                       <td style={{ minWidth: '120px' }}>
-                        <div className="xp-bar"><div className="xp-bar-fill" style={{ width: `${pct}%` }} /></div>
+                        {c.cargo === 'Cliente' ? (
+                          <div className="xp-bar"><div className="xp-bar-fill" style={{ width: `${pct}%` }} /></div>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>RPG Inativo</span>
+                        )}
                       </td>
                       <td>
                         <button className="btn btn-ghost btn-sm" title="Ver detalhes" onClick={() => setSelectedCliente(c)}>👁️</button>
-                        <button className="btn btn-ghost btn-sm" title="Editar">✏️</button>
+                        <button className="btn btn-ghost btn-sm" title="Editar" onClick={() => handleOpenEditModal(c)}>✏️</button>
+                        <button className="btn btn-ghost btn-sm" title="Excluir" style={{ color: 'var(--red)' }} onClick={() => handleDeletarCliente(c.id)}>🗑️</button>
                       </td>
                     </tr>
                   )
@@ -141,7 +199,7 @@ export default function ClientesPage() {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>👤 Novo Cliente</h3>
+              <h3>{editingCliente ? '👤 Editar Usuário' : '👤 Novo Usuário'}</h3>
               <button className="btn-ghost" onClick={() => setShowModal(false)} disabled={modalSaving}>✕</button>
             </div>
             {modalError && (
@@ -154,12 +212,27 @@ export default function ClientesPage() {
               <input 
                 type="text" 
                 className="form-input" 
-                placeholder="Nome do cliente" 
+                placeholder="Nome do usuário" 
                 value={nomeNovo} 
                 onChange={e => setNomeNovo(e.target.value)} 
                 disabled={modalSaving}
               />
             </div>
+            
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label">Cargo (Nível de Acesso)</label>
+              <select 
+                className="form-input" 
+                value={cargoNovo} 
+                onChange={e => setCargoNovo(e.target.value)} 
+                disabled={modalSaving}
+              >
+                <option value="Cliente">Cliente (Acumula XP/RPG)</option>
+                <option value="Barbeiro">Barbeiro (Atende e vende)</option>
+                <option value="Adm">Administrador (Controle Total)</option>
+              </select>
+            </div>
+
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Login</label>
@@ -173,11 +246,11 @@ export default function ClientesPage() {
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Senha</label>
+                <label className="form-label">{editingCliente ? 'Nova Senha (opcional)' : 'Senha'}</label>
                 <input 
                   type="password" 
                   className="form-input" 
-                  placeholder="Senha inicial" 
+                  placeholder={editingCliente ? 'Deixe em branco para não alterar' : 'Senha inicial'} 
                   value={senhaNovo} 
                   onChange={e => setSenhaNovo(e.target.value)} 
                   disabled={modalSaving}
@@ -187,7 +260,7 @@ export default function ClientesPage() {
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setShowModal(false)} disabled={modalSaving}>Cancelar</button>
               <button className="btn btn-primary" onClick={handleSalvarCliente} disabled={modalSaving}>
-                {modalSaving ? 'A salvar...' : 'Salvar Cliente'}
+                {modalSaving ? 'A salvar...' : editingCliente ? 'Salvar Alterações' : 'Criar Usuário'}
               </button>
             </div>
           </div>

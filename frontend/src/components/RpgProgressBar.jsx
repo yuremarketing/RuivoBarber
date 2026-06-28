@@ -53,7 +53,7 @@ function RpgProgressBar({ xpAtual = 0, nivel = 'Corte Iniciante' }) {
 
       <p className="rpg-progress-msg">
         {maxLevel ? (
-          <span>⚔️ Você é uma lenda viva na RuivoBarber! 👑</span>
+          <span>Você é uma lenda viva na RuivoBarber! 👑</span>
         ) : (
           <span>
             Faltam <strong>{xpFaltando} XP</strong> (~<strong>{atendimentosEstimados} atendimento(s)</strong>) para alcançar <strong>{nextNivel}</strong>!

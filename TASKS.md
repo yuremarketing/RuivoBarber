@@ -160,10 +160,16 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
   - [ ] Frontend: Integrar transições com sons arcade e confetes ao subir de nível ou resgatar cupons.
 
 ### 🛡️ Auditoria do Admin (Tasks Geradas)
-- [ ] [Admin-Dashboard] Task 71: Criar rota backend `/api/v1/dashboard` e integrar no `DashboardPage.jsx` para remover os mocks de KPIs e Agendamentos.
-- [ ] [Admin-Agenda] Task 72: Revisar os contrastes das labels de Status (Concluído, Falta, Pendente) nos novos temas dinâmicos (AgendamentosPage).
-- [ ] [Admin-Users] Task 73: Revisar listagem de Clientes e Barbeiros, garantindo edição completa e responsividade de tabelas.
-- [ ] [Admin-Finance] Task 74: Fluxo de Abertura/Fechamento de Caixa e validação de relatórios com os dados recém semeados.
+- [x] [Admin-Dashboard] Task 71: Criar rota backend `/api/v1/dashboard` e integrar no `DashboardPage.jsx` para remover os mocks de KPIs e Agendamentos.
+- [x] [Admin-Agenda] Task 72: Revisar os contrastes das labels de Status (Concluído, Falta, Pendente) nos novos temas dinâmicos (AgendamentosPage).
+- [x] [Admin-Users] Task 73: Revisar listagem de Clientes e Barbeiros, garantindo edição completa e responsividade de tabelas.
+- [x] [Admin-Finance] Task 74: Fluxo de Abertura/Fechamento de Caixa e validação de relatórios com os dados recém semeados.
+- [x] [Admin-Security] Task 76: Proteger rota do Dashboard com JWTMiddleware + RequireCargo("Adm").
+- [x] [Admin-Security] Task 77: Condicionar JWT mockado à variável de ambiente de desenvolvimento.
+- [x] [Admin-CRUD] Task 78: Permitir Admin criar Barbeiros/Admins (campo cargo no POST /clientes).
+- [x] [Admin-CRUD] Task 79: Ativar botão Editar na ClientesPage (modal + reset senha).
+- [x] [Admin-CRUD] Task 80: Implementar exclusão/desativação de contas (DELETE /clientes/:id).
+- [x] [Admin-CRUD] Task 81: Gestão de cargo (promover/rebaixar).
 
 ### 🚀 DevOps / Infraestrutura (CI/CD)
 - [ ] [DevOps] Task 60: Implantação do Harness.io (CI/CD)

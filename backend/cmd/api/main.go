@@ -70,6 +70,9 @@ func main() {
 		ALTER TABLE Temporadas ALTER COLUMN DataInicio TYPE TIMESTAMPTZ;
 		ALTER TABLE Temporadas ALTER COLUMN DataFim TYPE TIMESTAMPTZ;
 		ALTER TABLE Temporadas ALTER COLUMN CriadaEm TYPE TIMESTAMPTZ;
+		ALTER TABLE Raids ALTER COLUMN DataInicio TYPE TIMESTAMPTZ;
+		ALTER TABLE Raids ALTER COLUMN DataFim TYPE TIMESTAMPTZ;
+		ALTER TABLE Raids ALTER COLUMN CriadoEm TYPE TIMESTAMPTZ;
 	`
 	if _, err = db.Exec(tzMigration); err != nil {
 		log.Printf("[DB] Erro ao executar migração automática para TIMESTAMPTZ: %v", err)

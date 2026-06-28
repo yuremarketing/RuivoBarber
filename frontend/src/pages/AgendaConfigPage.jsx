@@ -219,7 +219,7 @@ export default function AgendaConfigPage() {
       <div className="page-header">
         <div className="page-header-actions">
           <div>
-            <h2>⚙️ Escala e Disponibilidade</h2>
+            <h2>Escala e Disponibilidade</h2>
             <p>Defina seus dias de atendimento, horários de expediente e bloqueios de férias/folgas</p>
           </div>
         </div>
@@ -252,7 +252,7 @@ export default function AgendaConfigPage() {
           {/* Escala Semanal Card */}
           <div className="card">
             <div className="card-header" style={{ marginBottom: '1rem' }}>
-              <h3>📅 Horários de Expediente Semanal</h3>
+              <h3>Horários de Expediente Semanal</h3>
             </div>
             <form onSubmit={handleSaveDisponibilidade}>
               <div className="table-container">

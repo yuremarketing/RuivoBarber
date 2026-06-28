@@ -63,7 +63,7 @@ export default function AvaliacaoModal({ agendamento, onClose, onSuccess }) {
                 Como foi seu último corte com o barbeiro <strong>{agendamento.barbeiro_nome}</strong>?
               </p>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                📅 Realizado em: {dataFormatada} | Serviço: {agendamento.servico_nome}
+                Realizado em: {dataFormatada} | Serviço: {agendamento.servico_nome}
               </span>
             </div>
 

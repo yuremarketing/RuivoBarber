@@ -153,7 +153,7 @@ export default function LivesPage() {
     return (
       <div className="fade-in-up">
         <div className="page-header">
-          <h2>📺 Assista ao Vivo</h2>
+          <h2>Assista ao Vivo</h2>
           <p>Acompanhe transmissões ao vivo da RuivoBarber directly from the Guild Hall</p>
         </div>
 
@@ -219,7 +219,7 @@ export default function LivesPage() {
   return (
     <div className="fade-in-up">
       <div className="page-header">
-        <h2>📺 Lives & Transmissões</h2>
+        <h2>Lives & Transmissões</h2>
         <p>Gerencie as transmissões ao vivo exibidas no portal do cliente</p>
       </div>
 
@@ -381,7 +381,7 @@ export default function LivesPage() {
             {liveAtiva ? (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
-                  <span style={{ color: 'var(--gold)' }}>📺 {liveAtiva.titulo}</span>
+                  <span style={{ color: 'var(--gold)' }}>{liveAtiva.titulo}</span>
                   <span style={{ color: 'var(--text-muted)' }}>{liveAtiva.plataforma}</span>
                 </div>
                 

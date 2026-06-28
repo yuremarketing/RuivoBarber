@@ -62,7 +62,7 @@ function AdminValidationPanel() {
       {/* Bloco 1: Tela de Validação de Cupons na hora do Pagamento */}
       <div className="card" style={{ border: '1px solid var(--border)' }}>
         <div className="card-header" style={{ paddingBottom: '0.75rem', marginBottom: '1rem' }}>
-          <h3 style={{ color: 'var(--accent)' }}>🎟️ Validar Cupom de Desconto</h3>
+          <h3 style={{ color: 'var(--accent)' }}>Validar Cupom de Desconto</h3>
         </div>
 
         <form onSubmit={handleValidarCupom} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -83,7 +83,7 @@ function AdminValidationPanel() {
                 disabled={validating}
                 style={{ padding: '0 1.5rem' }}
               >
-                {validating ? '⏳...' : 'Validar'}
+                {validating ? '...' : 'Validar'}
               </button>
             </div>
           </div>

@@ -263,7 +263,7 @@ export default function CheckoutPage() {
       )}
 
       <div className="page-header">
-        <h2>⚔️ Checkout do Caixa / PDV</h2>
+        <h2>Checkout do Caixa / PDV</h2>
         <p>Gere registros de vendas, conclua agendamentos de clientes e dê baixa automática no estoque.</p>
       </div>
 
@@ -280,7 +280,7 @@ export default function CheckoutPage() {
                 <div>
                   <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--gold)' }}>{selectedCliente.nome}</div>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    {selectedAgendamento ? `📅 Agendamento #${selectedAgendamento.id}` : '👥 Seleção Avulsa'}
+                    {selectedAgendamento ? `Agendamento #${selectedAgendamento.id}` : 'Seleção Avulsa'}
                   </span>
                 </div>
                 <button className="btn btn-ghost" onClick={() => { setSelectedCliente(null); setSelectedAgendamento(null); }} title="Remover cliente">✕</button>
@@ -300,14 +300,14 @@ export default function CheckoutPage() {
                 style={{ flex: 1, padding: '0.5rem', borderRadius: '6px' }}
                 onClick={() => setClientMode('agendamento')}
               >
-                📅 Agendas
+                Agendas
               </button>
               <button 
                 className={`btn btn-sm ${clientMode === 'avulso' ? 'btn-primary' : 'btn-ghost'}`}
                 style={{ flex: 1, padding: '0.5rem', borderRadius: '6px' }}
                 onClick={() => setClientMode('avulso')}
               >
-                👥 Clientes
+                Clientes
               </button>
               <button 
                 className={`btn btn-sm ${clientMode === 'anonimo' ? 'btn-primary' : 'btn-ghost'}`}
@@ -416,7 +416,7 @@ export default function CheckoutPage() {
                 >
                   <div>
                     <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{serv.nome}</div>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>⏱️ {serv.duracaoMinutos} min | ⚔️ +{serv.xpRecompensa} XP</span>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{serv.duracaoMinutos} min | +{serv.xpRecompensa} XP</span>
                   </div>
                   <div style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.95rem' }}>
                     {formatCurrency(serv.preco)}
@@ -503,7 +503,7 @@ export default function CheckoutPage() {
 
           {/* Desconto */}
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">🎟️ Desconto (R$)</label>
+            <label className="form-label">Desconto (R$)</label>
             <input 
               type="number" 
               step="0.01"
@@ -527,7 +527,7 @@ export default function CheckoutPage() {
                   style={{ padding: '0.5rem 0.25rem', fontSize: '0.8rem', justifyContent: 'center' }}
                   onClick={() => setMetodoPagamento(method)}
                 >
-                  {method === 'Dinheiro' && '💵 '}
+                  {method === 'Dinheiro' && ''}
                   {method === 'Pix' && '📱 '}
                   {method === 'Debito' && '💳 '}
                   {method === 'Credito' && '💳 '}
@@ -560,7 +560,7 @@ export default function CheckoutPage() {
               style={{ width: '100%', padding: '0.85rem', justifyContent: 'center', fontSize: '1rem' }}
               disabled={submitting || itensVenda.length === 0}
             >
-              {submitting ? 'Finalizando...' : '⚔️ Concluir Checkout / Venda'}
+              {submitting ? 'Finalizando...' : 'Concluir Checkout / Venda'}
             </button>
           </div>
         </form>

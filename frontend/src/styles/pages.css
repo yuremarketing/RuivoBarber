@@ -32,9 +32,9 @@
 .dashboard-evaluation-title { color: var(--gold); margin: 0; font-size: 1rem; }
 .dashboard-evaluation-text { margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-secondary); }
 
-.dashboard-hero-section { display: flex; flex-direction: row; gap: 1.5rem; flex-wrap: wrap; align-items: start; }
-.dashboard-player-card-wrapper { flex: 1; min-width: 280px; display: flex; justify-content: center; }
-.dashboard-rpg-panel { flex: 1.5; min-width: 300px; display: flex; flex-direction: column; gap: 1.5rem; }
+.dashboard-hero-section { display: flex; flex-direction: row; gap: 2rem; flex-wrap: wrap; align-items: start; }
+.dashboard-player-card-wrapper { flex: 1 1 340px; max-width: 340px; display: flex; justify-content: center; }
+.dashboard-rpg-panel { flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 1.5rem; }
 
 .dashboard-season-active {
   padding: 1rem; border-radius: var(--radius-sm);

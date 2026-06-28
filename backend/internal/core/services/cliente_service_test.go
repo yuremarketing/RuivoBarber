@@ -208,7 +208,6 @@ func TestCriarGorjeta(t *testing.T) {
 	}
 }
 
-<<<<<<< HEAD
 func TestAvaliacoes(t *testing.T) {
 	repo := &mockClienteRepository{}
 	service := NewClienteService(repo, nil, nil)

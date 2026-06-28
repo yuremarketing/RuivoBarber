@@ -32,7 +32,7 @@ export default function ClienteList() {
     fetchClientes()
   }, [])
 
-  if (loading) return <div className="empty-state"><p>⏳ A carregar...</p></div>
+  if (loading) return <div className="empty-state"><p>A carregar...</p></div>
   if (error) return <div style={{ color: 'var(--red)' }}>⚠️ {error}</div>
 
   return (

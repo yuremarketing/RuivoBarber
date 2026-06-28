@@ -48,7 +48,7 @@ export default class ErrorBoundary extends React.Component {
               color: '#bf2a2a',
               textShadow: '0 0 10px rgba(191, 42, 42, 0.5)'
             }}>
-              ⚔️
+              
             </div>
             
             <h2 style={{

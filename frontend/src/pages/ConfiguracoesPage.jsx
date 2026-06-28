@@ -183,7 +183,7 @@ export default function ConfiguracoesPage() {
     return (
       <div className="fade-in-up">
         <div className="page-header">
-          <h2>⚙️ Minha Conta</h2>
+          <h2>Minha Conta</h2>
           <p>Gerencie seus dados de acesso e acompanhe sua ficha de RPG</p>
         </div>
 
@@ -340,7 +340,7 @@ export default function ConfiguracoesPage() {
   return (
     <div className="fade-in-up">
       <div className="page-header">
-        <h2>⚙️ Configurações</h2>
+        <h2>Configurações</h2>
         <p>Configurações gerais do sistema</p>
       </div>
       <div className="grid-2">

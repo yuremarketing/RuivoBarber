@@ -348,7 +348,7 @@ export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess 
                   <div>
                     <h5 className="booking-service-title">{s.nome}</h5>
                     <p className="booking-service-desc">
-                      ⏱️ {s.duracaominutos} minutos
+                      {s.duracaominutos} minutos
                     </p>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -448,10 +448,10 @@ export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess 
               <label className="form-label">Horários Disponíveis (Sessão de {selectedServico?.duracaominutos} min)</label>
               {!selectedData ? (
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                  📅 Por favor, selecione uma data no seletor acima para consultar os horários.
+                  Por favor, selecione uma data no seletor acima para consultar os horários.
                 </p>
               ) : loadingSlots ? (
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>⏳ Consultando agenda do barbeiro...</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Consultando agenda do barbeiro...</p>
               ) : availableSlots.length === 0 ? (
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>❌ Sem horários disponíveis para este dia.</p>
               ) : (
@@ -485,7 +485,7 @@ export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess 
                   <div className="booking-summary-label">Serviço</div>
                   <div className="booking-summary-value">{selectedServico?.nome}</div>
                   <div className="booking-summary-sub">
-                    ⏱️ Duração: {selectedServico?.duracaominutos} minutos
+                    Duração: {selectedServico?.duracaominutos} minutos
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -512,7 +512,7 @@ export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess 
               <div>
                 <div className="booking-summary-label">Data e Horário</div>
                 <div className="booking-summary-value" style={{ fontSize: '1rem', marginTop: '2px' }}>
-                  📅 {new Date(selectedData + 'T12:00:00').toLocaleDateString('pt-BR')} às {selectedHora}
+                  {new Date(selectedData + 'T12:00:00').toLocaleDateString('pt-BR')} às {selectedHora}
                 </div>
               </div>
             </div>

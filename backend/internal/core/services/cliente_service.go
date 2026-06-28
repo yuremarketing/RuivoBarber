@@ -131,11 +131,13 @@ func (s *ClienteService) CadastrarCliente(cliente *domain.Cliente, password stri
 		return err
 	}
 
-	cliente.Cargo = "Cliente"
+	if cliente.Cargo != "Adm" && cliente.Cargo != "Barbeiro" && cliente.Cargo != "Cliente" {
+		cliente.Cargo = "Cliente"
+	}
 	return s.repo.Save(cliente, string(hashedBytes))
 }
 
-func (s *ClienteService) AtualizarPerfil(id int, nome, login, senha, avatarUrl string) error {
+func (s *ClienteService) AtualizarPerfil(id int, nome, login, senha, avatarUrl, cargo string) error {
 	if login != "" {
 		cExistente, err := s.repo.FindByLogin(login)
 		if err == nil && cExistente.ID != id {
@@ -154,6 +156,9 @@ func (s *ClienteService) AtualizarPerfil(id int, nome, login, senha, avatarUrl s
 	if login != "" {
 		cliente.Login = login
 	}
+	if cargo == "Adm" || cargo == "Barbeiro" || cargo == "Cliente" {
+		cliente.Cargo = cargo
+	}
 	
 	cliente.AvatarURL = avatarUrl
 
@@ -168,7 +173,9 @@ func (s *ClienteService) AtualizarPerfil(id int, nome, login, senha, avatarUrl s
 
 	return s.repo.Update(cliente, hashedSenha)
 }
-
+func (s *ClienteService) DeletarCliente(id int) error {
+	return s.repo.Delete(id)
+}
 func (s *ClienteService) ListarServicos() ([]domain.Servico, error) {
 	return s.repo.ListarServicos()
 }

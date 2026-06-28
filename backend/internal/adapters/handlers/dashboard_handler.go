@@ -14,8 +14,7 @@ func NewDashboardHandler(service *services.DashboardService) *DashboardHandler {
 }
 
 func (h *DashboardHandler) RegisterRoutes(app *fiber.App) {
-	api := app.Group("/api/v1/dashboard")
-	// Somente admin deve acessar, idealmente teria middleware de auth aqui
+	api := app.Group("/api/v1/dashboard", JWTMiddleware, RequireCargo("Adm"))
 	api.Get("/", h.GetDashboard)
 }
 

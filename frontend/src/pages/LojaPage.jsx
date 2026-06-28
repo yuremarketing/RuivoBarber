@@ -102,7 +102,7 @@ export default function LojaPage() {
   return (
     <div className="fade-in-up">
       <div className="page-header" style={{ marginBottom: '1.5rem' }}>
-        <h2>🎒 Loja & Bolsa de Itens</h2>
+        <h2>Loja & Bolsa de Itens</h2>
         <p>Gaste suas moedas de ouro conquistadas nos atendimentos para equipar cosméticos lendários!</p>
       </div>
 
@@ -155,7 +155,7 @@ export default function LojaPage() {
                 fontWeight: activeTab === 'loja' ? 600 : 500
               }}
             >
-              🛒 Loja de Cosméticos ({itensLoja.length})
+              Loja de Cosméticos ({itensLoja.length})
             </button>
             <button 
               className={`btn-ghost ${activeTab === 'inventario' ? 'active' : ''}`}
@@ -168,7 +168,7 @@ export default function LojaPage() {
                 fontWeight: activeTab === 'inventario' ? 600 : 500
               }}
             >
-              🎒 Meu Inventário ({itensInventario.length})
+              Meu Inventário ({itensInventario.length})
             </button>
           </div>
 
@@ -220,7 +220,7 @@ export default function LojaPage() {
           ) : (
             itensInventario.length === 0 ? (
               <div className="empty-state">
-                <div className="icon">🎒</div>
+                <div className="icon"></div>
                 <h4>Seu inventário está vazio</h4>
                 <p>Navegue pela "Loja de Cosméticos" para adquirir itens com suas moedas.</p>
               </div>

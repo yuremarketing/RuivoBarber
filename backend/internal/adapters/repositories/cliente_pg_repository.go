@@ -35,7 +35,6 @@ func (r *ClientePgRepository) FindAll() ([]domain.Cliente, error) {
         FROM Usuarios u
         LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
         LEFT JOIN Niveis n ON p.nivelatual = n.id
-        WHERE u.cargo = 'Cliente'
     `
     rows, err := r.db.Query(query)
     if err != nil {
@@ -149,15 +148,19 @@ func (r *ClientePgRepository) Save(c *domain.Cliente, hashedSenha string) error 
 
 func (r *ClientePgRepository) Update(c *domain.Cliente, hashedSenha string) error {
     if hashedSenha != "" {
-        query := "UPDATE Usuarios SET nome = $1, login = $2, senha = $3, avatar_url = $4 WHERE id = $5"
-        _, err := r.db.Exec(query, c.Nome, c.Login, hashedSenha, c.AvatarURL, c.ID)
+        query := "UPDATE Usuarios SET nome = $1, login = $2, senha = $3, cargo = $4, avatar_url = $5 WHERE id = $6"
+        _, err := r.db.Exec(query, c.Nome, c.Login, hashedSenha, c.Cargo, c.AvatarURL, c.ID)
         return err
     }
-    query := "UPDATE Usuarios SET nome = $1, login = $2, avatar_url = $3 WHERE id = $4"
-    _, err := r.db.Exec(query, c.Nome, c.Login, c.AvatarURL, c.ID)
+    query := "UPDATE Usuarios SET nome = $1, login = $2, cargo = $3, avatar_url = $4 WHERE id = $5"
+    _, err := r.db.Exec(query, c.Nome, c.Login, c.Cargo, c.AvatarURL, c.ID)
     return err
 }
-
+func (r *ClientePgRepository) Delete(id int) error {
+	query := "DELETE FROM Usuarios WHERE id = $1"
+	_, err := r.db.Exec(query, id)
+	return err
+}
 func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) (*ports.NotificationEvent, error) {
     ctx := context.Background()
     tx, err := r.db.BeginTx(ctx, nil)

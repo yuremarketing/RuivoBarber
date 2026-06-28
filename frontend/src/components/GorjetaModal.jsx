@@ -62,7 +62,7 @@ export default function GorjetaModal({ agendamento, onClose, onSuccess }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px', width: '100%' }}>
         <div className="modal-header">
-          <h3>💸 Enviar Gorjeta Pix</h3>
+          <h3>Enviar Gorjeta Pix</h3>
           <button className="btn-ghost" onClick={onClose}>✕</button>
         </div>
 

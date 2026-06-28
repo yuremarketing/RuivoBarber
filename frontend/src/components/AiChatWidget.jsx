@@ -14,24 +14,25 @@ export default function AiChatWidget() {
   const session = userSessionStr ? JSON.parse(userSessionStr) : null
   const user = session?.user || session
 
-  // Só mostra se houver usuário logado
-  if (!user) return null
+  useEffect(() => {
+    if (isOpen && messages.length === 0 && user) {
+      setMessages([
+        {
+          role: 'model',
+          content: `Olá, ${user.nome}! Eu sou o assistente de inteligência artificial da RuivoBarber. \n\nPosso te ajudar a consultar nossos serviços, conhecer nossos barbeiros ou fazer um agendamento direto. Como posso ajudar você hoje?`
+        }
+      ])
+    }
+  }, [isOpen, messages.length, user])
 
   useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [messages, loading])
+  }, [messages])
 
-  // Iniciar saudação do assistente
-  useEffect(() => {
-    setMessages([
-      {
-        role: 'model',
-        content: `Olá, ${user.nome}! Eu sou o assistente de inteligência artificial da RuivoBarber. ✂️\n\nPosso te ajudar a consultar nossos serviços, conhecer nossos barbeiros ou fazer um agendamento direto. Como posso ajudar você hoje?`
-      }
-    ])
-  }, [user.nome])
+  // Só mostra se houver usuário logado
+  if (!user) return null
 
   const handleSend = async (e) => {
     e.preventDefault()
@@ -123,7 +124,7 @@ export default function AiChatWidget() {
         onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
         onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
       >
-        {isOpen ? '✕' : '🤖'}
+        {isOpen ? '✕' : ''}
       </button>
 
       {/* Janela do Chat */}
@@ -158,7 +159,7 @@ export default function AiChatWidget() {
               gap: '0.8rem',
             }}
           >
-            <span style={{ fontSize: '1.5rem' }}>🤖</span>
+            <span style={{ fontSize: '1.5rem' }}></span>
             <div>
               <h4 style={{ margin: 0, fontWeight: 700 }}>Assistente RuivoBarber</h4>
               <small style={{ color: 'rgba(255,255,255,0.8)' }}>Online • Inteligência Artificial</small>

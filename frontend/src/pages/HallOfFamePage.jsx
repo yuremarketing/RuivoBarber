@@ -46,7 +46,7 @@ export default function HallOfFamePage() {
   return (
     <div className="fade-in-up hof-container">
       <div className="page-header hof-header">
-        <h2>🏆 Galeria de Lendários (Hall of Fame)</h2>
+        <h2>Galeria de Lendários (Hall of Fame)</h2>
         <p>Contemple os grandes campeões da RuivoBarber que alcançaram a glória em nosso RPG de Fidelidade!</p>
       </div>
 
@@ -86,7 +86,7 @@ export default function HallOfFamePage() {
         </div>
       ) : filteredRanking.length === 0 ? (
         <div className="empty-state">
-          <div className="icon">🛡️</div>
+          <div className="icon"></div>
           <h4>Nenhum lendário encontrado</h4>
           <p style={{ color: 'var(--text-secondary)' }}>Nenhum jogador corresponde à sua busca "{searchQuery}".</p>
         </div>
@@ -189,7 +189,7 @@ export default function HallOfFamePage() {
                     </div>
                     <div className="leaderboard-name">
                       {player.nome}
-                      {player.efeitoEquipado && <span style={{ marginLeft: '0.5rem', fontSize: '0.8rem', opacity: 0.8 }} title="Equipado com efeito visual!">✨</span>}
+                      {player.efeitoEquipado && <span style={{ marginLeft: '0.5rem', fontSize: '0.8rem', opacity: 0.8 }} title="Equipado com efeito visual!"></span>}
                     </div>
                     <div className="leaderboard-level-col">
                       <span className="rpg-level-badge" style={{

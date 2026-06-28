@@ -20,7 +20,7 @@ export default function CuponsPage() {
       <div className="page-header">
         <div className="page-header-actions">
           <div>
-            <h2>🎟️ Cupons</h2>
+            <h2>Cupons</h2>
             <p>{isAdmin ? 'Gestão de cupons de desconto e validação' : 'Seus cupons de desconto e recompensas RPG'}</p>
           </div>
           {isAdmin && (
@@ -32,7 +32,7 @@ export default function CuponsPage() {
       <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'start' }}>
         <div style={{ flex: '2', minWidth: '350px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', width: '100%', marginBottom: 0 }}>
-            <div className="stat-card"><div className="icon">🎟️</div><div className="value">{mockCupons.length}</div><div className="label">Total Cupons</div></div>
+            <div className="stat-card"><div className="icon"></div><div className="value">{mockCupons.length}</div><div className="label">Total Cupons</div></div>
             <div className="stat-card"><div className="icon">✅</div><div className="value">{mockCupons.filter(c => !c.usado && c.validade >= hoje).length}</div><div className="label">Ativos</div></div>
             <div className="stat-card"><div className="icon">📋</div><div className="value">{mockCupons.filter(c => c.usado).length}</div><div className="label">Utilizados</div></div>
           </div>
@@ -79,7 +79,7 @@ export default function CuponsPage() {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>🎟️ Novo Cupom</h3>
+              <h3>Novo Cupom</h3>
               <button className="btn-ghost" onClick={() => setShowModal(false)}>✕</button>
             </div>
             <div className="form-row">

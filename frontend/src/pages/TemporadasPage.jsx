@@ -99,7 +99,7 @@ export default function TemporadasPage() {
   return (
     <div className="fade-in-up">
       <div className="page-header">
-        <h2>⚔️ Temporadas RPG</h2>
+        <h2>Temporadas RPG</h2>
         <p>{isAdmin ? 'Painel Administrativo para gerenciamento dos ciclos de fidelidade gamificados' : 'Acompanhe as temporadas de fidelidade e prêmios sazonais da RuivoBarber'}</p>
       </div>
 
@@ -172,7 +172,7 @@ export default function TemporadasPage() {
 
             <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
               <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '0.8rem' }} disabled={loading}>
-                {editingId ? '💾 Salvar Alterações' : '✨ Iniciar Temporada'}
+                {editingId ? '💾 Salvar Alterações' : 'Iniciar Temporada'}
               </button>
               {editingId && (
                 <button 
@@ -199,7 +199,7 @@ export default function TemporadasPage() {
         {/* Listagem */}
         <div className="card">
           <div className="card-header">
-            <h3>⏳ Histórico de Temporadas ({temporadas.length})</h3>
+            <h3>Histórico de Temporadas ({temporadas.length})</h3>
           </div>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '2rem' }}>Carregando temporadas...</div>
@@ -234,7 +234,7 @@ export default function TemporadasPage() {
                     </div>
 
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      📅 <strong>Início:</strong> {new Date(t.dataInicio).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} | <strong>Fim:</strong> {new Date(t.dataFim).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} ({totalDias} dias)
+                      <strong>Início:</strong> {new Date(t.dataInicio).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} | <strong>Fim:</strong> {new Date(t.dataFim).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} ({totalDias} dias)
                     </div>
 
                     {isAdmin && (

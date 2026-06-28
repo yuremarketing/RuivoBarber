@@ -6,13 +6,13 @@ const getServiceDetails = (nome) => {
   if (n.includes('corte') && n.includes('barba')) {
     return { icon: '💈', desc: 'Combo completo: corte estilizado + barba na navalha' }
   } else if (n.includes('corte')) {
-    return { icon: '✂️', desc: 'Corte masculino clássico com máquina e tesoura' }
+    return { icon: '', desc: 'Corte masculino clássico com máquina e tesoura' }
   } else if (n.includes('barba')) {
     return { icon: '🧔', desc: 'Barba com toalha quente, navalha e hidratação' }
   } else if (n.includes('hidra')) {
     return { icon: '💧', desc: 'Tratamento profundo para cabelos danificados' }
   }
-  return { icon: '✨', desc: 'Serviço personalizado de alta qualidade' }
+  return { icon: '', desc: 'Serviço personalizado de alta qualidade' }
 }
 
 export default function ServicosPage() {
@@ -112,7 +112,7 @@ export default function ServicosPage() {
       <div className="page-header">
         <div className="page-header-actions">
           <div>
-            <h2>✂️ Serviços</h2>
+            <h2>Serviços</h2>
             <p>Catálogo de serviços e preços</p>
           </div>
           {isAdmin && (
@@ -140,8 +140,8 @@ export default function ServicosPage() {
                 </p>
                 <div className="service-price">R$ {s.preco ? s.preco.toFixed(2) : '0.00'}</div>
                 <div className="service-meta">
-                  <div className="service-meta-item">⏱️ <strong>{s.duracaoMinutos || 30}</strong> min</div>
-                  <div className="service-meta-item">⚔️ <strong style={{ color: 'var(--gold)' }}>+{s.xpRecompensa || 10} XP</strong></div>
+                  <div className="service-meta-item"><strong>{s.duracaoMinutos || 30}</strong> min</div>
+                  <div className="service-meta-item"><strong style={{ color: 'var(--gold)' }}>+{s.xpRecompensa || 10} XP</strong></div>
                 </div>
                 {isAdmin && (
                   <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
@@ -159,7 +159,7 @@ export default function ServicosPage() {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>✂️ {editingServico ? 'Editar Serviço' : 'Novo Serviço'}</h3>
+              <h3>{editingServico ? 'Editar Serviço' : 'Novo Serviço'}</h3>
               <button className="btn-ghost" onClick={() => setShowModal(false)}>✕</button>
             </div>
             <form onSubmit={handleSubmit}>

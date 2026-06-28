@@ -2,8 +2,8 @@ import React from 'react'
 
 const niveis = [
   { id: 1, nome: 'Corte Iniciante', xp: 100, bonus: '-', icon: '🌱' },
-  { id: 2, nome: 'Barba de Respeito', xp: 300, bonus: '5% de desconto', icon: '⚔️' },
-  { id: 3, nome: 'Lenda da Navalha', xp: 600, bonus: '10% de desconto', icon: '🗡️' },
+  { id: 2, nome: 'Barba de Respeito', xp: 300, bonus: '5% de desconto', icon: '' },
+  { id: 3, nome: 'Lenda da Navalha', xp: 600, bonus: '10% de desconto', icon: '' },
   { id: 4, nome: 'Rei da Cadeira', xp: 1000, bonus: '1 Corte Grátis', icon: '👑' },
 ]
 
@@ -11,7 +11,7 @@ export default function NiveisPage() {
   return (
     <div className="fade-in-up">
       <div className="page-header">
-        <h2>⚔️ Níveis RPG</h2>
+        <h2>Níveis RPG</h2>
         <p>Sistema de gamificação — Níveis e recompensas</p>
       </div>
       <div className="niveis-grid">

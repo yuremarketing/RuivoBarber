@@ -40,6 +40,7 @@ type CadastrarClienteRequest struct {
 	Nome  string `json:"nome"`
 	Login string `json:"login"`
 	Senha string `json:"senha"`
+	Cargo string `json:"cargo"`
 }
 
 func NewClienteHandler(service *services.ClienteService) *ClienteHandler {
@@ -60,6 +61,9 @@ func JWTMiddleware(c *fiber.Ctx) error {
 	tokenString := authHeader[len(prefix):]
 
 	if strings.HasPrefix(tokenString, "mocked_jwt_token_for_testing") {
+		if os.Getenv("APP_ENV") == "production" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Mocked tokens are disabled in production"})
+		}
 		userId := 999
 		userCargo := "Cliente"
 		userNome := "Cliente Fictício"
@@ -139,6 +143,7 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
 	api.Post("/clientes", JWTMiddleware, RequireCargo("Adm"), h.CadastrarCliente)
 	api.Get("/clientes/:id", JWTMiddleware, h.BuscarCliente)
 	api.Put("/clientes/:id/perfil", JWTMiddleware, h.AtualizarPerfil)
+	api.Delete("/clientes/:id", JWTMiddleware, RequireCargo("Adm"), h.DeletarCliente)
 	api.Get("/games/hall-of-fame", JWTMiddleware, h.ObterHallOfFame)
 
 	// Rotas de Atendimentos (Protegidas)
@@ -372,6 +377,7 @@ func (h *ClienteHandler) CadastrarCliente(c *fiber.Ctx) error {
 	cliente := &domain.Cliente{
 		Nome:  req.Nome,
 		Login: req.Login,
+		Cargo: req.Cargo,
 	}
 
 	err := h.service.CadastrarCliente(cliente, req.Senha)
@@ -542,6 +548,7 @@ func (h *ClienteHandler) RegisterPublico(c *fiber.Ctx) error {
 	cliente := &domain.Cliente{
 		Nome:  req.Nome,
 		Login: req.Login,
+		Cargo: "Cliente",
 	}
 
 	err := h.service.CadastrarCliente(cliente, req.Senha)
@@ -596,13 +603,19 @@ func (h *ClienteHandler) AtualizarPerfil(c *fiber.Ctx) error {
 		Login     string `json:"login"`
 		Senha     string `json:"senha"`
 		AvatarURL string `json:"avatarUrl"`
+		Cargo     string `json:"cargo"`
 	}
 
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "corpo da requisição inválido"})
 	}
 
-	err = h.service.AtualizarPerfil(id, req.Nome, req.Login, req.Senha, req.AvatarURL)
+	var cargoToUpdate string
+	if userCargo == "Adm" {
+		cargoToUpdate = req.Cargo
+	}
+
+	err = h.service.AtualizarPerfil(id, req.Nome, req.Login, req.Senha, req.AvatarURL, cargoToUpdate)
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -1101,6 +1114,25 @@ func (h *ClienteHandler) AvaliarAtendimento(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"status": "sucesso"})
+}
+
+func (h *ClienteHandler) DeletarCliente(c *fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "ID inválido"})
+	}
+
+	callerID := c.Locals("userId").(int)
+	if callerID == id {
+		return c.Status(400).JSON(fiber.Map{"error": "Não é permitido excluir o próprio usuário logado"})
+	}
+
+	err = h.service.DeletarCliente(id)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"message": "Usuário excluído com sucesso!"})
 }
 
 

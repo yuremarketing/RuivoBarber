@@ -426,7 +426,7 @@ export default function AgendamentosPage() {
       <div className="page-header">
         <div className="page-header-actions">
           <div>
-            <h2>📅 Agendamentos</h2>
+            <h2>Agendamentos</h2>
             <p>{isClient ? 'Seus horários marcados' : 'Gestão de horários e serviços'}</p>
           </div>
           <button className="btn btn-primary" onClick={() => {
@@ -441,7 +441,7 @@ export default function AgendamentosPage() {
       {error && <div className="banner error">{error}</div>}
 
       <div className="stats-grid agendamentos-stats-grid">
-        {[{ s: 'Pendente', v: getCount('Pendente'), i: '⏳' },
+        {[{ s: 'Pendente', v: getCount('Pendente'), i: '' },
           { s: 'Confirmado', v: getCount('Confirmado'), i: '✅' },
           { s: 'Concluido', v: getCount('Concluido'), i: '🏁' },
           { s: 'Falta', v: getCount('Falta'), i: '❌' }].map(x => (
@@ -502,7 +502,7 @@ export default function AgendamentosPage() {
                                 setShowGorjetaModal(true)
                               }}
                             >
-                              💸 Gorjeta
+                              Gorjeta
                             </button>
                           )}
                         </div>
@@ -520,7 +520,7 @@ export default function AgendamentosPage() {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" style={isClient ? { height: '650px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' } : {}} onClick={e => e.stopPropagation()}>
             <div className="modal-header" style={isClient ? { flexShrink: 0 } : {}}>
-              <h3>📅 Novo Agendamento</h3>
+              <h3>Novo Agendamento</h3>
               <button className="btn-ghost" onClick={() => setShowModal(false)}>✕</button>
             </div>
             {isClient ? (

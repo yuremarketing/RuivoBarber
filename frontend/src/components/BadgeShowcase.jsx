@@ -3,8 +3,8 @@ import React from 'react'
 // Mapeamento de emoji por nome de badge (fallback caso iconeUrl não exista)
 const BADGE_EMOJI_MAP = {
   'Primeiro Sangue': '🩸',
-  'Fiel da Navalha': '🗡️',
-  'Barba de Respeito': '🛡️',
+  'Fiel da Navalha': '',
+  'Barba de Respeito': '',
   'Lenda Viva': '👑',
 }
 
@@ -124,7 +124,7 @@ export default function BadgeShowcase({ badges = [], loading = false }) {
     <div style={{ marginTop: '1.5rem' }}>
       {/* Cabeçalho */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-        <h4 style={{
+        <h3 style={{
           margin: 0,
           fontSize: '0.95rem',
           fontWeight: 700,
@@ -133,8 +133,8 @@ export default function BadgeShowcase({ badges = [], loading = false }) {
           alignItems: 'center',
           gap: '0.4rem',
         }}>
-          🏅 Vitrine de Conquistas
-        </h4>
+          Vitrine de Conquistas
+        </h3>
         <span style={{
           fontSize: '0.75rem',
           fontWeight: 600,

@@ -168,7 +168,7 @@ export default function CaixaPage() {
       <div className="page-header">
         <div className="page-header-actions">
           <div>
-            <h2>💵 Controle de Caixa</h2>
+            <h2>Controle de Caixa</h2>
             <p>Monitore a sessão de caixa, registre movimentações manuais e gerencie o fluxo do estabelecimento.</p>
           </div>
           <div>
@@ -189,7 +189,7 @@ export default function CaixaPage() {
         /* ================= TELA CAIXA FECHADO ================= */
         <div style={{ display: 'flex', justifyContent: 'center', margin: '3rem 0' }}>
           <div className="card" style={{ maxWidth: '500px', width: '100%', textAlign: 'center', padding: '2.5rem 2rem', border: '1px solid var(--border)' }}>
-            <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>🔐</div>
+            <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}></div>
             <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--accent)' }}>Sessão de Caixa Fechada</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '2rem' }}>
               Para iniciar o faturamento, registrar vendas e atendimentos, é necessário abrir uma sessão de caixa fornecendo o saldo inicial em dinheiro.
@@ -220,7 +220,7 @@ export default function CaixaPage() {
                   ➖ Sangria
                 </button>
                 <button className="btn btn-danger" onClick={() => setShowFecharModal(true)}>
-                  🚪 Fechar Caixa
+                  Fechar Caixa
                 </button>
               </div>
             </div>
@@ -229,7 +229,7 @@ export default function CaixaPage() {
           {/* Grid de Estatísticas */}
           <div className="stats-grid">
             <div className="stat-card">
-              <div className="icon">💵</div>
+              <div className="icon"></div>
               <div className="label">Saldo Inicial</div>
               <div className="value">{formatCurrency(caixa.saldo_inicial)}</div>
               <div className="change" style={{ color: 'var(--text-secondary)' }}>Abertura da sessão</div>
@@ -247,7 +247,7 @@ export default function CaixaPage() {
               <div className="change" style={{ color: 'var(--text-secondary)' }}>Retiradas manuais</div>
             </div>
             <div className="stat-card" style={{ border: '1px solid rgba(245, 166, 35, 0.4)', boxShadow: '0 4px 20px rgba(245, 166, 35, 0.05)' }}>
-              <div className="icon">💰</div>
+              <div className="icon"></div>
               <div className="label" style={{ color: 'var(--gold)' }}>Saldo Esperado</div>
               <div className="value" style={{ color: 'var(--gold)' }}>{formatCurrency(caixa.saldo_atual)}</div>
               <div className="change" style={{ color: 'var(--green)' }}>Dinheiro físico em gaveta</div>
@@ -383,7 +383,7 @@ export default function CaixaPage() {
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <h3>🚪 Fechar Sessão de Caixa</h3>
+              <h3>Fechar Sessão de Caixa</h3>
               <button className="btn-ghost" onClick={() => setShowFecharModal(false)}>✕</button>
             </div>
             <form onSubmit={handleFecharCaixa}>
@@ -418,7 +418,7 @@ export default function CaixaPage() {
                   border: `1px solid ${diferencaFechamento === 0 ? 'rgba(34, 197, 94, 0.2)' : (diferencaFechamento > 0 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(239, 68, 68, 0.2)')}`,
                   marginBottom: '1rem'
                 }}>
-                  {diferencaFechamento === 0 && '✨ Saldo bate perfeitamente com o esperado!'}
+                  {diferencaFechamento === 0 && 'Saldo bate perfeitamente com o esperado!'}
                   {diferencaFechamento > 0 && `📈 Sobras no caixa (Diferença positiva): +R$ ${diferencaFechamento.toFixed(2)}`}
                   {diferencaFechamento < 0 && `📉 Quebra de caixa (Diferença negativa): -R$ ${Math.abs(diferencaFechamento).toFixed(2)}`}
                 </div>
