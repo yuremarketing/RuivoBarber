@@ -58,20 +58,20 @@ function PlayerCard({
         </div>
       </div>
 
-      <h2 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 700 }}>
+      <h2 className="player-card-name">
         {nome}
       </h2>
 
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1rem' }}>
+      <div className="player-card-badges">
         <span className="rpg-level-badge" style={{ background: color, color: '#fff' }}>
           {badgeEmoji} {nivel}
         </span>
       </div>
 
-      <div style={{ borderTop: '1px solid var(--border)', width: '100%', paddingTop: '0.75rem' }}>
-        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Ficha de Personagem</span>
-        <div style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--gold)', marginTop: '0.25rem' }}>
-          {xp} <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>XP Total</span>
+      <div className="player-card-stats-divider">
+        <span className="player-card-stats-title">Ficha de Personagem</span>
+        <div className="player-card-stats-xp">
+          {xp} <span className="player-card-stats-xp-label">XP Total</span>
         </div>
       </div>
     </div>

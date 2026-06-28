@@ -34,24 +34,24 @@ function RpgProgressBar({ xpAtual = 0, nivel = 'Corte Iniciante' }) {
   const atendimentosEstimados = Math.ceil(xpFaltando / 15)
 
   return (
-    <div style={{ width: '100%', marginBottom: '1.25rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+    <div className="rpg-progress-container">
+      <div className="rpg-progress-header">
+        <span className="rpg-progress-next">
           {maxLevel ? 'Nível Máximo Atingido!' : `Próximo Nível: ${nextNivel}`}
         </span>
-        <span style={{ fontSize: '0.85rem', color: 'var(--gold)', fontWeight: 700 }}>
+        <span className="rpg-progress-stats">
           {xpAtual} / {maxLevel ? xpAtual : nextXp} XP
         </span>
       </div>
 
-      <div className="xp-bar" style={{ height: '14px', borderRadius: '10px' }}>
+      <div className="xp-bar">
         <div 
           className="xp-bar-fill" 
           style={{ width: `${percentual.toFixed(1)}%` }} 
         />
       </div>
 
-      <p style={{ margin: '0.5rem 0 0 0', color: 'var(--text-secondary)', fontSize: '0.82rem', textAlign: 'center', fontStyle: 'italic' }}>
+      <p className="rpg-progress-msg">
         {maxLevel ? (
           <span>⚔️ Você é uma lenda viva na RuivoBarber! 👑</span>
         ) : (

@@ -236,3 +236,28 @@
     flex: 0 0 70px;
   }
 }
+
+/* ── Skeleton Loading (Dota 2 Theme) ─── */
+@keyframes skeletonPulse {
+  0% { background-color: var(--bg-card); border-color: var(--border); box-shadow: 0 0 0 rgba(var(--accent-rgb), 0); }
+  50% { background-color: var(--bg-card-hover); border-color: var(--border-accent); box-shadow: 0 0 15px var(--accent-15); }
+  100% { background-color: var(--bg-card); border-color: var(--border); box-shadow: 0 0 0 rgba(var(--accent-rgb), 0); }
+}
+.skeleton-pulse {
+  animation: skeletonPulse 2s infinite ease-in-out;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+}
+.skeleton-text {
+  height: 1rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+.skeleton-avatar {
+  border-radius: 50%;
+}
+.skeleton-card {
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  height: 100%;
+}

@@ -21,4 +21,43 @@
 .login-brand h1 { font-size: 1.8rem; font-weight: 800; color: var(--accent); }
 .login-brand p { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem; }
 .login-card .btn-primary { width: 100%; padding: 0.85rem; font-size: 0.95rem; justify-content: center; margin-top: 0.5rem; }
- 
+
+/* ── Dashboard Page ─── */
+.dashboard-evaluation-card {
+  background: linear-gradient(135deg, var(--gold-15), rgba(var(--gold-rgb), 0.05));
+  border: 1px dashed var(--gold); border-radius: var(--radius);
+  padding: 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
+  box-shadow: 0 4px 12px rgba(var(--gold-rgb), 0.05);
+}
+.dashboard-evaluation-title { color: var(--gold); margin: 0; font-size: 1rem; }
+.dashboard-evaluation-text { margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-secondary); }
+
+.dashboard-hero-section { display: flex; flex-direction: row; gap: 1.5rem; flex-wrap: wrap; align-items: start; }
+.dashboard-player-card-wrapper { flex: 1; min-width: 280px; display: flex; justify-content: center; }
+.dashboard-rpg-panel { flex: 1.5; min-width: 300px; display: flex; flex-direction: column; gap: 1.5rem; }
+
+.dashboard-season-active {
+  padding: 1rem; border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--accent-15), var(--gold-15));
+  border: 1px solid var(--accent-30); margin-top: 1rem;
+}
+.dashboard-season-inactive {
+  padding: 1rem; border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+  margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted);
+}
+.dashboard-season-title { color: var(--gold); margin: 0; font-size: 0.95rem; }
+.dashboard-season-end { font-size: 0.72rem; color: var(--accent); font-weight: bold; }
+.dashboard-season-desc { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem; margin-bottom: 0; }
+
+.dashboard-ranking-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
+.dashboard-ranking-empty { font-size: 0.85rem; color: var(--text-muted); text-align: center; }
+.dashboard-ranking-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem; }
+.dashboard-ranking-name { font-size: 0.85rem; font-weight: bold; }
+.dashboard-ranking-xp { color: var(--gold); font-weight: 600; font-size: 0.8rem; }
+.dashboard-ranking-badge { margin-left: 0.5rem; font-size: 0.55rem; }
+
+.dashboard-rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; padding: 0.5rem 0; }
+.dashboard-rule-card { background: rgba(255,255,255,0.02); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+.dashboard-rule-title { display: block; margin-bottom: 0.25rem; font-weight: bold; }
+.dashboard-rule-desc { font-size: 0.82rem; color: var(--text-secondary); } 

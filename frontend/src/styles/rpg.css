@@ -4,7 +4,7 @@
   background: linear-gradient(135deg, var(--accent), var(--gold)); border-radius: 50px;
   font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #fff;
 }
-.xp-bar { height: 12px; background: var(--bg-input); border-radius: 50px; overflow: hidden; border: 1px solid var(--border); position: relative; }
+.xp-bar { height: 14px; background: var(--bg-input); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); position: relative; }
 .xp-bar-fill {
   height: 100%; background: linear-gradient(90deg, var(--accent), var(--gold));
   border-radius: 50px; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); position: relative;
@@ -13,6 +13,12 @@
   content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); animation: shimmer 2s infinite;
 }
+
+.rpg-progress-container { width: 100%; margin-bottom: 1.25rem; }
+.rpg-progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.rpg-progress-next { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
+.rpg-progress-stats { font-size: 0.85rem; color: var(--gold); font-weight: 700; }
+.rpg-progress-msg { margin: 0.5rem 0 0 0; color: var(--text-secondary); font-size: 0.82rem; text-align: center; font-style: italic; }
  
 /* ── Gamified Player Card RPG ─── */
 .player-card-rpg {
@@ -43,6 +49,13 @@
   background: radial-gradient(circle at 50% -20%, var(--accent-15), transparent 70%);
   pointer-events: none;
 }
+.player-card-name { margin: 0 0 0.5rem 0; color: var(--text-primary); font-size: 1.25rem; font-weight: 700; }
+.player-card-badges { display: inline-flex; align-items: center; gap: 0.4rem; margin-bottom: 1rem; }
+.player-card-stats-divider { border-top: 1px solid var(--border); width: 100%; padding-top: 0.75rem; }
+.player-card-stats-title { font-size: 0.8rem; color: var(--text-secondary); }
+.player-card-stats-xp { font-size: 1.15rem; font-weight: 700; color: var(--gold); margin-top: 0.25rem; }
+.player-card-stats-xp-label { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
+
 .avatar-rpg-container {
   position: relative;
   width: 110px;

@@ -140,33 +140,41 @@ export default function DashboardPage() {
 
   // ── Render do Dashboard do Cliente (Gamificado) ──
   if (isClient) {
+    if (loading) {
+      return (
+        <div className="fade-in-up">
+          <div className="page-header">
+            <div className="skeleton-pulse skeleton-text" style={{ width: '60%', height: '2rem' }}></div>
+            <div className="skeleton-pulse skeleton-text" style={{ width: '80%' }}></div>
+          </div>
+          <div className="dashboard-hero-section">
+            <div className="dashboard-player-card-wrapper">
+               <div className="skeleton-pulse skeleton-card" style={{ minHeight: '350px', width: '100%', maxWidth: '400px' }}></div>
+            </div>
+            <div className="card dashboard-rpg-panel">
+               <div className="skeleton-pulse skeleton-text" style={{ width: '40%', height: '1.5rem', marginBottom: '1.5rem' }}></div>
+               <div className="skeleton-pulse skeleton-text" style={{ width: '100%', height: '14px', borderRadius: '10px', marginBottom: '2rem' }}></div>
+               <div className="skeleton-pulse skeleton-text" style={{ width: '100%', height: '100px', borderRadius: '8px' }}></div>
+            </div>
+          </div>
+        </div>
+      )
+    }
     const currentClient = clientData || user
     return (
       <div className="fade-in-up">
-        <div className="page-header" style={{ marginBottom: '1.5rem' }}>
+        <div className="page-header">
           <h2>⚔️ Bem-vindo ao RuivoBarber RPG!</h2>
           <p>Acompanhe sua jornada, ganhe XP nos atendimentos e resgate descontos lendários.</p>
         </div>
 
         {ultimoCorte && ultimoCorte.avaliacao_pendente && (
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(245,166,35,0.1), rgba(245,166,35,0.05))',
-            border: '1px dashed var(--gold)',
-            borderRadius: '12px',
-            padding: '1.25rem',
-            marginBottom: '1.5rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '1rem',
-            flexWrap: 'wrap',
-            boxShadow: '0 4px 12px rgba(245,166,35,0.05)'
-          }}>
+          <div className="dashboard-evaluation-card">
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <span style={{ fontSize: '2rem' }}>⭐</span>
               <div style={{ textAlign: 'left' }}>
-                <h4 style={{ color: 'var(--gold)', margin: 0, fontSize: '1rem' }}>Como foi seu último corte?</h4>
-                <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                <h4 className="dashboard-evaluation-title">Como foi seu último corte?</h4>
+                <p className="dashboard-evaluation-text">
                   Você foi atendido por <strong>{ultimoCorte.barbeiro_nome}</strong> ({ultimoCorte.servico_nome}). Sua avaliação nos ajuda muito!
                 </p>
               </div>
@@ -181,9 +189,9 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'start' }}>
+        <div className="dashboard-hero-section">
           {/* Ficha RPG Principal */}
-          <div style={{ flex: '1', minWidth: '280px', display: 'flex', justifyContent: 'center' }}>
+          <div className="dashboard-player-card-wrapper">
             <PlayerCard 
               nome={currentClient.nome} 
               nivel={currentClient.nivel} 
@@ -193,7 +201,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Painel de Recompensas e Progresso */}
-          <div className="card" style={{ flex: '1.5', minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="card dashboard-rpg-panel">
             <div className="card-header" style={{ paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
               <h3>🔥 Seu Progresso RPG</h3>
             </div>
@@ -213,33 +221,19 @@ export default function DashboardPage() {
             />
 
             {temporadaAtiva ? (
-              <div style={{ 
-                padding: '1rem', 
-                borderRadius: '8px', 
-                background: 'linear-gradient(135deg, rgba(233,69,96,0.1), rgba(245,166,35,0.1))', 
-                border: '1px solid rgba(233,69,96,0.3)',
-                marginTop: '1rem'
-              }}>
+              <div className="dashboard-season-active">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h4 style={{ color: '#f5a623', margin: 0, fontSize: '0.95rem' }}>⏳ Temporada Ativa: {temporadaAtiva.nome}</h4>
-                  <span style={{ fontSize: '0.72rem', color: '#e94560', fontWeight: 'bold' }}>
+                  <h4 className="dashboard-season-title">⏳ Temporada Ativa: {temporadaAtiva.nome}</h4>
+                  <span className="dashboard-season-end">
                     Término: {new Date(temporadaAtiva.dataFim).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                   </span>
                 </div>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem', marginBottom: 0 }}>
+                <p className="dashboard-season-desc">
                   Ganhe o máximo de XP possível até o fim da temporada para obter recompensas adicionais exclusivas!
                 </p>
               </div>
             ) : (
-              <div style={{ 
-                padding: '1rem', 
-                borderRadius: '8px', 
-                background: 'rgba(255,255,255,0.02)', 
-                border: '1px solid rgba(255,255,255,0.05)',
-                marginTop: '1rem',
-                fontSize: '0.8rem',
-                color: 'var(--text-muted)'
-              }}>
+              <div className="dashboard-season-inactive">
                 ℹ️ Nenhuma temporada ativa no momento. Aproveite para subir de nível e acumular XP base!
               </div>
             )}
@@ -254,9 +248,9 @@ export default function DashboardPage() {
           <div className="card-header">
             <h3>🏆 Ranking dos Barbeados (Top Clientes)</h3>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+          <div className="dashboard-ranking-list">
             {ranking.length === 0 ? (
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center' }}>Nenhum cliente cadastrado no ranking.</p>
+              <p className="dashboard-ranking-empty">Nenhum cliente cadastrado no ranking.</p>
             ) : (
               ranking.slice(0, 5).map((c, i) => {
                 const niveis = { 'Corte Iniciante': 300, 'Barba de Respeito': 600, 'Lenda da Navalha': 1000, 'Rei da Cadeira': 1000 }
@@ -264,15 +258,15 @@ export default function DashboardPage() {
                 const pct = Math.min((c.xp || 0) / max * 100, 100)
                 return (
                   <div key={i}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                    <div className="dashboard-ranking-item">
                       <div>
                         <span style={{ marginRight: '0.5rem', fontWeight: 'bold', color: i === 0 ? 'var(--gold)' : i === 1 ? 'silver' : i === 2 ? '#cd7f32' : 'var(--text-muted)' }}>
                           {i + 1}º
                         </span>
-                        <strong style={{ fontSize: '0.85rem' }}>{c.nome}</strong>
-                        <span className="rpg-level-badge" style={{ marginLeft: '0.5rem', fontSize: '0.55rem' }}>{c.nivel || 'Corte Iniciante'}</span>
+                        <span className="dashboard-ranking-name">{c.nome}</span>
+                        <span className="rpg-level-badge dashboard-ranking-badge">{c.nivel || 'Corte Iniciante'}</span>
                       </div>
-                      <span style={{ color: 'var(--gold)', fontWeight: 600, fontSize: '0.8rem' }}>{c.xp || 0} XP</span>
+                      <span className="dashboard-ranking-xp">{c.xp || 0} XP</span>
                     </div>
                     <div className="xp-bar">
                       <div className="xp-bar-fill" style={{ width: `${pct}%` }} />
@@ -288,18 +282,18 @@ export default function DashboardPage() {
           <div className="card-header">
             <h3>📜 Regras da Jornada RPG</h3>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', padding: '0.5rem 0' }}>
-            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
-              <strong style={{ color: 'var(--accent)', display: 'block', marginBottom: '0.25rem' }}>💈 Ganhe XP</strong>
-              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>A cada serviço concluído você ganha XP automático (Corte Simples = 10 XP, Barba = 15 XP, Corte+Barba = 25 XP).</span>
+          <div className="dashboard-rules-grid">
+            <div className="dashboard-rule-card">
+              <span className="dashboard-rule-title" style={{ color: 'var(--accent)' }}>💈 Ganhe XP</span>
+              <span className="dashboard-rule-desc">A cada serviço concluído você ganha XP automático (Corte Simples = 10 XP, Barba = 15 XP, Corte+Barba = 25 XP).</span>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
-              <strong style={{ color: 'var(--gold)', display: 'block', marginBottom: '0.25rem' }}>🎟️ Descontos Lendários</strong>
-              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Resgate cupons conforme atinge as patentes (Nível 2 = 5% off, Nível 3 = 10% off, Nível 4 = 1 Corte Grátis).</span>
+            <div className="dashboard-rule-card">
+              <span className="dashboard-rule-title" style={{ color: 'var(--gold)' }}>🎟️ Descontos Lendários</span>
+              <span className="dashboard-rule-desc">Resgate cupons conforme atinge as patentes (Nível 2 = 5% off, Nível 3 = 10% off, Nível 4 = 1 Corte Grátis).</span>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
-              <strong style={{ color: 'var(--red)', display: 'block', marginBottom: '0.25rem' }}>🛡️ Regra Anti-Falta</strong>
-              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Evite faltas sem aviso prévio. Faltas deduzem 100 XP do seu progresso geral de forma penalizada.</span>
+            <div className="dashboard-rule-card">
+              <span className="dashboard-rule-title" style={{ color: 'var(--red)' }}>🛡️ Regra Anti-Falta</span>
+              <span className="dashboard-rule-desc">Evite faltas sem aviso prévio. Faltas deduzem 100 XP do seu progresso geral de forma penalizada.</span>
             </div>
           </div>
         </div>
@@ -362,9 +356,9 @@ export default function DashboardPage() {
           <div className="card-header">
             <h3>⚔️ Top Clientes RPG</h3>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+          <div className="dashboard-ranking-list">
             {ranking.length === 0 ? (
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center' }}>Nenhum cliente cadastrado no ranking.</p>
+              <p className="dashboard-ranking-empty">Nenhum cliente cadastrado no ranking.</p>
             ) : (
               ranking.slice(0, 5).map((c, i) => {
                 const niveis = { 'Corte Iniciante': 300, 'Barba de Respeito': 600, 'Lenda da Navalha': 1000, 'Rei da Cadeira': 1000 }
@@ -372,15 +366,15 @@ export default function DashboardPage() {
                 const pct = Math.min((c.xp || 0) / max * 100, 100)
                 return (
                   <div key={i}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                    <div className="dashboard-ranking-item">
                       <div>
                         <span style={{ marginRight: '0.5rem', fontWeight: 'bold', color: i === 0 ? 'var(--gold)' : i === 1 ? 'silver' : i === 2 ? '#cd7f32' : 'var(--text-muted)' }}>
                           {i + 1}º
                         </span>
-                        <strong style={{ fontSize: '0.85rem' }}>{c.nome}</strong>
-                        <span className="rpg-level-badge" style={{ marginLeft: '0.5rem', fontSize: '0.55rem' }}>{c.nivel || 'Corte Iniciante'}</span>
+                        <span className="dashboard-ranking-name">{c.nome}</span>
+                        <span className="rpg-level-badge dashboard-ranking-badge">{c.nivel || 'Corte Iniciante'}</span>
                       </div>
-                      <span style={{ color: 'var(--gold)', fontWeight: 600, fontSize: '0.8rem' }}>{c.xp || 0} XP</span>
+                      <span className="dashboard-ranking-xp">{c.xp || 0} XP</span>
                     </div>
                     <div className="xp-bar">
                       <div className="xp-bar-fill" style={{ width: `${pct}%` }} />
