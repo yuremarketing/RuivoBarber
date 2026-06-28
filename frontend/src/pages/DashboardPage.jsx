@@ -4,23 +4,9 @@ import RpgProgressBar from '../components/RpgProgressBar.jsx'
 import RedeemCouponManager from '../components/RedeemCouponManager.jsx'
 import BadgeShowcase from '../components/BadgeShowcase.jsx'
 import AvaliacaoModal from '../components/AvaliacaoModal.jsx'
-import { buscarCliente, listarClientes, fetchTemporadaAtiva, fetchMeusBadges, fetchUltimoCorte, fetchGorjetasBarbeiro, confirmarPagamentoGorjeta } from '../services/api.js'
-
-
-const stats = [
-  { icon: '👥', label: 'Total Clientes', value: '47', change: '+5 este mês' },
-  { icon: '📅', label: 'Agendamentos Hoje', value: '12', change: '3 pendentes' },
-  { icon: '💰', label: 'Receita do Mês', value: 'R$ 4.280', change: '+18% vs anterior' },
-  { icon: '🎟️', label: 'Cupons Ativos', value: '8', change: '2 resgatados hoje' },
- ]
- 
-const agendamentos = [
-  { id: 1, cliente: 'João Silva', servico: 'Corte + Barba', barbeiro: 'Carlos', horario: '10:00', status: 'Confirmado' },
-  { id: 2, cliente: 'Pedro Santos', servico: 'Corte Simples', barbeiro: 'Ricardo', horario: '11:30', status: 'Pendente' },
-  { id: 3, cliente: 'André Costa', servico: 'Barba Completa', barbeiro: 'Carlos', horario: '14:00', status: 'Pendente' },
-  { id: 4, cliente: 'Marcos Oliveira', servico: 'Hidratação Capilar', barbeiro: 'Ricardo', horario: '15:30', status: 'Confirmado' },
-  { id: 5, cliente: 'Lucas Ferreira', servico: 'Corte + Barba', barbeiro: 'Carlos', horario: '16:00', status: 'Concluido' },
-]
+import { buscarCliente, listarClientes, fetchTemporadaAtiva, fetchMeusBadges, fetchUltimoCorte, fetchGorjetasBarbeiro, confirmarPagamentoGorjeta, fetchDashboard } from '../services/api.js'
+// Stats format: { icon, label, value, change }
+// Agendamentos format: { id, cliente, servico, barbeiro, horario, status }
 
 export default function DashboardPage() {
   const user = JSON.parse(localStorage.getItem('ruivobarber_user') || '{"nome":"Administrador","cargo":"Adm"}')
@@ -34,6 +20,8 @@ export default function DashboardPage() {
   const [showAvaliacaoModal, setShowAvaliacaoModal] = useState(false)
   const [gorjetas, setGorjetas] = useState([])
   const [loadingGorjetas, setLoadingGorjetas] = useState(false)
+  const [adminDashboard, setAdminDashboard] = useState({ stats: null, agendamentos: [] })
+  const [loadingAdmin, setLoadingAdmin] = useState(true)
  
   const isClient = user.cargo === 'Cliente'
   const hoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -77,6 +65,20 @@ export default function DashboardPage() {
     } catch (err) {
       console.error('Erro ao confirmar gorjeta:', err)
       alert('Erro ao confirmar pagamento: ' + (err.response?.data?.error || err.message))
+    }
+  }
+
+  const loadAdminDashboard = async () => {
+    try {
+      setLoadingAdmin(true)
+      const res = await fetchDashboard()
+      if (res.data) {
+        setAdminDashboard(res.data)
+      }
+    } catch (err) {
+      console.error('Erro ao buscar dados do dashboard:', err)
+    } finally {
+      setLoadingAdmin(false)
     }
   }
 
@@ -134,6 +136,7 @@ export default function DashboardPage() {
         .finally(() => setLoadingBadges(false))
     } else {
       loadGorjetas()
+      loadAdminDashboard()
     }
   }, [])
 
@@ -162,9 +165,9 @@ export default function DashboardPage() {
     }
     const currentClient = clientData || user
     return (
-      <div className="fade-in-up">
+      <div className="fade-in-up" style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <div className="page-header">
-          <h2>⚔️ Bem-vindo ao RuivoBarber RPG!</h2>
+          <h2>Bem-vindo ao RuivoBarber RPG!</h2>
           <p>Acompanhe sua jornada, ganhe XP nos atendimentos e resgate descontos lendários.</p>
         </div>
 
@@ -190,20 +193,25 @@ export default function DashboardPage() {
         )}
 
         <div className="dashboard-hero-section">
-          {/* Ficha RPG Principal */}
-          <div className="dashboard-player-card-wrapper">
+          {/* Ficha RPG Principal e Badges */}
+          <div className="dashboard-player-card-wrapper" style={{ flexDirection: 'column', gap: '0', alignItems: 'center' }}>
             <PlayerCard 
               nome={currentClient.nome} 
               nivel={currentClient.nivel} 
               xp={currentClient.xp} 
               avatarUrl={currentClient.avatarUrl}
             />
+            
+            {/* Vitrine de Conquistas movida para baixo do PlayerCard */}
+            <div style={{ width: '100%', maxWidth: '340px', marginTop: '0.5rem' }}>
+              <BadgeShowcase badges={badges} loading={loadingBadges} />
+            </div>
           </div>
 
           {/* Painel de Recompensas e Progresso */}
           <div className="card dashboard-rpg-panel">
             <div className="card-header" style={{ paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
-              <h3>🔥 Seu Progresso RPG</h3>
+              <h3>Seu Progresso RPG</h3>
             </div>
             
             <RpgProgressBar 
@@ -223,7 +231,7 @@ export default function DashboardPage() {
             {temporadaAtiva ? (
               <div className="dashboard-season-active">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h4 className="dashboard-season-title">⏳ Temporada Ativa: {temporadaAtiva.nome}</h4>
+                  <h4 className="dashboard-season-title">Temporada Ativa: {temporadaAtiva.nome}</h4>
                   <span className="dashboard-season-end">
                     Término: {new Date(temporadaAtiva.dataFim).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                   </span>
@@ -237,16 +245,13 @@ export default function DashboardPage() {
                 ℹ️ Nenhuma temporada ativa no momento. Aproveite para subir de nível e acumular XP base!
               </div>
             )}
-
-            {/* Vitrine de Conquistas */}
-            <BadgeShowcase badges={badges} loading={loadingBadges} />
           </div>
         </div>
 
 
         <div className="card" style={{ marginTop: '2.5rem' }}>
           <div className="card-header">
-            <h3>🏆 Ranking dos Barbeados (Top Clientes)</h3>
+            <h3>Ranking dos Barbeados (Top Clientes)</h3>
           </div>
           <div className="dashboard-ranking-list">
             {ranking.length === 0 ? (
@@ -288,11 +293,11 @@ export default function DashboardPage() {
               <span className="dashboard-rule-desc">A cada serviço concluído você ganha XP automático (Corte Simples = 10 XP, Barba = 15 XP, Corte+Barba = 25 XP).</span>
             </div>
             <div className="dashboard-rule-card">
-              <span className="dashboard-rule-title" style={{ color: 'var(--gold)' }}>🎟️ Descontos Lendários</span>
+              <span className="dashboard-rule-title" style={{ color: 'var(--gold)' }}>Descontos Lendários</span>
               <span className="dashboard-rule-desc">Resgate cupons conforme atinge as patentes (Nível 2 = 5% off, Nível 3 = 10% off, Nível 4 = 1 Corte Grátis).</span>
             </div>
             <div className="dashboard-rule-card">
-              <span className="dashboard-rule-title" style={{ color: 'var(--red)' }}>🛡️ Regra Anti-Falta</span>
+              <span className="dashboard-rule-title" style={{ color: 'var(--red)' }}>Regra Anti-Falta</span>
               <span className="dashboard-rule-desc">Evite faltas sem aviso prévio. Faltas deduzem 100 XP do seu progresso geral de forma penalizada.</span>
             </div>
           </div>
@@ -313,14 +318,26 @@ export default function DashboardPage() {
   }
 
   // ── Render do Dashboard Admin ──
+  const adminStats = adminDashboard.stats ? [
+    { icon: '👥', label: 'Total Clientes', value: adminDashboard.stats.total_clientes, change: `+${adminDashboard.stats.novos_clientes_mes} este mês` },
+    { icon: '📅', label: 'Agendamentos Hoje', value: adminDashboard.stats.agendamentos_hoje, change: `${adminDashboard.stats.pendentes_hoje} pendentes` },
+    { icon: '💰', label: 'Receita do Mês', value: `R$ ${adminDashboard.stats.receita_mes.toFixed(2)}`, change: `${adminDashboard.stats.percentual_mes_ant >= 0 ? '+' : ''}${adminDashboard.stats.percentual_mes_ant.toFixed(1)}% vs anterior` },
+    { icon: '🎫', label: 'Cupons Ativos', value: adminDashboard.stats.cupons_ativos, change: `${adminDashboard.stats.cupons_resgatados_hoje} resgatados hoje` },
+  ] : [
+    { icon: '👥', label: 'Total Clientes', value: '-', change: '-' },
+    { icon: '📅', label: 'Agendamentos Hoje', value: '-', change: '-' },
+    { icon: '💰', label: 'Receita do Mês', value: '-', change: '-' },
+    { icon: '🎫', label: 'Cupons Ativos', value: '-', change: '-' },
+  ]
+
   return (
-    <div className="fade-in-up">
+    <div className="fade-in-up" style={{ maxWidth: '1200px', margin: '0 auto' }}>
       <div className="page-header">
-        <h2>📊 Dashboard</h2>
+        <h2>Dashboard</h2>
         <p>Visão geral do RuivoBarber — {hoje}</p>
       </div>
       <div className="stats-grid">
-        {stats.map((s, i) => (
+        {adminStats.map((s, i) => (
           <div key={i} className="stat-card">
             <div className="icon">{s.icon}</div>
             <div className="label">{s.label}</div>
@@ -332,14 +349,19 @@ export default function DashboardPage() {
       <div className="grid-2">
         <div className="card">
           <div className="card-header">
-            <h3>📅 Agendamentos de Hoje</h3>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{agendamentos.length} total</span>
+            <h3>Agendamentos de Hoje</h3>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{adminDashboard.agendamentos.length} total</span>
           </div>
           <div className="table-container">
+            {loadingAdmin ? (
+               <p style={{ padding: '1rem', textAlign: 'center' }}>Carregando...</p>
+            ) : adminDashboard.agendamentos.length === 0 ? (
+               <p style={{ padding: '1rem', textAlign: 'center' }}>Nenhum agendamento para hoje.</p>
+            ) : (
             <table className="data-table">
               <thead><tr><th>Cliente</th><th>Serviço</th><th>Barbeiro</th><th>Hora</th><th>Status</th></tr></thead>
               <tbody>
-                {agendamentos.map(a => (
+                {adminDashboard.agendamentos.map(a => (
                   <tr key={a.id}>
                     <td style={{ fontWeight: 500 }}>{a.cliente}</td>
                     <td>{a.servico}</td>
@@ -350,11 +372,12 @@ export default function DashboardPage() {
                 ))}
               </tbody>
             </table>
+            )}
           </div>
         </div>
         <div className="card">
           <div className="card-header">
-            <h3>⚔️ Top Clientes RPG</h3>
+            <h3>Top Clientes RPG</h3>
           </div>
           <div className="dashboard-ranking-list">
             {ranking.length === 0 ? (
@@ -390,7 +413,7 @@ export default function DashboardPage() {
       {/* Seção de Gorjetas Pix Recebidas */}
       <div className="card" style={{ marginTop: '2.5rem' }}>
         <div className="card-header">
-          <h3>💸 Registro de Gorjetas Pix Recebidas</h3>
+          <h3>Registro de Gorjetas Pix Recebidas</h3>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{gorjetas.length} total</span>
         </div>
         <div className="table-container" style={{ marginTop: '1rem' }}>

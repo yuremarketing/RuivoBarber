@@ -4,15 +4,15 @@
 
 -- 1. Inserir Clientes Fictícios (Com hashes falsos, pois o foco é dashboard)
 INSERT INTO Usuarios (nome, cargo, login, senha, avatar_url) VALUES
-('Cliente Ouro', 'Cliente', 'cliente1', '$2a$10$placeholder_hash', 'https://api.dicebear.com/6.x/avataaars/svg?seed=c1'),
-('Cliente Prata', 'Cliente', 'cliente2', '$2a$10$placeholder_hash', 'https://api.dicebear.com/6.x/avataaars/svg?seed=c2'),
-('Cliente Bronze', 'Cliente', 'cliente3', '$2a$10$placeholder_hash', 'https://api.dicebear.com/6.x/avataaars/svg?seed=c3'),
-('Cliente Novo', 'Cliente', 'cliente4', '$2a$10$placeholder_hash', 'https://api.dicebear.com/6.x/avataaars/svg?seed=c4');
+('Cliente Ouro', 'Cliente', 'cliente1', '$2b$12$VKYf/FGnor.MCmbT66a.i.gnMXz3mntNZRI8qGsZZkqmGTDNfoOve', 'https://api.dicebear.com/6.x/avataaars/svg?seed=c1'),
+('Cliente Prata', 'Cliente', 'cliente2', '$2b$12$VKYf/FGnor.MCmbT66a.i.gnMXz3mntNZRI8qGsZZkqmGTDNfoOve', 'https://api.dicebear.com/6.x/avataaars/svg?seed=c2'),
+('Cliente Bronze', 'Cliente', 'cliente3', '$2b$12$VKYf/FGnor.MCmbT66a.i.gnMXz3mntNZRI8qGsZZkqmGTDNfoOve', 'https://api.dicebear.com/6.x/avataaars/svg?seed=c3'),
+('Cliente Novo', 'Cliente', 'cliente4', '$2b$12$VKYf/FGnor.MCmbT66a.i.gnMXz3mntNZRI8qGsZZkqmGTDNfoOve', 'https://api.dicebear.com/6.x/avataaars/svg?seed=c4');
 
 -- 2. Inserir Barbeiros
 INSERT INTO Usuarios (nome, cargo, login, senha, avatar_url, avaliacao_media) VALUES
-('Barbeiro Master', 'Barbeiro', 'barb1', '$2a$10$placeholder_hash', 'https://api.dicebear.com/6.x/avataaars/svg?seed=b1', 4.9),
-('Barbeiro Aprendiz', 'Barbeiro', 'barb2', '$2a$10$placeholder_hash', 'https://api.dicebear.com/6.x/avataaars/svg?seed=b2', 4.5);
+('Barbeiro Master', 'Barbeiro', 'barb1', '$2b$12$VKYf/FGnor.MCmbT66a.i.gnMXz3mntNZRI8qGsZZkqmGTDNfoOve', 'https://api.dicebear.com/6.x/avataaars/svg?seed=b1', 4.9),
+('Barbeiro Aprendiz', 'Barbeiro', 'barb2', '$2b$12$VKYf/FGnor.MCmbT66a.i.gnMXz3mntNZRI8qGsZZkqmGTDNfoOve', 'https://api.dicebear.com/6.x/avataaars/svg?seed=b2', 4.5);
 
 -- 3. Progresso dos Clientes
 INSERT INTO ProgressoCliente (clienteid, xpatual, nivelatual, barrapercentual, moedas, streakatual) 

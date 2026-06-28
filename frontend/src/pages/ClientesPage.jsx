@@ -4,36 +4,6 @@ import PlayerCard from '../components/PlayerCard.jsx'
 import RpgProgressBar from '../components/RpgProgressBar.jsx'
 import RedeemCouponManager from '../components/RedeemCouponManager.jsx'
 
-const mockClientes = [
-  { id: 1, nome: 'João Silva', login: 'joao.silva', cargo: 'Cliente', xp: 320, nivel: 'Barba de Respeito' },
-  { id: 2, nome: 'Pedro Santos', login: 'pedro.s', cargo: 'Cliente', xp: 580, nivel: 'Lenda da Navalha' },
-  { id: 3, nome: 'André Costa', login: 'andre.c', cargo: 'Cliente', xp: 75, nivel: 'Corte Iniciante' },
-  { id: 4, nome: 'Marcos Oliveira', login: 'marcos.o', cargo: 'Cliente', xp: 950, nivel: 'Rei da Cadeira' },
-  { id: 5, nome: 'Lucas Ferreira', login: 'lucas.f', cargo: 'Cliente', xp: 210, nivel: 'Barba de Respeito' },
-]
-
-const getCustomClientes = () => {
-  try {
-    const data = localStorage.getItem('ruivobarber_custom_clientes')
-    return data ? JSON.parse(data) : []
-  } catch (e) {
-    return []
-  }
-}
-
-const saveCustomCliente = (cliente) => {
-  try {
-    const list = getCustomClientes()
-    // Evita duplicidade no localStorage
-    if (!list.some(c => c.login === cliente.login)) {
-      list.push(cliente)
-      localStorage.setItem('ruivobarber_custom_clientes', JSON.stringify(list))
-    }
-  } catch (e) {
-    console.error(e)
-  }
-}
-
 export default function ClientesPage() {
   const [clientes, setClientes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -62,31 +32,15 @@ export default function ClientesPage() {
       setModalError('Todos os campos são obrigatórios.')
       return
     }
-    const tempClient = {
-      id: Date.now(),
-      nome: nomeNovo,
-      login: loginNovo,
-      cargo: 'Cliente',
-      xp: 0,
-      nivel: 'Corte Iniciante'
-    }
     try {
       setModalSaving(true)
       setModalError(null)
-      
-      // Salva localmente para garantir exibição mesmo sob fallback/mock do frontend
-      saveCustomCliente(tempClient)
       
       await cadastrarCliente(nomeNovo, loginNovo, senhaNovo)
       setShowModal(false)
       fetchClientes()
     } catch (err) {
       console.error('Erro ao cadastrar cliente:', err)
-      // Se deu erro de duplicidade, removemos do localStorage
-      if (err.response?.data?.error === 'login já cadastrado no sistema') {
-        const list = getCustomClientes().filter(c => c.login !== loginNovo)
-        localStorage.setItem('ruivobarber_custom_clientes', JSON.stringify(list))
-      }
       const msg = err.response?.data?.error || 'Erro ao cadastrar cliente. Verifique os dados e tente novamente.'
       setModalError(msg)
     } finally {
@@ -99,22 +53,14 @@ export default function ClientesPage() {
       setLoading(true)
       const res = await listarClientes()
       if (res && Array.isArray(res.data)) {
-        const custom = getCustomClientes()
-        const merged = [...res.data]
-        custom.forEach(c => {
-          if (!merged.some(m => m.login === c.login)) {
-            merged.push(c)
-          }
-        })
-        setClientes(merged)
+        setClientes(res.data)
       } else {
         throw new Error('Formato de dados inválido recebido do servidor.')
       }
     } catch (err) {
-      console.error('Erro ao buscar clientes da API, usando dados mockados:', err)
-      setError('Não foi possível carregar os dados em tempo real. Exibindo dados locais offline.')
-      const custom = getCustomClientes()
-      setClientes([...mockClientes, ...custom])
+      console.error('Erro ao buscar clientes da API:', err)
+      setError('Não foi possível carregar a lista de clientes.')
+      setClientes([])
     } finally {
       setLoading(false)
     }
@@ -133,7 +79,7 @@ export default function ClientesPage() {
       <div className="page-header">
         <div className="page-header-actions">
           <div>
-            <h2>👥 Clientes</h2>
+            <h2>Clientes</h2>
             <p>Gestão de clientes e progresso RPG</p>
           </div>
           <button className="btn btn-primary" onClick={handleOpenModal}>+ Novo Cliente</button>
@@ -154,7 +100,7 @@ export default function ClientesPage() {
       </div>
       <div className="card">
         {loading ? (
-          <div className="empty-state"><p>⏳ A carregar...</p></div>
+          <div className="empty-state"><p>A carregar...</p></div>
         ) : filtered.length === 0 ? (
           <div className="empty-state"><p>Nenhum cliente encontrado.</p></div>
         ) : (
@@ -252,7 +198,7 @@ export default function ClientesPage() {
         <div className="modal-overlay" onClick={() => setSelectedCliente(null)}>
           <div className="modal" style={{ maxWidth: '640px', width: '100%' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header" style={{ marginBottom: '1.25rem' }}>
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>⚔️ Ficha do Personagem RPG</h3>
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>Ficha do Personagem RPG</h3>
               <button className="btn-ghost" onClick={() => setSelectedCliente(null)}>✕</button>
             </div>
             

@@ -55,6 +55,8 @@ export const atualizarPerfil = (id, dados) => api.put(`/clientes/${id}/perfil`, 
 export const fetchConfiguracoes = () => api.get('/configuracoes')
 export const salvarConfiguracoes = (dados) => api.post('/configuracoes', dados)
 
+export const fetchDashboard = () => api.get('/dashboard')
+
 export const fetchLives = () => api.get('/lives')
 export const fetchLiveAtiva = () => api.get('/lives/ativa')
 export const criarLive = (titulo, url, plataforma, ativa) => api.post('/lives', { titulo, url, plataforma, ativa })

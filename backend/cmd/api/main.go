@@ -692,6 +692,10 @@ func main() {
     pdvService := services.NewPdvService(pdvRepo, clienteRepo, notificationService)
     pdvHandler := handlers.NewPdvHandler(pdvService)
 
+    dashboardRepo := repositories.NewDashboardPgRepository(db)
+    dashboardService := services.NewDashboardService(dashboardRepo)
+    dashboardHandler := handlers.NewDashboardHandler(dashboardService)
+
     app := fiber.New(fiber.Config{AppName: "RuivoBarber API v1.0"})
     app.Use(logger.New())
     app.Use(cors.New())
@@ -714,8 +718,7 @@ func main() {
     queueHandler.RegisterRoutes(app)
     liveHandler.RegisterRoutes(app)
     pdvHandler.RegisterRoutes(app)
-
-
+    dashboardHandler.RegisterRoutes(app)
     port := os.Getenv("PORT")
     if port == "" {
         port = "8080"

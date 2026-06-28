@@ -37,6 +37,15 @@ if [ -z "$BARBEIRO_ID" ]; then
   db_exec "INSERT INTO Usuarios (Nome, Cargo, Login, Senha) VALUES ('Barbeiro Checkout Teste', 'Barbeiro', 'test_checkout_barb', 'pwd');"
   BARBEIRO_ID=$(db_exec "SELECT ID FROM Usuarios WHERE Login='test_checkout_barb';")
 fi
+# Garantir disponibilidade do barbeiro para todos os dias
+db_exec "INSERT INTO BarbeiroDisponibilidade (BarbeiroID, DiaSemana, HoraInicio, HoraFim) VALUES 
+  ($BARBEIRO_ID, 0, '00:00:00', '23:59:59'),
+  ($BARBEIRO_ID, 1, '00:00:00', '23:59:59'),
+  ($BARBEIRO_ID, 2, '00:00:00', '23:59:59'),
+  ($BARBEIRO_ID, 3, '00:00:00', '23:59:59'),
+  ($BARBEIRO_ID, 4, '00:00:00', '23:59:59'),
+  ($BARBEIRO_ID, 5, '00:00:00', '23:59:59'),
+  ($BARBEIRO_ID, 6, '00:00:00', '23:59:59') ON CONFLICT DO NOTHING;"
 echo "✔ Barbeiro ID: $BARBEIRO_ID preparado."
 
 # 3. Obter ou cadastrar Serviço de Teste no Banco
