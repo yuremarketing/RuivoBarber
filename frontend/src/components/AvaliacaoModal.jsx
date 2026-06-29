@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import PropTypes from 'prop-types'
 import { enviarAvaliacao } from '../services/api.js'
 
 export default function AvaliacaoModal({ agendamento, onClose, onSuccess }) {
@@ -42,14 +43,14 @@ export default function AvaliacaoModal({ agendamento, onClose, onSuccess }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '440px', width: '100%' }}>
+      <div className="modal w-full max-w-440" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h3>⭐ Avaliar Atendimento</h3>
           <button className="btn-ghost" onClick={onClose} disabled={loading}>✕</button>
         </div>
 
         {success ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '2rem 0', textAlign: 'center' }}>
+          <div className="flex-column flex-align-center gap-1 py-2 text-center">
             <span style={{ fontSize: '3rem', animation: 'bounce 1s infinite' }}>🎉</span>
             <h4 style={{ color: 'var(--gold)', margin: 0 }}>Obrigado pelo feedback!</h4>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
@@ -57,8 +58,8 @@ export default function AvaliacaoModal({ agendamento, onClose, onSuccess }) {
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '0.5rem 0' }}>
-            <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem', textAlign: 'left' }}>
+          <form onSubmit={handleSubmit} className="flex-column gap-1-25 py-0-5">
+            <div className="border-b pb-0-75 text-left">
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 0.25rem 0' }}>
                 Como foi seu último corte com o barbeiro <strong>{agendamento.barbeiro_nome}</strong>?
               </p>
@@ -67,7 +68,7 @@ export default function AvaliacaoModal({ agendamento, onClose, onSuccess }) {
               </span>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="flex-column flex-align-center gap-0-5">
               <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
                 {nota === 1 && '⭐ Terrível'}
                 {nota === 2 && '⭐⭐ Ruim'}
@@ -76,7 +77,7 @@ export default function AvaliacaoModal({ agendamento, onClose, onSuccess }) {
                 {nota === 5 && '⭐⭐⭐⭐⭐ Excelente!'}
               </span>
 
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div className="flex-row gap-0-5">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
@@ -154,3 +155,16 @@ export default function AvaliacaoModal({ agendamento, onClose, onSuccess }) {
     </div>
   )
 }
+
+AvaliacaoModal.propTypes = {
+  agendamento: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    cliente_nome: PropTypes.string,
+    barbeiro_nome: PropTypes.string,
+    servico_nome: PropTypes.string,
+    data_hora: PropTypes.string
+  }).isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func.isRequired
+}
+

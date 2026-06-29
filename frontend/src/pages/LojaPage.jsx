@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import PlayerCard from '../components/PlayerCard.jsx'
-import { fetchLojaItens, comprarItem, equiparItem, desequiparItem, buscarCliente } from '../services/api.js'
+import { buscarCliente, fetchLojaItens, comprarItem, equiparItem, desequiparItem } from '../services/api.js'
+import ErrorState from '../components/ErrorState.jsx'
 
 const mockItems = [
   { id: 1, nome: 'Moldura de Ouro', descricao: 'Moldura dourada premium para o seu Card de Jogador', preco: 200, tipoItem: 'Moldura', styleClass: 'frame-gold', comprado: false, equipado: false },
@@ -172,9 +173,15 @@ export default function LojaPage() {
             </button>
           </div>
 
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-secondary)' }}>
-              ⌛ Carregando itens...
+          {errorMsg && itensLoja.length === 0 ? (
+            <div style={{ padding: '1rem' }}>
+              <ErrorState message={errorMsg} onRetry={loadData} />
+            </div>
+          ) : loading ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1.25rem' }}>
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="card skeleton-pulse" style={{ height: '220px', borderRadius: '12px' }}></div>
+              ))}
             </div>
           ) : activeTab === 'loja' ? (
             itensLoja.length === 0 ? (

@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 
 function PlayerCard({ 
   nome = 'Cliente', 
@@ -78,5 +79,16 @@ function PlayerCard({
   )
 }
 
+PlayerCard.propTypes = {
+  nome: PropTypes.string,
+  nivel: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  xp: PropTypes.number,
+  avatarUrl: PropTypes.string,
+  molduraEquipada: PropTypes.string,
+  fundoEquipado: PropTypes.string,
+  efeitoEquipado: PropTypes.string
+}
+
 export default PlayerCard
+
 

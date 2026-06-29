@@ -160,7 +160,7 @@ export default function ClientesPage() {
                   return (
                     <tr key={c.id}>
                       <td style={{ color: 'var(--text-muted)' }}>#{c.id}</td>
-                      <td style={{ fontWeight: 600 }}>{c.nome || 'Sem Nome'}</td>
+                      <td className="font-semibold">{c.nome || 'Sem Nome'}</td>
                       <td style={{ color: 'var(--text-secondary)' }}>{c.login || 'sem-login'}</td>
                       <td>
                         {c.cargo === 'Adm' ? (
@@ -219,7 +219,7 @@ export default function ClientesPage() {
               />
             </div>
             
-            <div className="form-group" style={{ marginBottom: '1rem' }}>
+            <div className="form-group mb-1">
               <label className="form-label">Cargo (Nível de Acesso)</label>
               <select 
                 className="form-input" 

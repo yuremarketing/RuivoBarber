@@ -240,7 +240,7 @@ export default function LivesPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* Cadastro Form */}
           <div className="card">
-            <div className="card-header" style={{ marginBottom: '1rem' }}>
+            <div className="card-header mb-1">
               <h3>➕ Cadastrar Nova Transmissão</h3>
             </div>
             <form onSubmit={handleCriar} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -302,7 +302,7 @@ export default function LivesPage() {
 
           {/* List of Lives */}
           <div className="card">
-            <div className="card-header" style={{ marginBottom: '1rem' }}>
+            <div className="card-header mb-1">
               <h3>📜 Histórico de Lives</h3>
             </div>
             
@@ -311,7 +311,7 @@ export default function LivesPage() {
                 Nenhuma transmissão cadastrada ainda.
               </p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div className="flex-column gap-0-75">
                 {lives.map(live => (
                   <div 
                     key={live.id} 
@@ -374,7 +374,7 @@ export default function LivesPage() {
         {/* Right Side: Active Live Preview */}
         <div style={{ position: 'sticky', top: '1.5rem' }}>
           <div className="card">
-            <div className="card-header" style={{ marginBottom: '1rem' }}>
+            <div className="card-header mb-1">
               <h3>Monitor da Live Ativa</h3>
             </div>
             

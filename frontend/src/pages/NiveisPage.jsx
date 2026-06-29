@@ -32,15 +32,15 @@ export default function NiveisPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
           <div>
             <h4 style={{ color: 'var(--accent)', marginBottom: '0.5rem', fontSize: '0.95rem' }}>1. Acumule XP</h4>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Cada serviço realizado concede pontos de experiência (XP) ao cliente.</p>
+            <p className="text-secondary text-sm">Cada serviço realizado concede pontos de experiência (XP) ao cliente.</p>
           </div>
           <div>
             <h4 style={{ color: 'var(--gold)', marginBottom: '0.5rem', fontSize: '0.95rem' }}>2. Suba de Nível</h4>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Ao atingir o XP necessário, o cliente sobe automaticamente de nível.</p>
+            <p className="text-secondary text-sm">Ao atingir o XP necessário, o cliente sobe automaticamente de nível.</p>
           </div>
           <div>
             <h4 style={{ color: 'var(--green)', marginBottom: '0.5rem', fontSize: '0.95rem' }}>3. Ganhe Recompensas</h4>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Cada nível desbloqueia bônus exclusivos como descontos e serviços grátis.</p>
+            <p className="text-secondary text-sm">Cada nível desbloqueia bônus exclusivos como descontos e serviços grátis.</p>
           </div>
         </div>
       </div>

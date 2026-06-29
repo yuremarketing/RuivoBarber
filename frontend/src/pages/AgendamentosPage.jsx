@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { fetchServicos, fetchBarbeiros, fetchAgendamentos, fetchAgendaBarbeiro, criarAgendamento, concluirAtendimento, registrarFalta, fetchDisponibilidadeBarbeiro, fetchBloqueiosBarbeiro } from '../services/api.js'
 import BookingWizard from '../components/BookingWizard.jsx'
 import GorjetaModal from '../components/GorjetaModal.jsx'
+import ErrorState from '../components/ErrorState.jsx'
 
 
 const getLocalDateStr = () => {
@@ -438,7 +439,7 @@ export default function AgendamentosPage() {
         </div>
       </div>
 
-      {error && <div className="banner error">{error}</div>}
+
 
       <div className="stats-grid agendamentos-stats-grid">
         {[{ s: 'Pendente', v: getCount('Pendente'), i: '' },
@@ -461,8 +462,16 @@ export default function AgendamentosPage() {
       </div>
 
       <div className="card">
-        {loading ? (
-          <p className="agendamentos-empty">A carregar agendamentos...</p>
+        {error ? (
+          <div style={{ padding: '1rem' }}>
+            <ErrorState message={error} onRetry={loadData} />
+          </div>
+        ) : loading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '1rem' }}>
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="skeleton-pulse" style={{ height: '35px', width: '100%', borderRadius: '4px' }}></div>
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
           <p className="agendamentos-empty">Nenhum agendamento encontrado.</p>
         ) : (
@@ -519,133 +528,21 @@ export default function AgendamentosPage() {
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" style={isClient ? { height: '650px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' } : {}} onClick={e => e.stopPropagation()}>
-            <div className="modal-header" style={isClient ? { flexShrink: 0 } : {}}>
+            <div className="modal-header">
               <h3>Novo Agendamento</h3>
               <button className="btn-ghost" onClick={() => setShowModal(false)}>✕</button>
             </div>
-            {isClient ? (
-              <BookingWizard
-                servicos={servicos}
-                barbeiros={barbeiros}
-                onClose={() => setShowModal(false)}
-                onSuccess={() => {
-                  setShowModal(false)
-                  loadData()
-                  // Evento customizado para notificar o chat de que o agendamento foi atualizado
-                  const event = new CustomEvent('agendamentoCreated')
-                  window.dispatchEvent(event)
-                }}
-              />
-            ) : (
-              <form onSubmit={handleCreateAgendamento}>
-                <div className="form-group">
-                  <label className="form-label">Cliente</label>
-                  <select className="form-input" disabled><option>{user?.nome || 'Admin/Barbeiro'}</option></select>
-                  <small style={{ color: 'var(--text-muted)' }}>Agendamento será criado no seu nome.</small>
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">Barbeiro</label>
-                    <select className="form-input" value={selectedBarbeiro} onChange={e => setSelectedBarbeiro(e.target.value)}>
-                      {barbeiros.map(b => (
-                        <option key={b.id} value={b.id}>{b.nome}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Serviço</label>
-                    <select className="form-input" value={selectedServico} onChange={e => setSelectedServico(e.target.value)}>
-                      {servicos.map(s => (
-                        <option key={s.id} value={s.id}>{s.nome} - R$ {s.preco.toFixed(2)}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                    <label className="form-label">Data</label>
-                    <input
-                      type="date"
-                      className="form-input"
-                      value={selectedData}
-                      min={getLocalDateStr()}
-                      onChange={e => handleDateChange(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                    <label className="form-label">Horários Disponíveis (Sessão de 30 min)</label>
-                    {!selectedData ? (
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Selecione uma data para consultar os horários.</p>
-                    ) : loadingSlots ? (
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Carregando horários...</p>
-                    ) : availableSlots.length === 0 ? (
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Nenhum slot disponível.</p>
-                    ) : (
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(75px, 1fr))',
-                        gap: '0.5rem',
-                        marginTop: '0.5rem',
-                        maxHeight: '180px',
-                        overflowY: 'auto',
-                        padding: '0.25rem',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        borderRadius: '8px',
-                        backgroundColor: 'rgba(0, 0, 0, 0.2)'
-                      }}>
-                        {availableSlots.map(slot => (
-                          <button
-                            key={slot.time}
-                            type="button"
-                            disabled={!slot.available}
-                            onClick={() => setSelectedHora(slot.time)}
-                            style={{
-                              padding: '0.5rem 0.25rem',
-                              borderRadius: '6px',
-                              border: '1px solid',
-                              borderColor: selectedHora === slot.time
-                                ? 'var(--primary-color, #e07a5f)'
-                                : slot.available
-                                  ? 'rgba(255, 255, 255, 0.15)'
-                                  : 'transparent',
-                              backgroundColor: selectedHora === slot.time
-                                ? 'var(--primary-color, #e07a5f)'
-                                : slot.available
-                                  ? 'rgba(255, 255, 255, 0.05)'
-                                  : 'rgba(255, 255, 255, 0.02)',
-                              color: selectedHora === slot.time
-                                ? '#fff'
-                                : slot.available
-                                  ? 'var(--text-color, #f4f1de)'
-                                  : 'rgba(255, 255, 255, 0.2)',
-                              cursor: slot.available ? 'pointer' : 'not-allowed',
-                              fontSize: '0.85rem',
-                              fontWeight: '600',
-                              textDecoration: slot.available ? 'none' : 'line-through',
-                              transition: 'all 0.2s ease',
-                            }}
-                          >
-                            {slot.time}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {selectedHora && (
-                      <div style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: 'var(--primary-color, #e07a5f)', fontWeight: 600 }}>
-                        Horário Selecionado: {selectedHora}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
-                  <button type="submit" className="btn btn-primary">Agendar</button>
-                </div>
-              </form>
-            )}
+            <BookingWizard
+              servicos={servicos}
+              barbeiros={barbeiros}
+              onClose={() => setShowModal(false)}
+              onSuccess={() => {
+                setShowModal(false)
+                loadData()
+                const event = new CustomEvent('agendamentoCreated')
+                window.dispatchEvent(event)
+              }}
+            />
           </div>
         </div>
       )}

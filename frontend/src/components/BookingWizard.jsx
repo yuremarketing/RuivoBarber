@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
+import PropTypes from 'prop-types'
 import { fetchAgendaBarbeiro, criarAgendamento, fetchDisponibilidadeBarbeiro, fetchBloqueiosBarbeiro } from '../services/api.js'
 
 const getLocalDateStr = () => {
@@ -337,7 +338,7 @@ export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess 
         {/* ETAPA 1: SELECIONAR SERVIÇO */}
         {step === 1 && (
           <div className="fade-in-up">
-            <h4 style={{ marginBottom: '1rem' }}>Selecione o Serviço desejado:</h4>
+            <h4 className="mb-1">Selecione o Serviço desejado:</h4>
             <div className="booking-service-grid">
               {servicos.map(s => (
                 <div
@@ -368,7 +369,7 @@ export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess 
         {/* ETAPA 2: SELECIONAR BARBEIRO */}
         {step === 2 && (
           <div className="fade-in-up">
-            <h4 style={{ marginBottom: '1rem' }}>Escolha um Barbeiro:</h4>
+            <h4 className="mb-1">Escolha um Barbeiro:</h4>
             <div className="booking-barber-grid">
               {barbeiros.map(b => (
                 <div
@@ -392,7 +393,7 @@ export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess 
         {/* ETAPA 3: SELECIONAR DATA E HORA */}
         {step === 3 && (
           <div className="fade-in-up">
-            <h4 style={{ marginBottom: '1rem' }}>Escolha a Data e o Horário:</h4>
+            <h4 className="mb-1">Escolha a Data e o Horário:</h4>
             
             <div className="form-group" style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
               <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -447,13 +448,13 @@ export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess 
             <div className="form-group">
               <label className="form-label">Horários Disponíveis (Sessão de {selectedServico?.duracaominutos} min)</label>
               {!selectedData ? (
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                <p className="text-secondary text-sm">
                   Por favor, selecione uma data no seletor acima para consultar os horários.
                 </p>
               ) : loadingSlots ? (
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Consultando agenda do barbeiro...</p>
+                <p className="text-secondary text-sm">Consultando agenda do barbeiro...</p>
               ) : availableSlots.length === 0 ? (
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>❌ Sem horários disponíveis para este dia.</p>
+                <p className="text-secondary text-sm">❌ Sem horários disponíveis para este dia.</p>
               ) : (
                 <div className="booking-slots-grid">
                   {availableSlots.map(slot => (
@@ -517,13 +518,7 @@ export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess 
               </div>
             </div>
 
-            <button
-              onClick={handleConfirm}
-              disabled={submitting}
-              className="btn btn-primary btn-booking-confirm"
-            >
-              {submitting ? 'Confirmando Agendamento...' : '⚡ Confirmar e Agendar'}
-            </button>
+
           </div>
         )}
       </div>
@@ -545,7 +540,7 @@ export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess 
           {step > 1 ? '← Voltar' : 'Cancelar'}
         </button>
 
-        {step < 4 && (
+        {step < 4 ? (
           <button
             type="button"
             className="btn btn-primary"
@@ -558,8 +553,37 @@ export default function BookingWizard({ servicos, barbeiros, onClose, onSuccess 
           >
             Avançar →
           </button>
+        ) : (
+          <button
+            onClick={handleConfirm}
+            disabled={submitting}
+            className="btn btn-primary btn-booking-confirm"
+            style={{ padding: '0.75rem 1.5rem' }}
+          >
+            {submitting ? 'Confirmando...' : '⚡ Confirmar e Agendar'}
+          </button>
         )}
       </div>
     </div>
   )
 }
+
+BookingWizard.propTypes = {
+  servicos: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      nome: PropTypes.string.isRequired,
+      preco: PropTypes.number,
+      duracao: PropTypes.number
+    })
+  ).isRequired,
+  barbeiros: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      nome: PropTypes.string.isRequired
+    })
+  ).isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func.isRequired
+}
+

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import PropTypes from 'prop-types'
 import { criarGorjeta } from '../services/api.js'
 
 export default function GorjetaModal({ agendamento, onClose, onSuccess }) {
@@ -67,7 +68,7 @@ export default function GorjetaModal({ agendamento, onClose, onSuccess }) {
         </div>
 
         {step === 1 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '0.5rem 0' }}>
+          <div className="flex-column gap-1-25 py-0-5">
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, textAlign: 'left' }}>
               Gostou do atendimento? Envie uma gorjeta digital direto para a conta do barbeiro <strong>{barbeiroNome}</strong>.
             </p>
@@ -127,7 +128,7 @@ export default function GorjetaModal({ agendamento, onClose, onSuccess }) {
 
             <div style={{ width: '100%' }}>
               <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'left', display: 'block', marginBottom: '0.25rem' }}>Pix Copia e Cola</label>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div className="flex-row gap-0-5">
                 <input
                   type="text"
                   readOnly
@@ -160,3 +161,14 @@ export default function GorjetaModal({ agendamento, onClose, onSuccess }) {
     </div>
   )
 }
+
+GorjetaModal.propTypes = {
+  agendamento: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    barbeiro_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    barbeiro_nome: PropTypes.string
+  }).isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func.isRequired
+}
+

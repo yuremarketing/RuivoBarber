@@ -13,12 +13,14 @@ import {
   postarNoMural, 
   fetchClasMissoes 
 } from '../services/api.js'
+import ErrorState from '../components/ErrorState.jsx'
 
 export default function ClasPage() {
   const user = JSON.parse(localStorage.getItem('ruivobarber_user') || '{"nome":"Jogador","cargo":"Cliente"}')
   
   const [activeTab, setActiveTab] = useState('painel') // 'painel' | 'mural' | 'ranking'
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
@@ -41,6 +43,7 @@ export default function ClasPage() {
 
   const loadData = async () => {
     try {
+      setInitialLoading(true)
       setLoading(true)
       setError('')
       
@@ -85,6 +88,7 @@ export default function ClasPage() {
       setError('Falha ao sincronizar dados com a guilda.')
     } finally {
       setLoading(false)
+      setInitialLoading(false)
     }
   }
 
@@ -214,6 +218,28 @@ export default function ClasPage() {
   }
 
   // VIEW: User has NO clan
+  if (error && ranking.length === 0 && !meuCla) {
+    return (
+      <div className="main-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+        <ErrorState message={error} onRetry={loadData} />
+      </div>
+    )
+  }
+
+  if (initialLoading) {
+    return (
+      <div className="main-content" style={{ padding: '2rem' }}>
+        <div className="page-header" style={{ marginBottom: '2rem' }}>
+          <div className="skeleton-pulse" style={{ height: '35px', width: '30%', borderRadius: '4px' }}></div>
+        </div>
+        <div style={{ display: 'flex', gap: '2rem' }}>
+          <div className="card skeleton-pulse" style={{ height: '400px', flex: 1, borderRadius: '12px' }}></div>
+          <div className="card skeleton-pulse" style={{ height: '400px', flex: 1, borderRadius: '12px' }}></div>
+        </div>
+      </div>
+    )
+  }
+
   if (!meuCla) {
     return (
       <div className="fade-in-up">
@@ -238,7 +264,7 @@ export default function ClasPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* Create Clan */}
             <div className="card">
-              <div className="card-header" style={{ marginBottom: '1rem' }}>
+              <div className="card-header mb-1">
                 <h3>Fundar Nova Guilda</h3>
               </div>
               <form onSubmit={handleCriarCla} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -273,7 +299,7 @@ export default function ClasPage() {
 
             {/* Received Invites */}
             <div className="card">
-              <div className="card-header" style={{ marginBottom: '1rem' }}>
+              <div className="card-header mb-1">
                 <h3>✉️ Convites de Clãs Recebidos</h3>
               </div>
               
@@ -282,7 +308,7 @@ export default function ClasPage() {
                   Nenhum convite pendente.
                 </p>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div className="flex-column gap-0-75">
                   {convites.map(inv => (
                     <div 
                       key={inv.id}
@@ -329,7 +355,7 @@ export default function ClasPage() {
 
           {/* Right Column: Leaderboard / List */}
           <div className="card">
-            <div className="card-header" style={{ marginBottom: '1rem' }}>
+            <div className="card-header mb-1">
               <h3>Ranking de Guildas</h3>
             </div>
             
@@ -338,7 +364,7 @@ export default function ClasPage() {
                 Nenhum clã fundado no reino ainda.
               </p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div className="flex-column gap-0-75">
                 {ranking.map((rk, idx) => (
                   <div 
                     key={rk.id}
@@ -478,7 +504,7 @@ export default function ClasPage() {
               <h3>Guerreiros do Clã</h3>
             </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div className="flex-column gap-0-75">
               {membros.map(memb => {
                 const memIniciais = (memb.nome || 'J')
                   .split(' ')
@@ -746,7 +772,7 @@ export default function ClasPage() {
             <h3>Classificação Geral das Guildas</h3>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div className="flex-column gap-0-75">
             {ranking.map((rk, idx) => (
               <div 
                 key={rk.id}

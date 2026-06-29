@@ -58,17 +58,17 @@ function AdminValidationPanel() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+    <div className="flex-column w-full gap-1-5">
       {/* Bloco 1: Tela de Validação de Cupons na hora do Pagamento */}
-      <div className="card" style={{ border: '1px solid var(--border)' }}>
-        <div className="card-header" style={{ paddingBottom: '0.75rem', marginBottom: '1rem' }}>
-          <h3 style={{ color: 'var(--accent)' }}>Validar Cupom de Desconto</h3>
+      <div className="card border-standard">
+        <div className="card-header pb-0-75 mb-1">
+          <h3 className="text-accent">Validar Cupom de Desconto</h3>
         </div>
 
-        <form onSubmit={handleValidarCupom} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <div className="form-group" style={{ marginBottom: '0.5rem' }}>
-            <label className="form-label" style={{ fontSize: '0.75rem' }}>Código do Cupom</label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <form onSubmit={handleValidarCupom} className="flex-column gap-0-75">
+          <div className="form-group mb-0-5">
+            <label className="form-label text-xs">Código do Cupom</label>
+            <div className="flex-row gap-0-5">
               <input
                 type="text"
                 className="form-input"
@@ -109,8 +109,8 @@ function AdminValidationPanel() {
       </div>
 
       {/* Bloco 2: Lista de Clientes no RPG para Consulta Rápida */}
-      <div className="card" style={{ border: '1px solid var(--border)' }}>
-        <div className="card-header" style={{ paddingBottom: '0.75rem', marginBottom: '1rem' }}>
+      <div className="card border-standard">
+        <div className="card-header pb-0-75 mb-1">
           <h3>👤 Consulta de Patentes RPG</h3>
         </div>
 
@@ -121,12 +121,12 @@ function AdminValidationPanel() {
         )}
 
         {loading ? (
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>A carregar...</p>
+          <p className="text-secondary text-sm">A carregar...</p>
         ) : clientes.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Nenhum cliente cadastrado.</p>
+          <p className="text-secondary text-sm">Nenhum cliente cadastrado.</p>
         ) : (
           <div className="table-container">
-            <table className="data-table" style={{ fontSize: '0.82rem' }}>
+            <table className="data-table text-sm">
               <thead>
                 <tr>
                   <th>Cliente</th>
@@ -137,9 +137,9 @@ function AdminValidationPanel() {
               <tbody>
                 {clientes.map(c => (
                   <tr key={c.id}>
-                    <td style={{ fontWeight: 600 }}>{c.nome}</td>
+                    <td className="font-semibold">{c.nome}</td>
                     <td><span className="rpg-level-badge" style={{ fontSize: '0.55rem', padding: '0.2rem 0.5rem' }}>{c.nivel || 'Iniciante'}</span></td>
-                    <td style={{ color: 'var(--gold)', fontWeight: 700 }}>{c.xp || 0} XP</td>
+                    <td className="text-gold font-bold">{c.xp || 0} XP</td>
                   </tr>
                 ))}
               </tbody>

@@ -7,6 +7,7 @@ import {
   fetchBarbeiros,
   processarVenda
 } from '../services/api.js'
+import ErrorState from '../components/ErrorState.jsx'
 
 export default function CheckoutPage() {
   const user = JSON.parse(localStorage.getItem('ruivobarber_user') || '{"nome":"Operador","cargo":"Barbeiro","id":1}')
@@ -222,10 +223,24 @@ export default function CheckoutPage() {
     c.login.toLowerCase().includes(searchClientQuery.toLowerCase())
   )
 
+  if (errorMsg) {
+    return (
+      <div className="main-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+        <ErrorState message={errorMsg} onRetry={loadData} />
+      </div>
+    )
+  }
+
   if (loading) {
     return (
-      <div className="main-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="spinner">Inicializando painel do PDV...</div>
+      <div className="main-content" style={{ padding: '2rem' }}>
+        <div className="page-header" style={{ marginBottom: '2rem' }}>
+          <div className="skeleton-pulse" style={{ height: '35px', width: '30%', borderRadius: '4px' }}></div>
+        </div>
+        <div style={{ display: 'flex', gap: '2rem' }}>
+          <div className="card skeleton-pulse" style={{ height: '400px', flex: 2, borderRadius: '12px' }}></div>
+          <div className="card skeleton-pulse" style={{ height: '400px', flex: 1, borderRadius: '12px' }}></div>
+        </div>
       </div>
     )
   }
@@ -320,7 +335,7 @@ export default function CheckoutPage() {
 
             <div style={{ flex: 1, overflowY: 'auto', maxHeight: '350px' }}>
               {clientMode === 'agendamento' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div className="flex-column gap-0-75">
                   {agendamentos.length > 0 ? (
                     agendamentos.map((ag) => (
                       <div 
@@ -351,14 +366,13 @@ export default function CheckoutPage() {
               )}
 
               {clientMode === 'avulso' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div className="flex-column gap-0-75">
                   <input
                     type="text"
-                    className="form-input"
+                    className="form-input mb-0-5"
                     placeholder="Pesquisar cliente por nome..."
                     value={searchClientQuery}
                     onChange={(e) => setSearchClientQuery(e.target.value)}
-                    style={{ marginBottom: '0.5rem' }}
                   />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto', maxHeight: '280px' }}>
                     {filteredClientes.length > 0 ? (

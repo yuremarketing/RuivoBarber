@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import PropTypes from 'prop-types'
 import { resgatarCupom } from '../services/api.js'
 
 const rewards = [
@@ -71,7 +72,7 @@ function RedeemCouponManager({ clienteId, xpAtual = 0, onRedeemSuccess }) {
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      <div className="flex-column gap-0-75">
         {rewards.map((r) => {
           const unlocked = xpAtual >= r.cost
           const isRedeeming = loadingId === r.id
@@ -127,4 +128,11 @@ function RedeemCouponManager({ clienteId, xpAtual = 0, onRedeemSuccess }) {
   )
 }
 
+RedeemCouponManager.propTypes = {
+  clienteId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  xpAtual: PropTypes.number,
+  onRedeemSuccess: PropTypes.func
+}
+
 export default RedeemCouponManager
+

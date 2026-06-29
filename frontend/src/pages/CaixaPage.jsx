@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { fetchStatusCaixa, abrirCaixa, fecharCaixa, movimentarCaixa } from '../services/api.js'
+import ErrorState from '../components/ErrorState.jsx'
 
 export default function CaixaPage() {
   const user = JSON.parse(localStorage.getItem('ruivobarber_user') || '{"nome":"Operador","cargo":"Barbeiro"}')
@@ -139,10 +140,24 @@ export default function CaixaPage() {
     })
   }
 
+  if (error && !caixa) {
+    return (
+      <div className="main-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+        <ErrorState message={error} onRetry={fetchCaixa} />
+      </div>
+    )
+  }
+
   if (loading && !caixa) {
     return (
-      <div className="main-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="spinner">Carregando painel do caixa...</div>
+      <div className="main-content" style={{ padding: '2rem' }}>
+        <div className="page-header" style={{ marginBottom: '2rem' }}>
+          <div className="skeleton-pulse" style={{ height: '35px', width: '30%', borderRadius: '4px' }}></div>
+        </div>
+        <div style={{ display: 'flex', gap: '2rem' }}>
+          <div className="card skeleton-pulse" style={{ height: '300px', flex: 1, borderRadius: '12px' }}></div>
+          <div className="card skeleton-pulse" style={{ height: '300px', flex: 1, borderRadius: '12px' }}></div>
+        </div>
       </div>
     )
   }
@@ -179,11 +194,7 @@ export default function CaixaPage() {
         </div>
       </div>
 
-      {error && (
-        <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--red)', color: 'var(--red)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
-          {error}
-        </div>
-      )}
+
 
       {isCaixaFechado ? (
         /* ================= TELA CAIXA FECHADO ================= */

@@ -251,7 +251,7 @@ export default function AgendaConfigPage() {
           
           {/* Escala Semanal Card */}
           <div className="card">
-            <div className="card-header" style={{ marginBottom: '1rem' }}>
+            <div className="card-header mb-1">
               <h3>Horários de Expediente Semanal</h3>
             </div>
             <form onSubmit={handleSaveDisponibilidade}>
@@ -318,7 +318,7 @@ export default function AgendaConfigPage() {
             
             {/* Configuração de Chave Pix para Gorjetas */}
             <div className="card">
-              <div className="card-header" style={{ marginBottom: '1rem' }}>
+              <div className="card-header mb-1">
                 <h3>🔑 Recebimento de Gorjetas (Pix)</h3>
               </div>
               <form onSubmit={handleSaveChavePix} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -344,7 +344,7 @@ export default function AgendaConfigPage() {
             
             {/* Adicionar Bloqueio */}
             <div className="card">
-              <div className="card-header" style={{ marginBottom: '1rem' }}>
+              <div className="card-header mb-1">
                 <h3>🚫 Bloquear Data / Folga</h3>
               </div>
               <form onSubmit={handleAddBloqueio} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -399,7 +399,7 @@ export default function AgendaConfigPage() {
 
             {/* Listagem de Bloqueios */}
             <div className="card">
-              <div className="card-header" style={{ marginBottom: '1rem' }}>
+              <div className="card-header mb-1">
                 <h3>📋 Bloqueios Ativos</h3>
               </div>
               {bloqueios.length === 0 ? (

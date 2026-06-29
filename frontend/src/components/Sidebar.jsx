@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import PropTypes from 'prop-types'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { 
   Swords, Ticket, Hourglass, Shield, Tv, Backpack, Trophy, 
@@ -168,3 +169,12 @@ export default function Sidebar({ collapsed, onToggle, theme, onSetTheme, onPrev
     </aside>
   )
 }
+
+Sidebar.propTypes = {
+  collapsed: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func.isRequired,
+  theme: PropTypes.string,
+  onSetTheme: PropTypes.func,
+  onPreviewTheme: PropTypes.func
+}
+

@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 
 function RpgProgressBar({ xpAtual = 0, nivel = 'Corte Iniciante' }) {
   const getProximoNivelXP = (nivelNome, currentXp) => {
@@ -64,4 +65,10 @@ function RpgProgressBar({ xpAtual = 0, nivel = 'Corte Iniciante' }) {
   )
 }
 
+RpgProgressBar.propTypes = {
+  xpAtual: PropTypes.number,
+  nivel: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+}
+
 export default RpgProgressBar
+

@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 
 // Mapeamento de emoji por nome de badge (fallback caso iconeUrl não exista)
 const BADGE_EMOJI_MAP = {
@@ -114,8 +115,13 @@ export default function BadgeShowcase({ badges = [], loading = false }) {
 
   if (loading) {
     return (
-      <div style={{ padding: '1rem 0', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-        Carregando conquistas...
+      <div style={{ marginTop: '1.5rem' }}>
+        <div style={{ height: '14px', width: '120px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.08)', marginBottom: '1rem' }} className="skeleton-pulse"></div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '0.75rem' }}>
+          {[1, 2, 3].map(i => (
+            <div key={i} style={{ height: '110px', borderRadius: '14px' }} className="skeleton-pulse"></div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -195,3 +201,18 @@ export default function BadgeShowcase({ badges = [], loading = false }) {
     </div>
   )
 }
+
+BadgeShowcase.propTypes = {
+  badges: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      nome: PropTypes.string.isRequired,
+      desbloqueada: PropTypes.bool,
+      desbloqueadaEm: PropTypes.string,
+      descricao: PropTypes.string,
+      xpBonus: PropTypes.number
+    })
+  ),
+  loading: PropTypes.bool
+}
+

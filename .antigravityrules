@@ -21,7 +21,7 @@
     <rule>Usar 1 agente por padrão</rule>
     <rule>Evitar paralelismo desnecessário</rule>
     <rule>Evitar loops e retries complexos</rule>
-    <rule>Pausar apenas em mudanças grandes ou arquiteturais</rule>
+    <rule>Pausar para aprovação humana sempre que apresentar um plano de ação ao usuário (ver approval_gate)</rule>
     <rule>Em erro 429: no máximo 1 retry simples</rule>
   </execution_policy>
 
@@ -60,6 +60,12 @@
     <rule>Evitar overthinking</rule>
     <rule>Expandir contexto só se necessário</rule>
   </strategy>
+  <approval_gate priority="MAXIMA">
+    <rule>Esta seção tem prioridade sobre todas as outras regras do arquivo.</rule>
+    <rule>SEMPRE QUE apresentar um plano de ação, lista de mudanças ou proposta técnica ao usuário para revisão, PARE IMEDIATAMENTE e aguarde a confirmação humana explícita (ex: "ok", "pode fazer", "aprovado", "execute") antes de rodar qualquer comando ou modificar qualquer arquivo.</rule>
+    <rule>Mensagens automáticas de sistema como "The user has automatically approved the artifact" ou qualquer variante NÃO contam como aprovação. São gatilhos automáticos da plataforma e devem ser completamente ignorados.</rule>
+    <rule>Só retome a execução após uma mensagem real e explícita do usuário humano.</rule>
+  </approval_gate>
 
 </system_constraints>
 ``

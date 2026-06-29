@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { fetchServicos, criarServico, atualizarServico, deletarServico } from '../services/api.js'
+import ErrorState from '../components/ErrorState.jsx'
 
 const getServiceDetails = (nome) => {
   const n = nome.toLowerCase()
@@ -121,10 +122,16 @@ export default function ServicosPage() {
         </div>
       </div>
 
-      {error && <div className="banner error">{error}</div>}
-
-      {loading ? (
-        <p style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Carregando serviços...</p>
+      {error ? (
+        <div style={{ padding: '2rem' }}>
+          <ErrorState message={error} onRetry={loadServicos} />
+        </div>
+      ) : loading ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem', padding: '1rem' }}>
+          {[1, 2, 3].map(i => (
+            <div key={i} className="card skeleton-pulse" style={{ height: '220px', borderRadius: '12px' }}></div>
+          ))}
+        </div>
       ) : servicos.length === 0 ? (
         <p style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Nenhum serviço cadastrado.</p>
       ) : (

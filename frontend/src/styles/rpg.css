@@ -110,7 +110,7 @@
   animation: pulse-gold 2s infinite alternate;
 }
 .frame-royal {
-  border-color: #b026ff !important;
+  border-color: var(--accent) !important;
   animation: pulse-royal 1.5s infinite alternate;
 }
 .badge-crown-rpg {
@@ -175,12 +175,12 @@
 .bg-neon-fire {
   background: linear-gradient(135deg, var(--accent-90), rgba(var(--gold-rgb), 0.9)) !important;
   color: #fff;
-  border-color: #f5a623 !important;
+  border-color: var(--gold) !important;
 }
 .bg-neon-ice {
   background: linear-gradient(135deg, rgba(15, 76, 129, 0.9), rgba(0, 242, 254, 0.9)) !important;
   color: #fff;
-  border-color: #00f2fe !important;
+  border-color: var(--blue) !important;
 }
 .glow-pulsing {
   box-shadow: 0 0 15px var(--accent-60);

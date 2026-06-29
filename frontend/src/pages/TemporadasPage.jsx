@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { fetchTemporadas, criarTemporada, atualizarTemporada } from '../services/api'
+import ErrorState from '../components/ErrorState.jsx'
 
 export default function TemporadasPage() {
   const user = JSON.parse(localStorage.getItem('ruivobarber_user') || '{"cargo":"Cliente"}')
@@ -201,8 +202,16 @@ export default function TemporadasPage() {
           <div className="card-header">
             <h3>Histórico de Temporadas ({temporadas.length})</h3>
           </div>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '2rem' }}>Carregando temporadas...</div>
+          {erro && temporadas.length === 0 ? (
+            <div style={{ padding: '2rem' }}>
+              <ErrorState message={erro} onRetry={loadTemporadas} />
+            </div>
+          ) : loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '1rem' }}>
+              {[1, 2, 3].map(i => (
+                <div key={i} className="skeleton-pulse" style={{ height: '50px', width: '100%', borderRadius: '6px' }}></div>
+              ))}
+            </div>
           ) : temporadas.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Nenhuma temporada cadastrada.</div>
           ) : (

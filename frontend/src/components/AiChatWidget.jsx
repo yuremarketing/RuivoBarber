@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { streamChat } from '../services/api.js'
+import { Mic, MicOff } from 'lucide-react'
 
 export default function AiChatWidget() {
   const [isOpen, setIsOpen] = useState(false)
@@ -7,8 +8,88 @@ export default function AiChatWidget() {
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(false)
   const [history, setHistory] = useState([])
+  const [isListening, setIsListening] = useState(false)
   
   const chatEndRef = useRef(null)
+  const recognitionRef = useRef(null)
+
+  useEffect(() => {
+    // Inicializa a API de Reconhecimento de Voz do navegador
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    let rec = null
+    if (SpeechRecognition) {
+      rec = new SpeechRecognition()
+      rec.continuous = false
+      rec.interimResults = false
+      rec.lang = 'pt-BR'
+
+      rec.onstart = () => {
+        setIsListening(true)
+      }
+
+      rec.onresult = (event) => {
+        const transcript = event.results[0][0].transcript
+        if (transcript) {
+          setMessage(prev => {
+            const spacing = prev.trim() ? ' ' : ''
+            return prev + spacing + transcript
+          })
+        }
+      }
+
+      rec.onerror = (event) => {
+        console.error('Speech recognition error:', event.error)
+        setIsListening(false)
+        
+        let msg = ''
+        if (event.error === 'not-allowed') {
+          msg = 'Acesso ao microfone negado. Certifique-se de que liberou as permissões de microfone nas configurações do seu navegador ou que está utilizando uma conexão segura (HTTPS).'
+        } else if (event.error === 'no-microphone') {
+          msg = 'Nenhum microfone foi detectado no seu dispositivo.'
+        } else if (event.error === 'network') {
+          msg = 'Erro de rede ao processar o áudio. Verifique sua conexão.'
+        } else if (event.error === 'aborted') {
+          return // Cancelado manualmente, sem aviso
+        } else {
+          msg = `Erro no reconhecimento de voz: ${event.error}`
+        }
+        alert(msg)
+      }
+
+      rec.onend = () => {
+        setIsListening(false)
+      }
+
+      recognitionRef.current = rec
+    }
+
+    return () => {
+      if (rec) {
+        try {
+          rec.stop()
+        } catch (e) {
+          // ignore if already stopped
+        }
+      }
+    }
+  }, [])
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      alert('Seu navegador não suporta reconhecimento de voz ou a permissão de microfone foi negada.')
+      return
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop()
+    } else {
+      try {
+        recognitionRef.current.start()
+      } catch (err) {
+        console.error('Failed to start speech recognition:', err)
+      }
+    }
+  }
 
   const userSessionStr = localStorage.getItem('ruivobarber_user')
   const session = userSessionStr ? JSON.parse(userSessionStr) : null
@@ -220,19 +301,42 @@ export default function AiChatWidget() {
               type="text"
               value={message}
               onChange={e => setMessage(e.target.value)}
-              placeholder="Digite sua mensagem..."
+              placeholder={isListening ? "Ouvindo... fale agora" : "Digite sua mensagem..."}
               style={{
                 flex: 1,
                 padding: '0.6rem 1rem',
                 borderRadius: '8px',
-                border: '1px solid rgba(233, 69, 96, 0.3)',
+                border: isListening ? '1px solid #ff4757' : '1px solid rgba(233, 69, 96, 0.3)',
                 background: 'rgba(15, 52, 96, 0.8)',
                 color: '#fff',
                 outline: 'none',
                 fontSize: '0.9rem',
+                boxShadow: isListening ? '0 0 8px rgba(255, 71, 87, 0.4)' : 'none',
+                transition: 'all 0.3s ease',
               }}
               disabled={loading}
             />
+            <button 
+              type="button"
+              onClick={toggleListening}
+              style={{
+                background: isListening ? '#ff4757' : 'rgba(15, 52, 96, 0.8)',
+                color: '#fff',
+                border: '1px solid rgba(233, 69, 96, 0.3)',
+                padding: '0 0.8rem',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease',
+                boxShadow: isListening ? '0 0 12px #ff4757' : 'none',
+              }}
+              title={isListening ? "Parar de ouvir" : "Falar por voz (Microfone)"}
+              disabled={loading}
+            >
+              {isListening ? <MicOff size={18} className="pulse-mic" /> : <Mic size={18} />}
+            </button>
             <button 
               type="submit"
               style={{
@@ -250,6 +354,16 @@ export default function AiChatWidget() {
               Enviar
             </button>
           </form>
+          <style>{`
+            @keyframes pulseMicAnimation {
+              0% { transform: scale(1); opacity: 1; }
+              50% { transform: scale(1.15); opacity: 0.7; }
+              100% { transform: scale(1); opacity: 1; }
+            }
+            .pulse-mic {
+              animation: pulseMicAnimation 1.5s infinite ease-in-out;
+            }
+          `}</style>
         </div>
       )}
     </>

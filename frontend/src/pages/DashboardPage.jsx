@@ -5,6 +5,7 @@ import RedeemCouponManager from '../components/RedeemCouponManager.jsx'
 import BadgeShowcase from '../components/BadgeShowcase.jsx'
 import AvaliacaoModal from '../components/AvaliacaoModal.jsx'
 import { buscarCliente, listarClientes, fetchTemporadaAtiva, fetchMeusBadges, fetchUltimoCorte, fetchGorjetasBarbeiro, confirmarPagamentoGorjeta, fetchDashboard } from '../services/api.js'
+import ErrorState from '../components/ErrorState.jsx'
 // Stats format: { icon, label, value, change }
 // Agendamentos format: { id, cliente, servico, barbeiro, horario, status }
 
@@ -22,6 +23,7 @@ export default function DashboardPage() {
   const [loadingGorjetas, setLoadingGorjetas] = useState(false)
   const [adminDashboard, setAdminDashboard] = useState({ stats: null, agendamentos: [] })
   const [loadingAdmin, setLoadingAdmin] = useState(true)
+  const [error, setError] = useState(null)
  
   const isClient = user.cargo === 'Cliente'
   const hoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -71,12 +73,14 @@ export default function DashboardPage() {
   const loadAdminDashboard = async () => {
     try {
       setLoadingAdmin(true)
+      setError(null)
       const res = await fetchDashboard()
       if (res.data) {
         setAdminDashboard(res.data)
       }
     } catch (err) {
       console.error('Erro ao buscar dados do dashboard:', err)
+      setError('Erro ao carregar dados do dashboard do servidor.')
     } finally {
       setLoadingAdmin(false)
     }
@@ -86,6 +90,7 @@ export default function DashboardPage() {
     if (!isClient) return
     try {
       setLoading(true)
+      setError(null)
       const res = await buscarCliente(user.id)
       if (res && res.data) {
         setClientData(res.data)
@@ -93,6 +98,7 @@ export default function DashboardPage() {
     } catch (err) {
       console.error('Erro ao buscar dados do cliente logado em tempo real:', err)
       setClientData(user)
+      setError('Aviso: Utilizando dados salvos localmente. O servidor está inacessível.')
     } finally {
       setLoading(false)
     }
@@ -165,7 +171,12 @@ export default function DashboardPage() {
     }
     const currentClient = clientData || user
     return (
-      <div className="fade-in-up" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <div className="fade-in-up page-container">
+        {error && (
+          <div className="alert-error mb-1">
+            ⚠️ {error}
+          </div>
+        )}
         <div className="page-header">
           <h2>Bem-vindo ao RuivoBarber RPG!</h2>
           <p>Acompanhe sua jornada, ganhe XP nos atendimentos e resgate descontos lendários.</p>
@@ -173,7 +184,7 @@ export default function DashboardPage() {
 
         {ultimoCorte && ultimoCorte.avaliacao_pendente && (
           <div className="dashboard-evaluation-card">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div className="flex-center gap-1">
               <span style={{ fontSize: '2rem' }}>⭐</span>
               <div style={{ textAlign: 'left' }}>
                 <h4 className="dashboard-evaluation-title">Como foi seu último corte?</h4>
@@ -194,7 +205,7 @@ export default function DashboardPage() {
 
         <div className="dashboard-hero-section">
           {/* Ficha RPG Principal e Badges */}
-          <div className="dashboard-player-card-wrapper" style={{ flexDirection: 'column', gap: '0', alignItems: 'center' }}>
+          <div className="dashboard-player-card-wrapper flex-column flex-center gap-0">
             <PlayerCard 
               nome={currentClient.nome} 
               nivel={currentClient.nivel} 
@@ -249,7 +260,7 @@ export default function DashboardPage() {
         </div>
 
 
-        <div className="card" style={{ marginTop: '2.5rem' }}>
+        <div className="card mt-3">
           <div className="card-header">
             <h3>Ranking dos Barbeados (Top Clientes)</h3>
           </div>
@@ -283,13 +294,13 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="card" style={{ marginTop: '2.5rem' }}>
+        <div className="card mt-3">
           <div className="card-header">
             <h3>📜 Regras da Jornada RPG</h3>
           </div>
           <div className="dashboard-rules-grid">
             <div className="dashboard-rule-card">
-              <span className="dashboard-rule-title" style={{ color: 'var(--accent)' }}>💈 Ganhe XP</span>
+              <span className="dashboard-rule-title text-accent">💈 Ganhe XP</span>
               <span className="dashboard-rule-desc">A cada serviço concluído você ganha XP automático (Corte Simples = 10 XP, Barba = 15 XP, Corte+Barba = 25 XP).</span>
             </div>
             <div className="dashboard-rule-card">
@@ -330,8 +341,36 @@ export default function DashboardPage() {
     { icon: '🎫', label: 'Cupons Ativos', value: '-', change: '-' },
   ]
 
+  if (!isClient && error) {
+    return (
+      <div className="fade-in-up page-container padded">
+        <ErrorState message={error} onRetry={loadAdminDashboard} />
+      </div>
+    )
+  }
+
+  if (!isClient && loadingAdmin) {
+    return (
+      <div className="fade-in-up page-container">
+        <div className="page-header">
+          <h2>Dashboard</h2>
+          <p>Visão geral do RuivoBarber — {hoje}</p>
+        </div>
+        <div className="stats-grid">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="stat-card skeleton-pulse" style={{ height: '120px', borderRadius: '12px' }}></div>
+          ))}
+        </div>
+        <div className="grid-2" style={{ marginTop: '2rem' }}>
+          <div className="card skeleton-pulse" style={{ height: '350px', borderRadius: '12px' }}></div>
+          <div className="card skeleton-pulse" style={{ height: '350px', borderRadius: '12px' }}></div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="fade-in-up" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="fade-in-up page-container">
       <div className="page-header">
         <h2>Dashboard</h2>
         <p>Visão geral do RuivoBarber — {hoje}</p>
@@ -353,9 +392,7 @@ export default function DashboardPage() {
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{adminDashboard.agendamentos.length} total</span>
           </div>
           <div className="table-container">
-            {loadingAdmin ? (
-               <p style={{ padding: '1rem', textAlign: 'center' }}>Carregando...</p>
-            ) : adminDashboard.agendamentos.length === 0 ? (
+            {adminDashboard.agendamentos.length === 0 ? (
                <p style={{ padding: '1rem', textAlign: 'center' }}>Nenhum agendamento para hoje.</p>
             ) : (
             <table className="data-table">
@@ -411,14 +448,14 @@ export default function DashboardPage() {
       </div>
       
       {/* Seção de Gorjetas Pix Recebidas */}
-      <div className="card" style={{ marginTop: '2.5rem' }}>
+      <div className="card mt-3">
         <div className="card-header">
           <h3>Registro de Gorjetas Pix Recebidas</h3>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{gorjetas.length} total</span>
         </div>
-        <div className="table-container" style={{ marginTop: '1rem' }}>
+        <div className="table-container mt-1">
           {loadingGorjetas ? (
-            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>Carregando gorjetas...</p>
+            <div className="skeleton-pulse" style={{ height: '150px', width: '100%', borderRadius: '6px' }}></div>
           ) : gorjetas.length === 0 ? (
             <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>Nenhuma gorjeta recebida.</p>
           ) : (

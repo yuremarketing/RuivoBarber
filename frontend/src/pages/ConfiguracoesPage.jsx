@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { buscarCliente, atualizarPerfil, fetchConfiguracoes, salvarConfiguracoes } from '../services/api.js'
 import PlayerCard from '../components/PlayerCard.jsx'
+import ErrorState from '../components/ErrorState.jsx'
 
 export default function ConfiguracoesPage() {
   const user = JSON.parse(localStorage.getItem('ruivobarber_user') || '{"nome":"Administrador","cargo":"Adm"}')
@@ -22,6 +23,8 @@ export default function ConfiguracoesPage() {
   const [confirmarSenha, setConfirmarSenha] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [errorMsg, setErrorMsg] = useState('')
 
   const handleImageUpload = (e) => {
@@ -86,6 +89,7 @@ export default function ConfiguracoesPage() {
       setLogin(user.login || '')
       setAvatarUrl(user.avatarUrl || '')
       setClientData(user)
+      setError('Aviso: Servidor inacessível, utilizando dados salvos localmente.')
     }
   }
 
@@ -100,12 +104,22 @@ export default function ConfiguracoesPage() {
       }
     } catch (err) {
       console.error('Erro ao carregar configurações:', err)
+      setError('Não foi possível carregar as configurações do servidor.')
     }
   }
 
+  const loadAllData = async () => {
+    setInitialLoading(true)
+    if (isAdmin) {
+      await loadConfiguracoes()
+    } else {
+      await loadClientInfo()
+    }
+    setInitialLoading(false)
+  }
+
   useEffect(() => {
-    loadClientInfo()
-    loadConfiguracoes()
+    loadAllData()
   }, [])
 
   const salvarAdmin = async () => {
@@ -177,6 +191,28 @@ export default function ConfiguracoesPage() {
     }
   }
 
+  if (isAdmin && error) {
+    return (
+      <div className="main-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+        <ErrorState message={error} onRetry={loadAllData} />
+      </div>
+    )
+  }
+
+  if (initialLoading) {
+    return (
+      <div className="main-content" style={{ padding: '2rem' }}>
+        <div className="page-header" style={{ marginBottom: '2rem' }}>
+          <div className="skeleton-pulse" style={{ height: '35px', width: '30%', borderRadius: '4px' }}></div>
+        </div>
+        <div style={{ display: 'flex', gap: '2rem' }}>
+          <div className="card skeleton-pulse" style={{ height: '300px', flex: 1, borderRadius: '12px' }}></div>
+          <div className="card skeleton-pulse" style={{ height: '300px', flex: 1, borderRadius: '12px' }}></div>
+        </div>
+      </div>
+    )
+  }
+
   // Se o usuário logado for Cliente
   if (!isAdmin) {
     const currentClient = clientData || user
@@ -186,6 +222,11 @@ export default function ConfiguracoesPage() {
           <h2>Minha Conta</h2>
           <p>Gerencie seus dados de acesso e acompanhe sua ficha de RPG</p>
         </div>
+        {error && (
+          <div style={{ padding: '0.75rem', marginBottom: '1.5rem', borderRadius: '6px', background: 'rgba(233, 69, 96, 0.15)', border: '1px solid #e94560', color: '#ff8a8a', fontSize: '0.9rem' }}>
+            ⚠️ {error}
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'start', marginTop: '1rem' }}>
           {/* Lado Esquerdo - Ficha RPG */}
