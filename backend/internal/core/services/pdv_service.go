@@ -330,6 +330,13 @@ func (s *PdvService) ProcessarVenda(ctx context.Context, operadorID int, req *Pr
 			IdempotencyKey: idempotencyKey,
 		}
 		
+		if s.pagamentoService == nil {
+			return nil, errors.New("Integração com Mercado Pago não está habilitada ou configurada neste servidor")
+		}
+		if svc, ok := s.pagamentoService.(*MercadoPagoService); ok && svc == nil {
+			return nil, errors.New("Integração com Mercado Pago não está habilitada ou configurada neste servidor")
+		}
+
 		pixResp, err := s.pagamentoService.CriarCobrancaPix(ctx, pixReq)
 		if err != nil {
 			return nil, err
