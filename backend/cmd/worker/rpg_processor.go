@@ -10,13 +10,18 @@ import (
 	"time"
 )
 
-type RPGProcessor struct {
-	db *sql.DB
-	wg sync.WaitGroup
+type SSEBroadcaster interface {
+	BroadcastEvent(tenantID, userID, eventType string, payload interface{})
 }
 
-func NewRPGProcessor(db *sql.DB) *RPGProcessor {
-	return &RPGProcessor{db: db}
+type RPGProcessor struct {
+	db          *sql.DB
+	wg          sync.WaitGroup
+	broadcaster SSEBroadcaster
+}
+
+func NewRPGProcessor(db *sql.DB, b SSEBroadcaster) *RPGProcessor {
+	return &RPGProcessor{db: db, broadcaster: b}
 }
 
 func (p *RPGProcessor) Start(ctx context.Context) {
@@ -194,6 +199,14 @@ func (p *RPGProcessor) processEvent(ctx context.Context, tx *sql.Tx, e OutboxEve
 	
 	if err != nil {
 		return fmt.Errorf("erro ao inserir histórico xp: %w", err)
+	}
+
+
+	if p.broadcaster != nil {
+		p.broadcaster.BroadcastEvent(fmt.Sprintf("%d", tenantID), fmt.Sprintf("%d", clienteID), "XP_GRANTED", map[string]interface{}{
+			"xp": xpConcedido,
+			"venda_id": vendaID,
+		})
 	}
 
 	return nil

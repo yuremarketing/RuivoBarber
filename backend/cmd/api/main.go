@@ -31,6 +31,20 @@ import (
 //go:embed schema.sql
 var schemaFS embed.FS
 
+
+type HubWrapper struct {
+	hub *handlers.SSEHub
+}
+
+func (w *HubWrapper) BroadcastEvent(tenantID, userID, eventType string, payload interface{}) {
+	w.hub.Broadcast <- handlers.SSEEvent{
+		TenantID: tenantID,
+		UserID:   userID,
+		Type:     eventType,
+		Payload:  payload,
+	}
+}
+
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("Ficheiro .env não encontrado, a usar variáveis do sistema")
@@ -703,9 +717,15 @@ func main() {
 	}
 
 	pdvService := services.NewPdvService(pdvRepo, clienteRepo, notificationService, pagamentoService)
-    	// Start RPG Worker with Graceful Shutdown context
+    	// Setup SSE Hub
+	generalSSEHub := handlers.NewSSEHub()
+	go generalSSEHub.Run()
+	sseHandler := handlers.NewSSEHandler(generalSSEHub)
+	broadcaster := &HubWrapper{hub: generalSSEHub}
+
+	// Start RPG Worker with Graceful Shutdown context
 	workerCtx, workerCancel := context.WithCancel(context.Background())
-	rpgWorker := worker.NewRPGProcessor(db)
+	rpgWorker := worker.NewRPGProcessor(db, broadcaster)
 	rpgWorker.Start(workerCtx)
 
 	pdvHandler := handlers.NewPdvHandler(pdvService)
@@ -741,6 +761,7 @@ func main() {
     liveHandler.RegisterRoutes(app)
     pdvHandler.RegisterRoutes(app)
     dashboardHandler.RegisterRoutes(app)
+    sseHandler.RegisterRoutes(app)
     
     // Register Relatorios explicitly here or add RegisterRoutes method.
     // For simplicity, we can just define the route here or I can create RegisterRoutes in relatorios_handler.go
