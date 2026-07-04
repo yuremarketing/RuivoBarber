@@ -132,21 +132,16 @@ func (h *SSEHandler) HandleStream(c *fiber.Ctx) error {
 		}()
 
 		for {
-			select {
-			case msg, ok := <-client.Channel:
-				if !ok {
-					return
-				}
-				_, err := w.Write(msg)
-				if err != nil {
-					return
-				}
-				err = w.Flush()
-				if err != nil {
-					return
-				}
-			case <-c.Context().Done():
-				// Client disconnected
+			msg, ok := <-client.Channel
+			if !ok {
+				return
+			}
+			_, err := w.Write(msg)
+			if err != nil {
+				return
+			}
+			err = w.Flush()
+			if err != nil {
 				return
 			}
 		}
