@@ -105,34 +105,30 @@ func (r *ClientePgRepository) FindByID(ctx context.Context, id int) (*domain.Cli
 }
 
 func (r *ClientePgRepository) FindByLogin(ctx context.Context, login string) (*domain.Cliente, error) {
-    tenantID, err := contextutils.GetTenantID(ctx)
-    if err != nil {
-        return nil, err
-    }
-    var c domain.Cliente
-    query := `
-        SELECT u.id, u.nome, u.login, u.cargo, 
-               COALESCE(p.xpatual, 0) as xp, 
-               COALESCE(p.nivelatual, 1) as nivel, 
-               COALESCE(p.barrapercentual, 0.0) as barra_percentual, 
-               COALESCE(n.nomedonivel, 'Corte Iniciante') as nome_do_nivel,
-               COALESCE(u.avatar_url, '') as avatar_url,
-               COALESCE(p.moedas, 0) as moedas,
-               COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Moldura' LIMIT 1), '') as moldura_equipada,
+	var c domain.Cliente
+	query := `
+		SELECT u.id, u.nome, u.login, u.cargo,
+		       COALESCE(p.xpatual, 0) as xp,
+		       COALESCE(p.nivelatual, 1) as nivel,
+		       COALESCE(p.barrapercentual, 0.0) as barra_percentual,
+		       COALESCE(n.nomedonivel, 'Corte Iniciante') as nome_do_nivel,
+		       COALESCE(u.avatar_url, '') as avatar_url,
+		       COALESCE(p.moedas, 0) as moedas,
+		       COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Moldura' LIMIT 1), '') as moldura_equipada,
                COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Background' LIMIT 1), '') as fundo_equipado,
                COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Efeito' LIMIT 1), '') as efeito_equipado,
                COALESCE(u.whatsappconsent, FALSE) as whatsapp_consent,
                COALESCE(u.telefone, '') as telefone,
                COALESCE(u.lgpdaceito, FALSE) as lgpdaceito,
                u.lgpdaceitoem
-        FROM Usuarios u
-        LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
-        LEFT JOIN Niveis n ON p.nivelatual = n.id
-        WHERE u.login = $1 AND u.tenant_id = $2
-    `
-    row := r.db.QueryRowContext(ctx, query, login, tenantID)
-    err = row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado, &c.WhatsappConsent, &c.Telefone, &c.LgpdAceito, &c.LgpdAceitoEm)
-    if err != nil {
+		FROM Usuarios u
+		LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
+		LEFT JOIN Niveis n ON p.nivelatual = n.id
+		WHERE u.login = $1
+	`
+	row := r.db.QueryRowContext(ctx, query, login)
+	err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado, &c.WhatsappConsent, &c.Telefone, &c.LgpdAceito, &c.LgpdAceitoEm)
+	if err != nil {
         return nil, err
     }
     c.Telefone = security.Decrypt(c.Telefone)
@@ -140,17 +136,13 @@ func (r *ClientePgRepository) FindByLogin(ctx context.Context, login string) (*d
 }
 
 func (r *ClientePgRepository) GetPasswordHashByLogin(ctx context.Context, login string) (string, error) {
-    tenantID, err := contextutils.GetTenantID(ctx)
-    if err != nil {
-        return "", err
-    }
-    var senha string
-    query := "SELECT senha FROM Usuarios WHERE login = $1 AND tenant_id = $2"
-    err = r.db.QueryRowContext(ctx, query, login, tenantID).Scan(&senha)
-    if err != nil {
-        return "", err
-    }
-    return senha, nil
+	var senha string
+	query := "SELECT senha FROM Usuarios WHERE login = $1"
+	err := r.db.QueryRowContext(ctx, query, login).Scan(&senha)
+	if err != nil {
+		return "", err
+	}
+	return senha, nil
 }
 
 func (r *ClientePgRepository) Save(ctx context.Context, c *domain.Cliente, hashedSenha string) error {
