@@ -231,7 +231,7 @@ func (r *PdvPgRepository) AdicionarVenda(ctx context.Context, venda *domain.Vend
 	
 	if venda.StatusPagamento == "approved" {
 		payload := fmt.Sprintf(`{"tipo": "venda_aprovada", "venda_id": %d, "cliente_id": %v}`, venda.ID, ptrToInt(venda.ClienteID))
-		_, err = tx.ExecContext(ctx, "INSERT INTO eventos_rpg_outbox (payload) VALUES ($1)", payload)
+		_, err = tx.ExecContext(ctx, "INSERT INTO eventos_rpg_outbox (payload, venda_id, tenant_id) VALUES ($1, $2, $3)", payload, venda.ID, tenantID)
 		if err != nil {
 			return err
 		}
@@ -303,7 +303,7 @@ func (r *PdvPgRepository) AtualizarVenda(ctx context.Context, venda *domain.Vend
 
 	if venda.StatusPagamento == "approved" {
 		payload := fmt.Sprintf(`{"tipo": "venda_aprovada", "venda_id": %d, "cliente_id": %v}`, venda.ID, ptrToInt(venda.ClienteID))
-		_, err = tx.ExecContext(ctx, "INSERT INTO eventos_rpg_outbox (payload) VALUES ($1)", payload)
+		_, err = tx.ExecContext(ctx, "INSERT INTO eventos_rpg_outbox (payload, venda_id, tenant_id) VALUES ($1, $2, $3)", payload, venda.ID, tenantID)
 		if err != nil {
 			return err
 		}

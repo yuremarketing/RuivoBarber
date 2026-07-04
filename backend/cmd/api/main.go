@@ -19,6 +19,7 @@ import (
 	_ "time/tzdata"
 
 	"golang.org/x/crypto/bcrypt"
+	"ruivobarber-api/cmd/worker"
 	"ruivobarber-api/internal/adapters/handlers"
 	"ruivobarber-api/internal/adapters/repositories"
 	"ruivobarber-api/internal/core/services"
@@ -699,7 +700,11 @@ func main() {
 	}
 
 	pdvService := services.NewPdvService(pdvRepo, clienteRepo, notificationService, pagamentoService)
-    pdvHandler := handlers.NewPdvHandler(pdvService)
+    	// Start RPG Worker
+	rpgWorker := worker.NewRPGProcessor(db)
+	rpgWorker.Start(context.Background())
+
+	pdvHandler := handlers.NewPdvHandler(pdvService)
 
     dashboardRepo := repositories.NewDashboardPgRepository(db)
     dashboardService := services.NewDashboardService(dashboardRepo)
