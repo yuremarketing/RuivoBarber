@@ -1,0 +1,66 @@
+-- Migration: 016_fix_multi_tenant_schema
+-- Correção da Migration 013 que referenciou tabelas inexistentes e omitiu o core do sistema.
+
+-- 1. Adicionando tenant_id nas tabelas que realmente existem e faltaram
+ALTER TABLE Usuarios ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE Caixas ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE Vendas ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE VendaItens ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE Gorjetas ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE Avaliacoes ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE MovimentacoesCaixa ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE Clas ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE Cupons ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE Produtos ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE Temporadas ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE Badges ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE ItensLoja ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE ClaMissoes ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE Raids ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE Lives ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;
+
+-- 2. Atribuir o Master Tenant para os registros legados (assumindo primeiro cliente da base)
+UPDATE Usuarios SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL;
+UPDATE Caixas SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL;
+UPDATE Vendas SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL;
+UPDATE VendaItens SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL;
+UPDATE Gorjetas SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL;
+UPDATE Avaliacoes SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL;
+UPDATE MovimentacoesCaixa SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL;
+UPDATE Clas SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL;
+UPDATE Cupons SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL;
+UPDATE Produtos SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL;
+UPDATE Temporadas SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL;
+UPDATE Badges SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL;
+UPDATE ItensLoja SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL;
+UPDATE ClaMissoes SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL;
+UPDATE Raids SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL;
+UPDATE Lives SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL;
+
+-- 3. Forçar NOT NULL constraint
+ALTER TABLE Usuarios ALTER COLUMN tenant_id SET NOT NULL;
+ALTER TABLE Caixas ALTER COLUMN tenant_id SET NOT NULL;
+ALTER TABLE Vendas ALTER COLUMN tenant_id SET NOT NULL;
+ALTER TABLE VendaItens ALTER COLUMN tenant_id SET NOT NULL;
+ALTER TABLE Gorjetas ALTER COLUMN tenant_id SET NOT NULL;
+ALTER TABLE Avaliacoes ALTER COLUMN tenant_id SET NOT NULL;
+ALTER TABLE MovimentacoesCaixa ALTER COLUMN tenant_id SET NOT NULL;
+ALTER TABLE Clas ALTER COLUMN tenant_id SET NOT NULL;
+ALTER TABLE Cupons ALTER COLUMN tenant_id SET NOT NULL;
+ALTER TABLE Produtos ALTER COLUMN tenant_id SET NOT NULL;
+ALTER TABLE Temporadas ALTER COLUMN tenant_id SET NOT NULL;
+ALTER TABLE Badges ALTER COLUMN tenant_id SET NOT NULL;
+ALTER TABLE ItensLoja ALTER COLUMN tenant_id SET NOT NULL;
+ALTER TABLE ClaMissoes ALTER COLUMN tenant_id SET NOT NULL;
+ALTER TABLE Raids ALTER COLUMN tenant_id SET NOT NULL;
+ALTER TABLE Lives ALTER COLUMN tenant_id SET NOT NULL;
+
+-- 4. Criar Índices
+CREATE INDEX IF NOT EXISTS idx_usuarios_tenant_id ON Usuarios(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_caixas_tenant_id ON Caixas(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_vendas_tenant_id ON Vendas(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_venda_itens_tenant_id ON VendaItens(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_gorjetas_tenant_id ON Gorjetas(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_avaliacoes_tenant_id ON Avaliacoes(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_mov_caixa_tenant_id ON MovimentacoesCaixa(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_clas_tenant_id ON Clas(tenant_id);
