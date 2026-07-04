@@ -13,4 +13,6 @@ type PdvRepository interface {
 	ObterMovimentacoesCaixa(ctx context.Context, caixaID int) ([]domain.MovimentacaoCaixa, error)
 	AdicionarVenda(ctx context.Context, venda *domain.Venda, itens []domain.VendaItem) error
 	ObterTotalVendasDinheiro(ctx context.Context, caixaID int) (float64, error)
+	ObterVendaPorGatewayID(ctx context.Context, gatewayID string) (*domain.Venda, error)
+	AtualizarVenda(ctx context.Context, venda *domain.Venda) error
 }

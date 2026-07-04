@@ -23,4 +23,5 @@ type CobrancaPixRequest struct {
 
 type PagamentoService interface {
 	CriarCobrancaPix(ctx context.Context, req CobrancaPixRequest) (*PixCobranzaResponse, error)
+	ConsultarPagamento(ctx context.Context, paymentID int64) (*PixCobranzaResponse, error)
 }

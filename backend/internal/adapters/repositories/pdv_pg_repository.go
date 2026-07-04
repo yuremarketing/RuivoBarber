@@ -238,3 +238,45 @@ func (r *PdvPgRepository) ObterTotalVendasDinheiro(ctx context.Context, caixaID 
 	err = r.db.QueryRowContext(ctx, query, caixaID, tenantID).Scan(&total)
 	return total, err
 }
+
+func (r *PdvPgRepository) ObterVendaPorGatewayID(ctx context.Context, gatewayID string) (*domain.Venda, error) {
+	tenantID, err := contextutils.GetTenantID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	query := `
+		SELECT id, caixa_id, cliente_id, agendamento_id, valor_bruto, desconto, valor_liquido, 
+		       metodo_pagamento, status_pagamento, gateway_id, idempotency_key, criado_em
+		FROM vendas
+		WHERE tenant_id = $1 AND gateway_id = $2
+	`
+	row := r.db.QueryRowContext(ctx, query, tenantID, gatewayID)
+
+	var v domain.Venda
+	err = row.Scan(&v.ID, &v.CaixaID, &v.ClienteID, &v.AgendamentoID, &v.ValorBruto, &v.Desconto,
+		&v.ValorLiquido, &v.MetodoPagamento, &v.StatusPagamento, &v.GatewayID, &v.IdempotencyKey, &v.CriadoEm)
+	
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &v, nil
+}
+
+func (r *PdvPgRepository) AtualizarVenda(ctx context.Context, venda *domain.Venda) error {
+	tenantID, err := contextutils.GetTenantID(ctx)
+	if err != nil {
+		return err
+	}
+
+	query := `
+		UPDATE vendas
+		SET status_pagamento = $1
+		WHERE id = $2 AND tenant_id = $3
+	`
+	_, err = r.db.ExecContext(ctx, query, venda.StatusPagamento, venda.ID, tenantID)
+	return err
+}
