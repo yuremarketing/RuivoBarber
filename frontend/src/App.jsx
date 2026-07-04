@@ -25,6 +25,10 @@ const HallOfFamePage = React.lazy(() => import('./pages/HallOfFamePage.jsx'))
 const LojaPage = React.lazy(() => import('./pages/LojaPage.jsx'))
 
 
+import RpgListener from './components/RpgListener.jsx'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+
 export default function App() {
   const location = useLocation()
   const isLogin = location.pathname === '/login'
@@ -49,6 +53,11 @@ export default function App() {
     <div className={`app ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       <div className="dota-noise-overlay"></div>
       <div className="dota-vignette"></div>
+      
+      {/* RPG Realtime Listener and Global Toasts */}
+      <RpgListener />
+      <ToastContainer />
+
       {!isLogin && <Sidebar 
         collapsed={sidebarCollapsed} 
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} 
