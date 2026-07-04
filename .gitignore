@@ -28,6 +28,8 @@ main
 .env.production
 .env.development
 .env.staging
+backend/.env
+frontend/.env
 
 # Operating System files
 .DS_Store
