@@ -10,6 +10,8 @@ import (
     "time"
     "ruivobarber-api/internal/core/domain"
     "ruivobarber-api/internal/core/ports"
+    "ruivobarber-api/internal/core/security"
+    "ruivobarber-api/internal/pkg/contextutils"
 )
 
 type ClientePgRepository struct {
@@ -20,7 +22,11 @@ func NewClientePgRepository(db *sql.DB) *ClientePgRepository {
     return &ClientePgRepository{db: db}
 }
 
-func (r *ClientePgRepository) FindAll() ([]domain.Cliente, error) {
+func (r *ClientePgRepository) FindAll(ctx context.Context) ([]domain.Cliente, error) {
+    tenantID, err := contextutils.GetTenantID(ctx)
+    if err != nil {
+        return nil, err
+    }
     query := `
         SELECT u.id, u.nome, u.login, u.cargo, 
                COALESCE(p.xpatual, 0) as xp, 
@@ -32,12 +38,17 @@ func (r *ClientePgRepository) FindAll() ([]domain.Cliente, error) {
                COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Moldura' LIMIT 1), '') as moldura_equipada,
                COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Background' LIMIT 1), '') as fundo_equipado,
                COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Efeito' LIMIT 1), '') as efeito_equipado,
-               COALESCE(u.whatsappconsent, FALSE) as whatsapp_consent
+               COALESCE(u.whatsappconsent, FALSE) as whatsapp_consent,
+               COALESCE(u.telefone, '') as telefone,
+               COALESCE(u.lgpdaceito, FALSE) as lgpdaceito,
+               u.lgpdaceitoem
+
         FROM Usuarios u
         LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
         LEFT JOIN Niveis n ON p.nivelatual = n.id
+        WHERE u.tenant_id = $1
     `
-    rows, err := r.db.Query(query)
+    rows, err := r.db.QueryContext(ctx, query, tenantID)
     if err != nil {
         return nil, err
     }
@@ -45,10 +56,11 @@ func (r *ClientePgRepository) FindAll() ([]domain.Cliente, error) {
     var clientes []domain.Cliente
     for rows.Next() {
         var c domain.Cliente
-        err := rows.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado, &c.WhatsappConsent)
+        err := rows.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado, &c.WhatsappConsent, &c.Telefone, &c.LgpdAceito, &c.LgpdAceitoEm)
         if err != nil {
             return nil, err
         }
+        c.Telefone = security.Decrypt(c.Telefone)
         clientes = append(clientes, c)
     }
     if err = rows.Err(); err != nil {
@@ -57,7 +69,11 @@ func (r *ClientePgRepository) FindAll() ([]domain.Cliente, error) {
     return clientes, nil
 }
 
-func (r *ClientePgRepository) FindByID(id int) (*domain.Cliente, error) {
+func (r *ClientePgRepository) FindByID(ctx context.Context, id int) (*domain.Cliente, error) {
+    tenantID, err := contextutils.GetTenantID(ctx)
+    if err != nil {
+        return nil, err
+    }
     var c domain.Cliente
     query := `
         SELECT u.id, u.nome, u.login, u.cargo, 
@@ -70,21 +86,29 @@ func (r *ClientePgRepository) FindByID(id int) (*domain.Cliente, error) {
                COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Moldura' LIMIT 1), '') as moldura_equipada,
                COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Background' LIMIT 1), '') as fundo_equipado,
                COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Efeito' LIMIT 1), '') as efeito_equipado,
-               COALESCE(u.whatsappconsent, FALSE) as whatsapp_consent
+               COALESCE(u.whatsappconsent, FALSE) as whatsapp_consent,
+               COALESCE(u.telefone, '') as telefone,
+               COALESCE(u.lgpdaceito, FALSE) as lgpdaceito,
+               u.lgpdaceitoem
         FROM Usuarios u
         LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
         LEFT JOIN Niveis n ON p.nivelatual = n.id
-        WHERE u.id = $1
+        WHERE u.id = $1 AND u.tenant_id = $2
     `
-    row := r.db.QueryRow(query, id)
-    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado, &c.WhatsappConsent)
+    row := r.db.QueryRowContext(ctx, query, id, tenantID)
+    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado, &c.WhatsappConsent, &c.Telefone, &c.LgpdAceito, &c.LgpdAceitoEm)
     if err != nil {
         return nil, err
     }
+    c.Telefone = security.Decrypt(c.Telefone)
     return &c, nil
 }
 
-func (r *ClientePgRepository) FindByLogin(login string) (*domain.Cliente, error) {
+func (r *ClientePgRepository) FindByLogin(ctx context.Context, login string) (*domain.Cliente, error) {
+    tenantID, err := contextutils.GetTenantID(ctx)
+    if err != nil {
+        return nil, err
+    }
     var c domain.Cliente
     query := `
         SELECT u.id, u.nome, u.login, u.cargo, 
@@ -97,32 +121,43 @@ func (r *ClientePgRepository) FindByLogin(login string) (*domain.Cliente, error)
                COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Moldura' LIMIT 1), '') as moldura_equipada,
                COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Background' LIMIT 1), '') as fundo_equipado,
                COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Efeito' LIMIT 1), '') as efeito_equipado,
-               COALESCE(u.whatsappconsent, FALSE) as whatsapp_consent
+               COALESCE(u.whatsappconsent, FALSE) as whatsapp_consent,
+               COALESCE(u.telefone, '') as telefone,
+               COALESCE(u.lgpdaceito, FALSE) as lgpdaceito,
+               u.lgpdaceitoem
         FROM Usuarios u
         LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
         LEFT JOIN Niveis n ON p.nivelatual = n.id
-        WHERE u.login = $1
+        WHERE u.login = $1 AND u.tenant_id = $2
     `
-    row := r.db.QueryRow(query, login)
-    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado, &c.WhatsappConsent)
+    row := r.db.QueryRowContext(ctx, query, login, tenantID)
+    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado, &c.WhatsappConsent, &c.Telefone, &c.LgpdAceito, &c.LgpdAceitoEm)
     if err != nil {
         return nil, err
     }
+    c.Telefone = security.Decrypt(c.Telefone)
     return &c, nil
 }
 
-func (r *ClientePgRepository) GetPasswordHashByLogin(login string) (string, error) {
+func (r *ClientePgRepository) GetPasswordHashByLogin(ctx context.Context, login string) (string, error) {
+    tenantID, err := contextutils.GetTenantID(ctx)
+    if err != nil {
+        return "", err
+    }
     var senha string
-    query := "SELECT senha FROM Usuarios WHERE login = $1"
-    err := r.db.QueryRow(query, login).Scan(&senha)
+    query := "SELECT senha FROM Usuarios WHERE login = $1 AND tenant_id = $2"
+    err = r.db.QueryRowContext(ctx, query, login, tenantID).Scan(&senha)
     if err != nil {
         return "", err
     }
     return senha, nil
 }
 
-func (r *ClientePgRepository) Save(c *domain.Cliente, hashedSenha string) error {
-    ctx := context.Background()
+func (r *ClientePgRepository) Save(ctx context.Context, c *domain.Cliente, hashedSenha string) error {
+    tenantID, err := contextutils.GetTenantID(ctx)
+    if err != nil {
+        return err
+    }
     tx, err := r.db.BeginTx(ctx, nil)
     if err != nil {
         return err
@@ -130,8 +165,9 @@ func (r *ClientePgRepository) Save(c *domain.Cliente, hashedSenha string) error 
     defer tx.Rollback()
 
     var id int
-    queryUser := "INSERT INTO Usuarios (nome, login, senha, cargo, avatar_url, whatsappconsent) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
-    err = tx.QueryRowContext(ctx, queryUser, c.Nome, c.Login, hashedSenha, c.Cargo, c.AvatarURL, c.WhatsappConsent).Scan(&id)
+    telefoneEnc, _ := security.Encrypt(c.Telefone)
+    queryUser := "INSERT INTO Usuarios (nome, login, senha, cargo, avatar_url, whatsappconsent, telefone, lgpdaceito, lgpdaceitoem, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id"
+    err = tx.QueryRowContext(ctx, queryUser, c.Nome, c.Login, hashedSenha, c.Cargo, c.AvatarURL, c.WhatsappConsent, telefoneEnc, c.LgpdAceito, c.LgpdAceitoEm, tenantID).Scan(&id)
     if err != nil {
         return err
     }
@@ -151,12 +187,13 @@ func (r *ClientePgRepository) Save(c *domain.Cliente, hashedSenha string) error 
 
 func (r *ClientePgRepository) Update(c *domain.Cliente, hashedSenha string) error {
 	var err error
+	telefoneEnc, _ := security.Encrypt(c.Telefone)
 	if hashedSenha != "" {
-		query := "UPDATE Usuarios SET nome = $1, login = $2, senha = $3, cargo = $4, avatar_url = $5, whatsappconsent = $6, telefone = $7 WHERE id = $8"
-		_, err = r.db.Exec(query, c.Nome, c.Login, hashedSenha, c.Cargo, c.AvatarURL, c.WhatsappConsent, c.Telefone, c.ID)
+		query := "UPDATE Usuarios SET nome = $1, login = $2, senha = $3, cargo = $4, avatar_url = $5, whatsappconsent = $6, telefone = $7, lgpdaceito = $8, lgpdaceitoem = $9 WHERE id = $10"
+		_, err = r.db.Exec(query, c.Nome, c.Login, hashedSenha, c.Cargo, c.AvatarURL, c.WhatsappConsent, telefoneEnc, c.LgpdAceito, c.LgpdAceitoEm, c.ID)
 	} else {
-		query := "UPDATE Usuarios SET nome = $1, login = $2, cargo = $3, avatar_url = $4, whatsappconsent = $5, telefone = $6 WHERE id = $7"
-		_, err = r.db.Exec(query, c.Nome, c.Login, c.Cargo, c.AvatarURL, c.WhatsappConsent, c.Telefone, c.ID)
+		query := "UPDATE Usuarios SET nome = $1, login = $2, cargo = $3, avatar_url = $4, whatsappconsent = $5, telefone = $6, lgpdaceito = $7, lgpdaceitoem = $8 WHERE id = $9"
+		_, err = r.db.Exec(query, c.Nome, c.Login, c.Cargo, c.AvatarURL, c.WhatsappConsent, telefoneEnc, c.LgpdAceito, c.LgpdAceitoEm, c.ID)
 	}
 	return err
 }
@@ -170,12 +207,22 @@ func (r *ClientePgRepository) Delete(id int) error {
 		    login = 'DELETED_' || $1,
 		    senha = 'DELETED',
 		    avatar_url = '',
-		    whatsappconsent = false
+		    whatsappconsent = false,
+		    telefone = '',
+		    lgpdaceito = false,
+		    lgpdaceitoem = NULL
 		WHERE id = $1
 	`
-	_, err := r.db.Exec(query, pseudoID)
+	_, err := r.db.Exec(query, id)
 	return err
 }
+
+func (r *ClientePgRepository) LogAuditoria(usuarioID, alvoID int, acao, detalhes string) error {
+	query := "INSERT INTO LogsAuditoria (usuarioid, alvoid, acao, detalhes) VALUES ($1, $2, $3, $4)"
+	_, err := r.db.Exec(query, usuarioID, alvoID, acao, detalhes)
+	return err
+}
+
 func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) (*ports.NotificationEvent, error) {
     ctx := context.Background()
     tx, err := r.db.BeginTx(ctx, nil)
@@ -1168,14 +1215,21 @@ func (r *ClientePgRepository) BuscarClientePorTelefone(telefone string) (*domain
 		       COALESCE(p.moedas, 0) as moedas,
 		       COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Moldura' LIMIT 1), '') as moldura_equipada,
 		       COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Background' LIMIT 1), '') as fundo_equipado,
-		       COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Efeito' LIMIT 1), '') as efeito_equipado
+		       COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Efeito' LIMIT 1), '') as efeito_equipado,
+		       COALESCE(u.whatsappconsent, FALSE) as whatsapp_consent,
+               COALESCE(u.telefone, '') as telefone,
+               COALESCE(u.lgpdaceito, FALSE) as lgpdaceito,
+               u.lgpdaceitoem
 		FROM Usuarios u
 		LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
 		LEFT JOIN Niveis n ON p.nivelatual = n.id
 		WHERE (u.login = $1 OR u.login = $2) AND u.cargo = 'Cliente'
 		LIMIT 1
 	`
-	err := r.db.QueryRow(query, telefone, cleanPhone).Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado)
+	err := r.db.QueryRow(query, telefone, cleanPhone).Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado, &c.WhatsappConsent, &c.Telefone, &c.LgpdAceito, &c.LgpdAceitoEm)
+	if err == nil {
+		c.Telefone = security.Decrypt(c.Telefone)
+	}
 	if err != nil {
 		return nil, err
 	}
