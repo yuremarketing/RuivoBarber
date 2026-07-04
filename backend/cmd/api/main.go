@@ -738,6 +738,8 @@ func main() {
     relatoriosService := services.NewRelatoriosService(relatoriosRepo)
     relatoriosHandler := handlers.NewRelatoriosHandler(relatoriosService)
 
+    healthHandler := handlers.NewHealthHandler(db)
+
     app := fiber.New(fiber.Config{AppName: "RuivoBarber API v1.0"})
     app.Use(logger.New())
     app.Use(cors.New())
@@ -750,6 +752,7 @@ func main() {
         return err
     })
 
+    healthHandler.RegisterRoutes(app)
     questHandler.RegisterRoutes(app)
     clienteHandler.RegisterRoutes(app)
     claHandler.RegisterRoutes(app)
