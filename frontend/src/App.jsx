@@ -49,6 +49,24 @@ export default function App() {
     localStorage.setItem('theme', theme)
   }, [theme, previewTheme])
 
+  useEffect(() => {
+    import('@sentry/react').then(Sentry => {
+      const userStr = localStorage.getItem('user')
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr)
+          Sentry.setUser({ id: user.id, username: user.login })
+          // Assuming single tenant logic, but we attach it
+          Sentry.setTag('tenant_id', '1')
+        } catch (e) {
+          // ignore
+        }
+      } else {
+        Sentry.setUser(null)
+      }
+    })
+  }, [location.pathname])
+
   return (
     <div className={`app ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       <div className="dota-noise-overlay"></div>
@@ -88,6 +106,7 @@ export default function App() {
                 <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
                 <Route path="/hall-of-fame" element={<ProtectedRoute><HallOfFamePage /></ProtectedRoute>} />
                 <Route path="/loja" element={<ProtectedRoute><LojaPage /></ProtectedRoute>} />
+                <Route path="/debug-sentry" element={<button onClick={() => { throw new Error("Sentry Frontend Test Error"); }}>Throw Test Error</button>} />
                 <Route path="*" element={<Navigate to="/login" replace />} />
               </Routes>
             </LgpdGatekeeper>

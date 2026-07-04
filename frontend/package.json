@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@sentry/react": "^10.63.0",
     "axios": "^1.6.0",
     "canvas-confetti": "^1.9.4",
     "lucide-react": "^1.21.0",
