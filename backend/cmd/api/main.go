@@ -1,6 +1,9 @@
 package main
 
 import (
+	"os/signal"
+	"syscall"
+
 	"context"
 	"database/sql"
 	"embed"
@@ -700,9 +703,10 @@ func main() {
 	}
 
 	pdvService := services.NewPdvService(pdvRepo, clienteRepo, notificationService, pagamentoService)
-    	// Start RPG Worker
+    	// Start RPG Worker with Graceful Shutdown context
+	workerCtx, workerCancel := context.WithCancel(context.Background())
 	rpgWorker := worker.NewRPGProcessor(db)
-	rpgWorker.Start(context.Background())
+	rpgWorker.Start(workerCtx)
 
 	pdvHandler := handlers.NewPdvHandler(pdvService)
 
@@ -746,6 +750,18 @@ func main() {
     if port == "" {
         port = "8080"
     }
+
+    // Graceful Shutdown Channel
+    c := make(chan os.Signal, 1)
+    signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
+    go func() {
+        <-c
+        log.Println("Gracefully shutting down...")
+        workerCancel()
+        rpgWorker.Wait()
+        _ = app.Shutdown()
+    }()
 
     log.Printf("🚀 RuivoBarber API a correr na porta %s", port)
     log.Fatal(app.Listen(":" + port))

@@ -1,4 +1,19 @@
-package worker
+import os
+
+# 1. Migration for DLQ
+os.makedirs("backend/cmd/api/migrations", exist_ok=True)
+with open("backend/cmd/api/migrations/018_add_dlq_to_outbox.sql", "w") as f:
+    f.write('''-- Up
+ALTER TABLE eventos_rpg_outbox ADD COLUMN dlq BOOLEAN DEFAULT false;
+CREATE INDEX idx_outbox_dlq ON eventos_rpg_outbox(dlq);
+
+-- Down
+DROP INDEX idx_outbox_dlq;
+ALTER TABLE eventos_rpg_outbox DROP COLUMN dlq;
+''')
+
+# 2. Update rpg_processor.go
+worker_code = '''package worker
 
 import (
 	"context"
@@ -198,3 +213,61 @@ func (p *RPGProcessor) processEvent(ctx context.Context, tx *sql.Tx, e OutboxEve
 
 	return nil
 }
+'''
+
+with open("backend/cmd/worker/rpg_processor.go", "w") as f:
+    f.write(worker_code)
+
+
+# 3. Update main.go for graceful shutdown
+path_main = 'backend/cmd/api/main.go'
+with open(path_main, 'r') as f:
+    main_content = f.read()
+
+# Replace worker init
+worker_old = '''	// Start RPG Worker
+	rpgWorker := worker.NewRPGProcessor(db)
+	rpgWorker.Start(context.Background())'''
+    
+worker_new = '''	// Start RPG Worker with Graceful Shutdown context
+	workerCtx, workerCancel := context.WithCancel(context.Background())
+	rpgWorker := worker.NewRPGProcessor(db)
+	rpgWorker.Start(workerCtx)'''
+main_content = main_content.replace(worker_old, worker_new)
+
+# Add graceful shutdown logic
+shutdown_logic = '''
+    // Graceful Shutdown Channel
+    c := make(chan os.Signal, 1)
+    signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
+    go func() {
+        <-c
+        log.Println("Gracefully shutting down...")
+        workerCancel()
+        rpgWorker.Wait()
+        _ = app.Shutdown()
+    }()
+
+    log.Printf("Server rodando na porta %s", port)
+    err = app.Listen(":" + port)
+    if err != nil {
+        log.Fatalf("Erro ao iniciar server: %v", err)
+    }
+}
+'''
+main_content = main_content.replace('''
+    log.Printf("Server rodando na porta %s", port)
+    err = app.Listen(":" + port)
+    if err != nil {
+        log.Fatalf("Erro ao iniciar server: %v", err)
+    }
+}''', shutdown_logic)
+
+if '"os/signal"' not in main_content:
+    main_content = main_content.replace('import (', 'import (\n\t"os/signal"\n\t"syscall"\n', 1)
+
+with open(path_main, 'w') as f:
+    f.write(main_content)
+
+print("Robust worker setup complete")
