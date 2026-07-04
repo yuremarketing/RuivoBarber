@@ -1,6 +1,8 @@
 package services
 
 import (
+	"context"
+
 	"errors"
 	"ruivobarber-api/internal/core/domain"
 	"ruivobarber-api/internal/core/ports"
@@ -32,12 +34,12 @@ func NewPdvService(repo ports.PdvRepository, clienteRepo ports.ClienteRepository
 	}
 }
 
-func (s *PdvService) AbrirCaixa(operadorID int, saldoInicial float64) (*domain.Caixa, error) {
+func (s *PdvService) AbrirCaixa(ctx context.Context, operadorID int, saldoInicial float64) (*domain.Caixa, error) {
 	if saldoInicial < 0 {
 		return nil, errors.New("o saldo inicial não pode ser negativo")
 	}
 
-	ativo, err := s.repo.ObterCaixaAtivo(operadorID)
+	ativo, err := s.repo.ObterCaixaAtivo(ctx, operadorID)
 	if err != nil {
 		return nil, err
 	}
@@ -45,20 +47,20 @@ func (s *PdvService) AbrirCaixa(operadorID int, saldoInicial float64) (*domain.C
 		return nil, errors.New("já existe um caixa aberto para este operador")
 	}
 
-	id, err := s.repo.AbrirCaixa(operadorID, saldoInicial)
+	id, err := s.repo.AbrirCaixa(ctx, operadorID, saldoInicial)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.repo.ObterCaixaPorID(id)
+	return s.repo.ObterCaixaPorID(ctx, id)
 }
 
-func (s *PdvService) FecharCaixa(operadorID int, saldoInformado float64) (*domain.Caixa, error) {
+func (s *PdvService) FecharCaixa(ctx context.Context, operadorID int, saldoInformado float64) (*domain.Caixa, error) {
 	if saldoInformado < 0 {
 		return nil, errors.New("o saldo informado não pode ser negativo")
 	}
 
-	ativo, err := s.repo.ObterCaixaAtivo(operadorID)
+	ativo, err := s.repo.ObterCaixaAtivo(ctx, operadorID)
 	if err != nil {
 		return nil, err
 	}
@@ -66,12 +68,12 @@ func (s *PdvService) FecharCaixa(operadorID int, saldoInformado float64) (*domai
 		return nil, errors.New("nenhum caixa aberto encontrado para este operador")
 	}
 
-	mcs, err := s.repo.ObterMovimentacoesCaixa(ativo.ID)
+	mcs, err := s.repo.ObterMovimentacoesCaixa(ctx, ativo.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	vendasDinheiro, err := s.repo.ObterTotalVendasDinheiro(ativo.ID)
+	vendasDinheiro, err := s.repo.ObterTotalVendasDinheiro(ctx, ativo.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -85,16 +87,16 @@ func (s *PdvService) FecharCaixa(operadorID int, saldoInformado float64) (*domai
 		}
 	}
 
-	err = s.repo.FecharCaixa(ativo.ID, saldoEsperado, saldoInformado)
+	err = s.repo.FecharCaixa(ctx, ativo.ID, saldoEsperado, saldoInformado)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.repo.ObterCaixaPorID(ativo.ID)
+	return s.repo.ObterCaixaPorID(ctx, ativo.ID)
 }
 
-func (s *PdvService) ObterStatusCaixa(operadorID int) (*CaixaStatusResponse, error) {
-	ativo, err := s.repo.ObterCaixaAtivo(operadorID)
+func (s *PdvService) ObterStatusCaixa(ctx context.Context, operadorID int) (*CaixaStatusResponse, error) {
+	ativo, err := s.repo.ObterCaixaAtivo(ctx, operadorID)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +104,7 @@ func (s *PdvService) ObterStatusCaixa(operadorID int) (*CaixaStatusResponse, err
 		return &CaixaStatusResponse{Status: "Fechado"}, nil
 	}
 
-	mcs, err := s.repo.ObterMovimentacoesCaixa(ativo.ID)
+	mcs, err := s.repo.ObterMovimentacoesCaixa(ctx, ativo.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +118,7 @@ func (s *PdvService) ObterStatusCaixa(operadorID int) (*CaixaStatusResponse, err
 		}
 	}
 
-	vendasDinheiro, err := s.repo.ObterTotalVendasDinheiro(ativo.ID)
+	vendasDinheiro, err := s.repo.ObterTotalVendasDinheiro(ctx, ativo.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +137,7 @@ func (s *PdvService) ObterStatusCaixa(operadorID int) (*CaixaStatusResponse, err
 	}, nil
 }
 
-func (s *PdvService) MovimentarCaixa(operadorID int, tipo string, valor float64, motivo string) error {
+func (s *PdvService) MovimentarCaixa(ctx context.Context, operadorID int, tipo string, valor float64, motivo string) error {
 	if tipo != "Entrada" && tipo != "Saida" {
 		return errors.New("tipo de movimentação inválido. Deve ser 'Entrada' ou 'Saida'")
 	}
@@ -146,7 +148,7 @@ func (s *PdvService) MovimentarCaixa(operadorID int, tipo string, valor float64,
 		return errors.New("o motivo é obrigatório")
 	}
 
-	ativo, err := s.repo.ObterCaixaAtivo(operadorID)
+	ativo, err := s.repo.ObterCaixaAtivo(ctx, operadorID)
 	if err != nil {
 		return err
 	}
@@ -161,7 +163,7 @@ func (s *PdvService) MovimentarCaixa(operadorID int, tipo string, valor float64,
 		Motivo:  motivo,
 	}
 
-	return s.repo.AdicionarMovimentacaoCaixa(mc)
+	return s.repo.AdicionarMovimentacaoCaixa(ctx, mc)
 }
 
 type VendaItemRequest struct {
@@ -179,7 +181,7 @@ type ProcessarVendaRequest struct {
 	Itens           []VendaItemRequest `json:"itens"`
 }
 
-func (s *PdvService) ProcessarVenda(operadorID int, req *ProcessarVendaRequest) (*domain.Venda, error) {
+func (s *PdvService) ProcessarVenda(ctx context.Context, operadorID int, req *ProcessarVendaRequest) (*domain.Venda, error) {
 	if req.MetodoPagamento != "Dinheiro" && req.MetodoPagamento != "Pix" && req.MetodoPagamento != "Debito" && req.MetodoPagamento != "Credito" {
 		return nil, errors.New("método de pagamento inválido. Deve ser 'Dinheiro', 'Pix', 'Debito' ou 'Credito'")
 	}
@@ -190,7 +192,7 @@ func (s *PdvService) ProcessarVenda(operadorID int, req *ProcessarVendaRequest) 
 		return nil, errors.New("a venda deve conter pelo menos um item")
 	}
 
-	ativo, err := s.repo.ObterCaixaAtivo(operadorID)
+	ativo, err := s.repo.ObterCaixaAtivo(ctx, operadorID)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +204,7 @@ func (s *PdvService) ProcessarVenda(operadorID int, req *ProcessarVendaRequest) 
 	if req.BarbeiroID != nil {
 		barbeiroID = *req.BarbeiroID
 	} else {
-		operador, err := s.clienteRepo.FindByID(operadorID)
+		operador, err := s.clienteRepo.FindByID(ctx, operadorID)
 		if err != nil {
 			return nil, err
 		}
@@ -242,7 +244,7 @@ func (s *PdvService) ProcessarVenda(operadorID int, req *ProcessarVendaRequest) 
 	valorLiquido := valorBruto - req.Desconto
 
 	if req.AgendamentoID != nil {
-		ag, err := s.clienteRepo.ObterAgendamentoPorID(*req.AgendamentoID)
+		ag, err := s.clienteRepo.ObterAgendamentoPorID(ctx, *req.AgendamentoID)
 		if err != nil {
 			return nil, err
 		}
@@ -253,7 +255,7 @@ func (s *PdvService) ProcessarVenda(operadorID int, req *ProcessarVendaRequest) 
 			return nil, errors.New("agendamento já concluído")
 		}
 
-		event, err := s.clienteRepo.ConcluirAtendimento(*req.AgendamentoID)
+		event, err := s.clienteRepo.ConcluirAtendimento(ctx, *req.AgendamentoID)
 		if err != nil {
 			return nil, err
 		}
@@ -264,11 +266,11 @@ func (s *PdvService) ProcessarVenda(operadorID int, req *ProcessarVendaRequest) 
 		if req.ClienteID != nil {
 			for _, item := range req.Itens {
 				if item.ServicoID != nil && *item.ServicoID != ag.ServicoID {
-					newAgID, err := s.clienteRepo.CriarAgendamento(*req.ClienteID, barbeiroID, *item.ServicoID, time.Now())
+					newAgID, err := s.clienteRepo.CriarAgendamento(ctx, *req.ClienteID, barbeiroID, *item.ServicoID, time.Now())
 					if err != nil {
 						return nil, err
 					}
-					eventExtra, err := s.clienteRepo.ConcluirAtendimento(newAgID)
+					eventExtra, err := s.clienteRepo.ConcluirAtendimento(ctx, newAgID)
 					if err != nil {
 						return nil, err
 					}
@@ -281,11 +283,11 @@ func (s *PdvService) ProcessarVenda(operadorID int, req *ProcessarVendaRequest) 
 	} else if req.ClienteID != nil {
 		for _, item := range req.Itens {
 			if item.ServicoID != nil {
-				newAgID, err := s.clienteRepo.CriarAgendamento(*req.ClienteID, barbeiroID, *item.ServicoID, time.Now())
+				newAgID, err := s.clienteRepo.CriarAgendamento(ctx, *req.ClienteID, barbeiroID, *item.ServicoID, time.Now())
 				if err != nil {
 					return nil, err
 				}
-				event, err := s.clienteRepo.ConcluirAtendimento(newAgID)
+				event, err := s.clienteRepo.ConcluirAtendimento(ctx, newAgID)
 				if err != nil {
 					return nil, err
 				}
@@ -306,7 +308,7 @@ func (s *PdvService) ProcessarVenda(operadorID int, req *ProcessarVendaRequest) 
 		MetodoPagamento: req.MetodoPagamento,
 	}
 
-	err = s.repo.AdicionarVenda(venda, itens)
+	err = s.repo.AdicionarVenda(ctx, venda, itens)
 	if err != nil {
 		return nil, err
 	}

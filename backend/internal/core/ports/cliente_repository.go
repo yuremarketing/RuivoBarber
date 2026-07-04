@@ -1,50 +1,52 @@
 package ports
 
 import (
+	"context"
 	"time"
 	"ruivobarber-api/internal/core/domain"
 )
 
 type ClienteRepository interface {
-	FindAll() ([]domain.Cliente, error)
-	FindByID(id int) (*domain.Cliente, error)
-	FindByLogin(login string) (*domain.Cliente, error)
-	GetPasswordHashByLogin(login string) (string, error)
-	Save(c *domain.Cliente, hashedSenha string) error
-	Update(c *domain.Cliente, hashedSenha string) error
-	Delete(id int) error
-	ConcluirAtendimento(agendamentoID int) (*NotificationEvent, error)
-	ObterAgendamentoPorID(id int) (*domain.Agendamento, error)
-	RegistrarFalta(agendamentoID int) error
-	ResgatarCupom(clienteID, nivelID int) (*domain.Cupom, error)
-	ValidarCupom(codigo string) (*domain.Cupom, error)
-	ListarServicos() ([]domain.Servico, error)
-	BuscarServico(id int) (*domain.Servico, error)
-	CriarServico(s *domain.Servico) (int, error)
-	AtualizarServico(s *domain.Servico) error
-	DeletarServico(id int) error
-	ListarBarbeiros() ([]domain.Barbeiro, error)
-	ListarAgendamentos(data string) ([]domain.Agendamento, error)
-	ListarAgendamentosDoBarbeiro(barbeiroID int, data string) ([]domain.Agendamento, error)
-	CriarAgendamento(clienteID, barbeiroID, servicoID int, dataHora time.Time) (int, error)
-	ListarAgendamentosDoCliente(clienteID int) ([]domain.Agendamento, error)
-	ObterConfiguracoes() (*domain.Configuracoes, error)
-	SalvarConfiguracoes(cfg *domain.Configuracoes) error
-	BuscarClientePorTelefone(telefone string) (*domain.Cliente, error)
-	RegistrarMensagemProcessada(messageID string) (bool, error)
-	ObterDisponibilidadeBarbeiro(barbeiroID int) ([]domain.BarbeiroDisponibilidade, error)
-	SalvarDisponibilidadeBarbeiro(barbeiroID int, disps []domain.BarbeiroDisponibilidade) error
-	ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.BarbeiroBloqueio, error)
-	AdicionarBloqueioBarbeiro(barbeiroID int, data string, horaInicio string, horaFim string, motivo string) error
-	RemoverBloqueioBarbeiro(barbeiroID int, data string) error
-	SalvarChavePixBarbeiro(barbeiroID int, chavePix string) error
-	CriarGorjeta(g *domain.Gorjeta) (int, error)
-	ConfirmarPagamentoGorjeta(id int) error
-	ObterGorjetasDoBarbeiro(barbeiroID int) ([]domain.Gorjeta, error)
-	ObterUltimoCorteConcluido(clienteID int) (*domain.Agendamento, error)
-	BuscarAvaliacaoPorAgendamento(agendamentoID int) (*domain.Avaliacao, error)
-	CriarAvaliacao(a *domain.Avaliacao) error
-	RecalcularAvaliacaoMediaBarbeiro(barbeiroID int) error
-	BuscarAgendamentoPorID(id int) (*domain.Agendamento, error)
+	FindAll(ctx context.Context) ([]domain.Cliente, error)
+	FindByID(ctx context.Context, id int) (*domain.Cliente, error)
+	FindByLogin(ctx context.Context, login string) (*domain.Cliente, error)
+	GetPasswordHashByLogin(ctx context.Context, login string) (string, error)
+	Save(ctx context.Context, c *domain.Cliente, hashedSenha string) error
+	Update(ctx context.Context, c *domain.Cliente, hashedSenha string) error
+	Delete(ctx context.Context, id int) error
+	LogAuditoria(ctx context.Context, usuarioID, alvoID int, acao, detalhes string) error
+	ConcluirAtendimento(ctx context.Context, agendamentoID int) (*NotificationEvent, error)
+	ObterAgendamentoPorID(ctx context.Context, id int) (*domain.Agendamento, error)
+	RegistrarFalta(ctx context.Context, agendamentoID int) error
+	ResgatarCupom(ctx context.Context, clienteID, nivelID int) (*domain.Cupom, error)
+	ValidarCupom(ctx context.Context, codigo string) (*domain.Cupom, error)
+	ListarServicos(ctx context.Context) ([]domain.Servico, error)
+	BuscarServico(ctx context.Context, id int) (*domain.Servico, error)
+	CriarServico(ctx context.Context, s *domain.Servico) (int, error)
+	AtualizarServico(ctx context.Context, s *domain.Servico) error
+	DeletarServico(ctx context.Context, id int) error
+	ListarBarbeiros(ctx context.Context) ([]domain.Barbeiro, error)
+	ListarAgendamentos(ctx context.Context, data string) ([]domain.Agendamento, error)
+	ListarAgendamentosDoBarbeiro(ctx context.Context, barbeiroID int, data string) ([]domain.Agendamento, error)
+	CriarAgendamento(ctx context.Context, clienteID, barbeiroID, servicoID int, dataHora time.Time) (int, error)
+	ListarAgendamentosDoCliente(ctx context.Context, clienteID int) ([]domain.Agendamento, error)
+	ObterConfiguracoes(ctx context.Context) (*domain.Configuracoes, error)
+	SalvarConfiguracoes(ctx context.Context, cfg *domain.Configuracoes) error
+	BuscarClientePorTelefone(ctx context.Context, telefone string) (*domain.Cliente, error)
+	RegistrarMensagemProcessada(ctx context.Context, messageID string) (bool, error)
+	ObterDisponibilidadeBarbeiro(ctx context.Context, barbeiroID int) ([]domain.BarbeiroDisponibilidade, error)
+	SalvarDisponibilidadeBarbeiro(ctx context.Context, barbeiroID int, disps []domain.BarbeiroDisponibilidade) error
+	ObterBloqueiosBarbeiro(ctx context.Context, barbeiroID int) ([]domain.BarbeiroBloqueio, error)
+	AdicionarBloqueioBarbeiro(ctx context.Context, barbeiroID int, data string, horaInicio string, horaFim string, motivo string) error
+	RemoverBloqueioBarbeiro(ctx context.Context, barbeiroID int, data string) error
+	SalvarChavePixBarbeiro(ctx context.Context, barbeiroID int, chavePix string) error
+	CriarGorjeta(ctx context.Context, g *domain.Gorjeta) (int, error)
+	ConfirmarPagamentoGorjeta(ctx context.Context, id int) error
+	ObterGorjetasDoBarbeiro(ctx context.Context, barbeiroID int) ([]domain.Gorjeta, error)
+	ObterUltimoCorteConcluido(ctx context.Context, clienteID int) (*domain.Agendamento, error)
+	BuscarAvaliacaoPorAgendamento(ctx context.Context, agendamentoID int) (*domain.Avaliacao, error)
+	CriarAvaliacao(ctx context.Context, a *domain.Avaliacao) error
+	RecalcularAvaliacaoMediaBarbeiro(ctx context.Context, barbeiroID int) error
+	BuscarAgendamentoPorID(ctx context.Context, id int) (*domain.Agendamento, error)
 }
 

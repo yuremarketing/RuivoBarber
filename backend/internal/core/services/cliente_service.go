@@ -40,12 +40,31 @@ func getSaoPauloLocation() *time.Location {
 }
 
 
+func (s *ClienteService) AceitarLGPD(id int) error {
+	cliente, err := s.repo.FindByID(context.Background(), id)
+	if err != nil {
+		return err
+	}
+	cliente.LgpdAceito = true
+	now := time.Now().Format(time.RFC3339)
+	cliente.LgpdAceitoEm = &now
+	return s.repo.Update(context.Background(), cliente, "")
+}
+
+func (s *ClienteService) EsquecerCliente(id int) error {
+	return s.repo.Delete(context.Background(), id)
+}
+
+func (s *ClienteService) RegistrarAuditoria(usuarioID, alvoID int, acao, detalhes string) error {
+	return s.repo.LogAuditoria(context.Background(), usuarioID, alvoID, acao, detalhes)
+}
+
 func (s *ClienteService) ListarClientes() ([]domain.Cliente, error) {
-	return s.repo.FindAll()
+	return s.repo.FindAll(context.Background())
 }
 
 func (s *ClienteService) ObterHallOfFame() ([]domain.Cliente, error) {
-	clientes, err := s.repo.FindAll()
+	clientes, err := s.repo.FindAll(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -56,11 +75,11 @@ func (s *ClienteService) ObterHallOfFame() ([]domain.Cliente, error) {
 }
 
 func (s *ClienteService) BuscarCliente(id int) (*domain.Cliente, error) {
-	return s.repo.FindByID(id)
+	return s.repo.FindByID(context.Background(), id)
 }
 
 func (s *ClienteService) ConcluirAtendimento(agendamentoID int) error {
-	event, err := s.repo.ConcluirAtendimento(agendamentoID)
+	event, err := s.repo.ConcluirAtendimento(context.Background(), agendamentoID)
 	if err != nil {
 		return err
 	}
@@ -69,24 +88,24 @@ func (s *ClienteService) ConcluirAtendimento(agendamentoID int) error {
 }
 
 func (s *ClienteService) RegistrarFalta(agendamentoID int) error {
-	return s.repo.RegistrarFalta(agendamentoID)
+	return s.repo.RegistrarFalta(context.Background(), agendamentoID)
 }
 
 func (s *ClienteService) ResgatarCupom(clienteID, nivelID int) (*domain.Cupom, error) {
-	return s.repo.ResgatarCupom(clienteID, nivelID)
+	return s.repo.ResgatarCupom(context.Background(), clienteID, nivelID)
 }
 
 func (s *ClienteService) ValidarCupom(codigo string) (*domain.Cupom, error) {
-	return s.repo.ValidarCupom(codigo)
+	return s.repo.ValidarCupom(context.Background(), codigo)
 }
 
 func (s *ClienteService) Login(login, senha string) (*domain.Cliente, string, error) {
-	hashedSenha, err := s.repo.GetPasswordHashByLogin(login)
+	hashedSenha, err := s.repo.GetPasswordHashByLogin(context.Background(), login)
 	if err != nil {
 		return nil, "", errors.New("usuário ou senha incorretos")
 	}
 
-	cliente, err := s.repo.FindByLogin(login)
+	cliente, err := s.repo.FindByLogin(context.Background(), login)
 	if err != nil {
 		return nil, "", errors.New("usuário ou senha incorretos")
 	}
@@ -101,10 +120,11 @@ func (s *ClienteService) Login(login, senha string) (*domain.Cliente, string, er
 
 	// Criar token JWT
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    cliente.ID,
-		"nome":  cliente.Nome,
-		"cargo": cliente.Cargo,
-		"exp":   time.Now().Add(time.Hour * 72).Unix(),
+		"id":        cliente.ID,
+		"nome":      cliente.Nome,
+		"cargo":     cliente.Cargo,
+		"tenant_id": "00000000-0000-0000-0000-000000000000",
+		"exp":       time.Now().Add(time.Hour * 72).Unix(),
 	})
 
 	jwtSecret := os.Getenv("JWT_SECRET")
@@ -121,7 +141,7 @@ func (s *ClienteService) Login(login, senha string) (*domain.Cliente, string, er
 }
 
 func (s *ClienteService) CadastrarCliente(cliente *domain.Cliente, password string) error {
-	_, err := s.repo.FindByLogin(cliente.Login)
+	_, err := s.repo.FindByLogin(context.Background(), cliente.Login)
 	if err == nil {
 		return errors.New("login já cadastrado no sistema")
 	}
@@ -134,18 +154,18 @@ func (s *ClienteService) CadastrarCliente(cliente *domain.Cliente, password stri
 	if cliente.Cargo != "Adm" && cliente.Cargo != "Barbeiro" && cliente.Cargo != "Cliente" {
 		cliente.Cargo = "Cliente"
 	}
-	return s.repo.Save(cliente, string(hashedBytes))
+	return s.repo.Save(context.Background(), cliente,  string(hashedBytes))
 }
 
-func (s *ClienteService) AtualizarPerfil(id int, nome, login, senha, avatarUrl, cargo string) error {
+func (s *ClienteService) AtualizarPerfil(id int, nome, login, senha, avatarUrl, telefone string, whatsappConsent bool, cargo string) error {
 	if login != "" {
-		cExistente, err := s.repo.FindByLogin(login)
+		cExistente, err := s.repo.FindByLogin(context.Background(), login)
 		if err == nil && cExistente.ID != id {
 			return errors.New("login já cadastrado no sistema")
 		}
 	}
 
-	cliente, err := s.repo.FindByID(id)
+	cliente, err := s.repo.FindByID(context.Background(), id)
 	if err != nil {
 		return err
 	}
@@ -159,8 +179,16 @@ func (s *ClienteService) AtualizarPerfil(id int, nome, login, senha, avatarUrl, 
 	if cargo == "Adm" || cargo == "Barbeiro" || cargo == "Cliente" {
 		cliente.Cargo = cargo
 	}
+	if avatarUrl != "" {
+		cliente.AvatarURL = avatarUrl
+	}
 	
-	cliente.AvatarURL = avatarUrl
+	cliente.WhatsappConsent = whatsappConsent
+	if !whatsappConsent {
+		cliente.Telefone = "" // Apagar telefone se revogar consentimento (LGPD)
+	} else {
+		cliente.Telefone = telefone
+	}
 
 	var hashedSenha string
 	if senha != "" {
@@ -171,37 +199,41 @@ func (s *ClienteService) AtualizarPerfil(id int, nome, login, senha, avatarUrl, 
 		hashedSenha = string(hashedBytes)
 	}
 
-	return s.repo.Update(cliente, hashedSenha)
+	return s.repo.Update(context.Background(), cliente, hashedSenha)
 }
 func (s *ClienteService) DeletarCliente(id int) error {
-	return s.repo.Delete(id)
+	return s.repo.Delete(context.Background(), id)
 }
 func (s *ClienteService) ListarServicos() ([]domain.Servico, error) {
-	return s.repo.ListarServicos()
+	return s.repo.ListarServicos(context.Background())
 }
 
 func (s *ClienteService) ListarBarbeiros() ([]domain.Barbeiro, error) {
-	return s.repo.ListarBarbeiros()
+	return s.repo.ListarBarbeiros(context.Background())
 }
 
 func (s *ClienteService) ListarAgendamentos(data string) ([]domain.Agendamento, error) {
-	return s.repo.ListarAgendamentos(data)
+	return s.repo.ListarAgendamentos(context.Background(), data)
+}
+
+func (s *ClienteService) ListarAgendamentosDoBarbeiro(barbeiroID int, data string) ([]domain.Agendamento, error) {
+	return s.repo.ListarAgendamentosDoBarbeiro(context.Background(), barbeiroID, data)
 }
 
 func (s *ClienteService) ListarAgendamentosDoCliente(clienteID int) ([]domain.Agendamento, error) {
-	return s.repo.ListarAgendamentosDoCliente(clienteID)
+	return s.repo.ListarAgendamentosDoCliente(context.Background(), clienteID)
 }
 
 func (s *ClienteService) ObterDisponibilidadeBarbeiro(barbeiroID int) ([]domain.BarbeiroDisponibilidade, error) {
-	return s.repo.ObterDisponibilidadeBarbeiro(barbeiroID)
+	return s.repo.ObterDisponibilidadeBarbeiro(context.Background(), barbeiroID)
 }
 
 func (s *ClienteService) SalvarDisponibilidadeBarbeiro(barbeiroID int, disps []domain.BarbeiroDisponibilidade) error {
-	return s.repo.SalvarDisponibilidadeBarbeiro(barbeiroID, disps)
+	return s.repo.SalvarDisponibilidadeBarbeiro(context.Background(), barbeiroID, disps)
 }
 
 func (s *ClienteService) ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.BarbeiroBloqueio, error) {
-	return s.repo.ObterBloqueiosBarbeiro(barbeiroID)
+	return s.repo.ObterBloqueiosBarbeiro(context.Background(), barbeiroID)
 }
 
 func (s *ClienteService) AdicionarBloqueioBarbeiro(barbeiroID int, data string, horaInicio string, horaFim string, motivo string) error {
@@ -221,11 +253,11 @@ func (s *ClienteService) AdicionarBloqueioBarbeiro(barbeiroID int, data string, 
 		}
 	}
 
-	return s.repo.AdicionarBloqueioBarbeiro(barbeiroID, data, horaInicio, horaFim, motivo)
+	return s.repo.AdicionarBloqueioBarbeiro(context.Background(), barbeiroID, data, horaInicio, horaFim, motivo)
 }
 
 func (s *ClienteService) RemoverBloqueioBarbeiro(barbeiroID int, data string) error {
-	return s.repo.RemoverBloqueioBarbeiro(barbeiroID, data)
+	return s.repo.RemoverBloqueioBarbeiro(context.Background(), barbeiroID, data)
 }
 
 func (s *ClienteService) CriarAgendamento(clienteID, barbeiroID, servicoID int, dataHora time.Time) (int, error) {
@@ -237,14 +269,14 @@ func (s *ClienteService) CriarAgendamento(clienteID, barbeiroID, servicoID int, 
 		return 0, errors.New("não é possível criar um agendamento em horário retroativo")
 	}
 
-	return s.repo.CriarAgendamento(clienteID, barbeiroID, servicoID, dataHora)
+	return s.repo.CriarAgendamento(context.Background(), clienteID, barbeiroID, servicoID, dataHora)
 }
 
 func (s *ClienteService) ObterAgendaBarbeiro(barbeiroID int, dataStr string, servicoID int) ([]domain.AgendaSlot, error) {
 	// 1. Fetch service to get its duration
 	duracao := 30
 	if servicoID > 0 {
-		servico, err := s.repo.BuscarServico(servicoID)
+		servico, err := s.repo.BuscarServico(context.Background(), servicoID)
 		if err == nil && servico != nil {
 			duracao = servico.DuracaoMinutos
 		}
@@ -259,7 +291,7 @@ func (s *ClienteService) ObterAgendaBarbeiro(barbeiroID int, dataStr string, ser
 
 	// 3. Verificar bloqueios pontuais
 	dateStr := parsedDate.Format("2006-01-02")
-	bloqueios, err := s.repo.ObterBloqueiosBarbeiro(barbeiroID)
+	bloqueios, err := s.repo.ObterBloqueiosBarbeiro(context.Background(), barbeiroID)
 	var diaBloqueadoTotalmente bool
 	var bloqueiosParciais []domain.BarbeiroBloqueio
 
@@ -282,7 +314,7 @@ func (s *ClienteService) ObterAgendaBarbeiro(barbeiroID int, dataStr string, ser
 
 	// 4. Verificar disponibilidade semanal
 	weekday := int(parsedDate.Weekday())
-	disps, err := s.repo.ObterDisponibilidadeBarbeiro(barbeiroID)
+	disps, err := s.repo.ObterDisponibilidadeBarbeiro(context.Background(), barbeiroID)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +333,7 @@ func (s *ClienteService) ObterAgendaBarbeiro(barbeiroID int, dataStr string, ser
 	}
 
 	// 5. Fetch existing appointments
-	agendamentos, err := s.repo.ListarAgendamentosDoBarbeiro(barbeiroID, dateStr)
+	agendamentos, err := s.repo.ListarAgendamentosDoBarbeiro(context.Background(), barbeiroID, dateStr)
 	if err != nil {
 		return nil, err
 	}
@@ -809,7 +841,7 @@ func (s *ClienteService) resolverFunctionCall(apiKey string, clienteID int, reqB
 }
 
 func (s *ClienteService) GoogleLogin(email, nome string) (*domain.Cliente, string, error) {
-	cliente, err := s.repo.FindByLogin(email)
+	cliente, err := s.repo.FindByLogin(context.Background(), email)
 	if err == nil {
 		if cliente.Cargo != "Cliente" {
 			return nil, "", errors.New("login social permitido apenas para clientes")
@@ -829,13 +861,13 @@ func (s *ClienteService) GoogleLogin(email, nome string) (*domain.Cliente, strin
 			return nil, "", err
 		}
 
-		err = s.repo.Save(novoCliente, string(hashedBytes))
+		err = s.repo.Save(context.Background(), novoCliente,  string(hashedBytes))
 		if err != nil {
 			return nil, "", err
 		}
 
 		// Buscar o cliente recém criado para obter o ID preenchido pelo banco
-		cliente, err = s.repo.FindByLogin(email)
+		cliente, err = s.repo.FindByLogin(context.Background(), email)
 		if err != nil {
 			return nil, "", err
 		}
@@ -843,10 +875,11 @@ func (s *ClienteService) GoogleLogin(email, nome string) (*domain.Cliente, strin
 
 	// Criar token JWT para o login do Google
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    cliente.ID,
-		"nome":  cliente.Nome,
-		"cargo": cliente.Cargo,
-		"exp":   time.Now().Add(time.Hour * 72).Unix(),
+		"id":        cliente.ID,
+		"nome":      cliente.Nome,
+		"cargo":     cliente.Cargo,
+		"tenant_id": "00000000-0000-0000-0000-000000000000",
+		"exp":       time.Now().Add(time.Hour * 72).Unix(),
 	})
 
 	jwtSecret := os.Getenv("JWT_SECRET")
@@ -930,15 +963,15 @@ func (s *ClienteService) AtualizarTemporada(id int, nome string, dataInicio, dat
 }
 
 func (s *ClienteService) ObterConfiguracoes() (*domain.Configuracoes, error) {
-	return s.repo.ObterConfiguracoes()
+	return s.repo.ObterConfiguracoes(context.Background())
 }
 
 func (s *ClienteService) SalvarConfiguracoes(cfg *domain.Configuracoes) error {
-	return s.repo.SalvarConfiguracoes(cfg)
+	return s.repo.SalvarConfiguracoes(context.Background(), cfg)
 }
 
 func (s *ClienteService) RegistrarMensagemProcessada(messageID string) (bool, error) {
-	return s.repo.RegistrarMensagemProcessada(messageID)
+	return s.repo.RegistrarMensagemProcessada(context.Background(), messageID)
 }
 
 func (s *ClienteService) simularChatSincrono(clienteID int, clienteNome string, userMsg string) (string, error) {
@@ -953,7 +986,7 @@ func (s *ClienteService) simularChatSincrono(clienteID int, clienteNome string, 
 func (s *ClienteService) ProcessarChatWhatsApp(sender string, message string) (string, error) {
 	clienteID := 0
 	clienteNome := "Visitante"
-	c, err := s.repo.BuscarClientePorTelefone(sender)
+	c, err := s.repo.BuscarClientePorTelefone(context.Background(), sender)
 	if err == nil && c != nil {
 		clienteID = c.ID
 		clienteNome = c.Nome
@@ -1205,15 +1238,15 @@ func (s *ClienteService) resolverFunctionCallSincrono(ctx context.Context, apiKe
 }
 
 func (s *ClienteService) CriarServico(serv *domain.Servico) (int, error) {
-	return s.repo.CriarServico(serv)
+	return s.repo.CriarServico(context.Background(), serv)
 }
 
 func (s *ClienteService) AtualizarServico(serv *domain.Servico) error {
-	return s.repo.AtualizarServico(serv)
+	return s.repo.AtualizarServico(context.Background(), serv)
 }
 
 func (s *ClienteService) DeletarServico(id int) error {
-	return s.repo.DeletarServico(id)
+	return s.repo.DeletarServico(context.Background(), id)
 }
 
 func calculateCRC16(data string) string {
@@ -1300,15 +1333,15 @@ func sanitizeString(input string, maxLength int) string {
 }
 
 func (s *ClienteService) SalvarChavePixBarbeiro(barbeiroID int, chavePix string) error {
-	return s.repo.SalvarChavePixBarbeiro(barbeiroID, chavePix)
+	return s.repo.SalvarChavePixBarbeiro(context.Background(), barbeiroID, chavePix)
 }
 
 func (s *ClienteService) ConfirmarPagamentoGorjeta(id int) error {
-	return s.repo.ConfirmarPagamentoGorjeta(id)
+	return s.repo.ConfirmarPagamentoGorjeta(context.Background(), id)
 }
 
 func (s *ClienteService) ObterGorjetasDoBarbeiro(barbeiroID int) ([]domain.Gorjeta, error) {
-	gorjetas, err := s.repo.ObterGorjetasDoBarbeiro(barbeiroID)
+	gorjetas, err := s.repo.ObterGorjetasDoBarbeiro(context.Background(), barbeiroID)
 	if err != nil {
 		return nil, err
 	}
@@ -1319,7 +1352,7 @@ func (s *ClienteService) ObterGorjetasDoBarbeiro(barbeiroID int) ([]domain.Gorje
 }
 
 func (s *ClienteService) CriarGorjeta(agendamentoID *int, clienteID *int, barbeiroID int, valor float64) (*domain.Gorjeta, error) {
-	barbeiros, err := s.repo.ListarBarbeiros()
+	barbeiros, err := s.repo.ListarBarbeiros(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -1355,7 +1388,7 @@ func (s *ClienteService) CriarGorjeta(agendamentoID *int, clienteID *int, barbei
 		Status:        "Pendente",
 	}
 
-	id, err := s.repo.CriarGorjeta(g)
+	id, err := s.repo.CriarGorjeta(context.Background(), g)
 	if err != nil {
 		return nil, err
 	}
@@ -1367,7 +1400,7 @@ func (s *ClienteService) CriarGorjeta(agendamentoID *int, clienteID *int, barbei
 }
 
 func (s *ClienteService) ObterUltimoCorteComStatusAvaliacao(clienteID int) (*domain.UltimoCorteResponse, error) {
-	ultimoCorte, err := s.repo.ObterUltimoCorteConcluido(clienteID)
+	ultimoCorte, err := s.repo.ObterUltimoCorteConcluido(context.Background(), clienteID)
 	if err != nil {
 		return nil, err
 	}
@@ -1375,7 +1408,7 @@ func (s *ClienteService) ObterUltimoCorteComStatusAvaliacao(clienteID int) (*dom
 		return nil, nil
 	}
 
-	avaliacao, err := s.repo.BuscarAvaliacaoPorAgendamento(ultimoCorte.ID)
+	avaliacao, err := s.repo.BuscarAvaliacaoPorAgendamento(context.Background(), ultimoCorte.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -1396,7 +1429,7 @@ func (s *ClienteService) SalvarAvaliacao(agendamentoID int, clienteID int, nota 
 		return errors.New("a nota deve ser entre 1 e 5")
 	}
 
-	agendamento, err := s.repo.BuscarAgendamentoPorID(agendamentoID)
+	agendamento, err := s.repo.BuscarAgendamentoPorID(context.Background(), agendamentoID)
 	if err != nil {
 		return err
 	}
@@ -1412,7 +1445,7 @@ func (s *ClienteService) SalvarAvaliacao(agendamentoID int, clienteID int, nota 
 		return errors.New("só é possível avaliar atendimentos concluídos")
 	}
 
-	avaliacaoExistente, err := s.repo.BuscarAvaliacaoPorAgendamento(agendamentoID)
+	avaliacaoExistente, err := s.repo.BuscarAvaliacaoPorAgendamento(context.Background(), agendamentoID)
 	if err != nil {
 		return err
 	}
@@ -1428,12 +1461,12 @@ func (s *ClienteService) SalvarAvaliacao(agendamentoID int, clienteID int, nota 
 		Comentario:    comentario,
 	}
 
-	err = s.repo.CriarAvaliacao(avaliacao)
+	err = s.repo.CriarAvaliacao(context.Background(), avaliacao)
 	if err != nil {
 		return err
 	}
 
-	return s.repo.RecalcularAvaliacaoMediaBarbeiro(agendamento.BarbeiroID)
+	return s.repo.RecalcularAvaliacaoMediaBarbeiro(context.Background(), agendamento.BarbeiroID)
 }
 
 

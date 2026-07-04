@@ -17,6 +17,7 @@ import (
 	"ruivobarber-api/internal/core/domain"
 	"ruivobarber-api/internal/core/services"
 	"ruivobarber-api/internal/infra"
+	"ruivobarber-api/internal/pkg/contextutils"
 )
 
 func getSaoPauloLocation() *time.Location {
@@ -109,9 +110,19 @@ func JWTMiddleware(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Claims inválidos"})
 	}
 
+	tenantID, ok := claims["tenant_id"].(string)
+	if !ok || tenantID == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Tenant inválido no token"})
+	}
+
 	c.Locals("userId", int(claims["id"].(float64)))
 	c.Locals("userNome", claims["nome"].(string))
 	c.Locals("userCargo", claims["cargo"].(string))
+	c.Locals("tenant_id", tenantID)
+
+	// Inject into Go Context securely using Typed Key
+	ctx := context.WithValue(c.Context(), contextutils.TenantIDKey, tenantID)
+	c.SetUserContext(ctx)
 
 	return c.Next()
 }
@@ -140,9 +151,12 @@ func (h *ClienteHandler) RegisterRoutes(app *fiber.App) {
 	})
 
 	// Rotas de Clientes (Protegidas)
+	api.Post("/usuarios/aceitar-lgpd", JWTMiddleware, h.AceitarLGPD)
+	api.Delete("/usuarios/esquecer", JWTMiddleware, h.EsquecerLGPD)
 	api.Get("/clientes", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.ListarClientes)
 	api.Post("/clientes", JWTMiddleware, RequireCargo("Adm"), h.CadastrarCliente)
 	api.Get("/clientes/:id", JWTMiddleware, h.BuscarCliente)
+	api.Post("/clientes/:id/revelar-telefone", JWTMiddleware, RequireCargo("Adm", "Barbeiro"), h.RevelarTelefone)
 	api.Put("/clientes/:id/perfil", JWTMiddleware, h.AtualizarPerfil)
 	api.Delete("/clientes/:id", JWTMiddleware, RequireCargo("Adm"), h.DeletarCliente)
 	api.Get("/games/hall-of-fame", JWTMiddleware, h.ObterHallOfFame)
@@ -228,6 +242,9 @@ func (h *ClienteHandler) ListarClientes(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
+	for i := range clientes {
+		clientes[i].Telefone = maskPhone(clientes[i].Telefone)
+	}
 	return c.JSON(clientes)
 }
 
@@ -264,6 +281,10 @@ func (h *ClienteHandler) BuscarCliente(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Cliente não encontrado"})
 	}
+	if userCargo != "Cliente" {
+		cliente.Telefone = maskPhone(cliente.Telefone)
+	}
+
 	return c.JSON(cliente)
 }
 
@@ -1157,10 +1178,53 @@ func (h *ClienteHandler) DeletarCliente(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return c.JSON(fiber.Map{"message": "Usuário excluído com sucesso!"})
+	return c.Status(200).JSON(fiber.Map{"message": "Avaliação salva com sucesso!"})
 }
 
+func maskPhone(phone string) string {
+	if len(phone) < 8 {
+		return phone // Cannot mask easily
+	}
+	// e.g. 11988887777 -> 1198****777
+	if len(phone) > 10 {
+		return phone[:4] + "****" + phone[len(phone)-4:]
+	}
+	return phone[:2] + "****" + phone[len(phone)-2:]
+}
 
+func (h *ClienteHandler) AceitarLGPD(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(int)
+	err := h.service.AceitarLGPD(userID)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"message": "LGPD aceito com sucesso"})
+}
 
+func (h *ClienteHandler) EsquecerLGPD(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(int)
+	err := h.service.EsquecerCliente(userID)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"message": "Conta esquecida com sucesso"})
+}
 
+func (h *ClienteHandler) RevelarTelefone(c *fiber.Ctx) error {
+	alvoID, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "ID inválido"})
+	}
+	usuarioID := c.Locals("userID").(int)
+	
+	cliente, err := h.service.BuscarCliente(alvoID)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Cliente não encontrado"})
+	}
 
+	acao := "Acesso a Perfil de Cliente (Telefone)"
+	detalhes := fmt.Sprintf("Revelou telefone do cliente %s (ID %d)", cliente.Nome, alvoID)
+	_ = h.service.RegistrarAuditoria(usuarioID, alvoID, acao, detalhes)
+
+	return c.JSON(fiber.Map{"telefone": cliente.Telefone})
+}

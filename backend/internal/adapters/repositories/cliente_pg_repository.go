@@ -96,7 +96,7 @@ func (r *ClientePgRepository) FindByID(ctx context.Context, id int) (*domain.Cli
         WHERE u.id = $1 AND u.tenant_id = $2
     `
     row := r.db.QueryRowContext(ctx, query, id, tenantID)
-    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado, &c.WhatsappConsent, &c.Telefone, &c.LgpdAceito, &c.LgpdAceitoEm)
+    err = row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado, &c.WhatsappConsent, &c.Telefone, &c.LgpdAceito, &c.LgpdAceitoEm)
     if err != nil {
         return nil, err
     }
@@ -131,7 +131,7 @@ func (r *ClientePgRepository) FindByLogin(ctx context.Context, login string) (*d
         WHERE u.login = $1 AND u.tenant_id = $2
     `
     row := r.db.QueryRowContext(ctx, query, login, tenantID)
-    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado, &c.WhatsappConsent, &c.Telefone, &c.LgpdAceito, &c.LgpdAceitoEm)
+    err = row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado, &c.WhatsappConsent, &c.Telefone, &c.LgpdAceito, &c.LgpdAceitoEm)
     if err != nil {
         return nil, err
     }
@@ -185,7 +185,7 @@ func (r *ClientePgRepository) Save(ctx context.Context, c *domain.Cliente, hashe
     return tx.Commit()
 }
 
-func (r *ClientePgRepository) Update(c *domain.Cliente, hashedSenha string) error {
+func (r *ClientePgRepository) Update(ctx context.Context, c *domain.Cliente, hashedSenha string) error {
 	var err error
 	telefoneEnc, _ := security.Encrypt(c.Telefone)
 	if hashedSenha != "" {
@@ -198,9 +198,8 @@ func (r *ClientePgRepository) Update(c *domain.Cliente, hashedSenha string) erro
 	return err
 }
 
-func (r *ClientePgRepository) Delete(id int) error {
+func (r *ClientePgRepository) Delete(ctx context.Context, id int) error {
 	// Pseudonimização (LGPD) - Direito ao Esquecimento em vez de exclusão física
-	pseudoID := fmt.Sprintf("%d", id) // Simple suffix
 	query := `
 		UPDATE Usuarios 
 		SET nome = 'CLIENTE_EXCLUIDO_' || $1,
@@ -217,14 +216,13 @@ func (r *ClientePgRepository) Delete(id int) error {
 	return err
 }
 
-func (r *ClientePgRepository) LogAuditoria(usuarioID, alvoID int, acao, detalhes string) error {
+func (r *ClientePgRepository) LogAuditoria(ctx context.Context, usuarioID, alvoID int, acao, detalhes string) error {
 	query := "INSERT INTO LogsAuditoria (usuarioid, alvoid, acao, detalhes) VALUES ($1, $2, $3, $4)"
 	_, err := r.db.Exec(query, usuarioID, alvoID, acao, detalhes)
 	return err
 }
 
-func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) (*ports.NotificationEvent, error) {
-    ctx := context.Background()
+func (r *ClientePgRepository) ConcluirAtendimento(ctx context.Context, agendamentoID int) (*ports.NotificationEvent, error) {
     tx, err := r.db.BeginTx(ctx, nil)
     if err != nil {
         return nil, err
@@ -560,8 +558,7 @@ func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) (*ports.Not
     }, nil
 }
 
-func (r *ClientePgRepository) RegistrarFalta(agendamentoID int) error {
-    ctx := context.Background()
+func (r *ClientePgRepository) RegistrarFalta(ctx context.Context, agendamentoID int) error {
     tx, err := r.db.BeginTx(ctx, nil)
     if err != nil {
         return err
@@ -679,8 +676,7 @@ func generateRandomCode(prefix string) string {
     return prefix + "-" + string(b)
 }
 
-func (r *ClientePgRepository) ResgatarCupom(clienteID, nivelID int) (*domain.Cupom, error) {
-    ctx := context.Background()
+func (r *ClientePgRepository) ResgatarCupom(ctx context.Context, clienteID, nivelID int) (*domain.Cupom, error) {
     tx, err := r.db.BeginTx(ctx, nil)
     if err != nil {
         return nil, err
@@ -776,8 +772,7 @@ func (r *ClientePgRepository) ResgatarCupom(clienteID, nivelID int) (*domain.Cup
     }, nil
 }
 
-func (r *ClientePgRepository) ValidarCupom(codigo string) (*domain.Cupom, error) {
-    ctx := context.Background()
+func (r *ClientePgRepository) ValidarCupom(ctx context.Context, codigo string) (*domain.Cupom, error) {
     tx, err := r.db.BeginTx(ctx, nil)
     if err != nil {
         return nil, err
@@ -820,7 +815,7 @@ func (r *ClientePgRepository) ValidarCupom(codigo string) (*domain.Cupom, error)
 	return &c, nil
 }
 
-func (r *ClientePgRepository) ListarServicos() ([]domain.Servico, error) {
+func (r *ClientePgRepository) ListarServicos(ctx context.Context) ([]domain.Servico, error) {
 	query := `SELECT id, nome, preco, xprecompensa, duracaominutos FROM Servicos ORDER BY id ASC`
 	rows, err := r.db.Query(query)
 	if err != nil {
@@ -839,7 +834,7 @@ func (r *ClientePgRepository) ListarServicos() ([]domain.Servico, error) {
 	return servicos, nil
 }
 
-func (r *ClientePgRepository) ListarBarbeiros() ([]domain.Barbeiro, error) {
+func (r *ClientePgRepository) ListarBarbeiros(ctx context.Context) ([]domain.Barbeiro, error) {
 	query := `SELECT id, nome, COALESCE(foto_url, ''), COALESCE(avaliacao_media, 5.00), COALESCE(chave_pix, '') FROM Usuarios WHERE cargo IN ('Barbeiro', 'Adm') ORDER BY nome ASC`
 	rows, err := r.db.Query(query)
 	if err != nil {
@@ -858,7 +853,7 @@ func (r *ClientePgRepository) ListarBarbeiros() ([]domain.Barbeiro, error) {
 	return barbeiros, nil
 }
 
-func (r *ClientePgRepository) ObterAgendamentoPorID(id int) (*domain.Agendamento, error) {
+func (r *ClientePgRepository) ObterAgendamentoPorID(ctx context.Context, id int) (*domain.Agendamento, error) {
 	query := `
 		SELECT a.id, a.clienteid, u.nome, a.barbeiroid, b.nome, a.servicoid, s.nome, s.duracaominutos, a.datahora, a.status
 		FROM Agendamentos a
@@ -881,7 +876,7 @@ func (r *ClientePgRepository) ObterAgendamentoPorID(id int) (*domain.Agendamento
 	return &a, nil
 }
 
-func (r *ClientePgRepository) ListarAgendamentos(data string) ([]domain.Agendamento, error) {
+func (r *ClientePgRepository) ListarAgendamentos(ctx context.Context, data string) ([]domain.Agendamento, error) {
 	query := `
 		SELECT a.id, a.clienteid, u.nome, a.barbeiroid, b.nome, a.servicoid, s.nome, s.duracaominutos, a.datahora, a.status
 		FROM Agendamentos a
@@ -911,7 +906,7 @@ func (r *ClientePgRepository) ListarAgendamentos(data string) ([]domain.Agendame
 	return agendamentos, nil
 }
 
-func (r *ClientePgRepository) BuscarServico(id int) (*domain.Servico, error) {
+func (r *ClientePgRepository) BuscarServico(ctx context.Context, id int) (*domain.Servico, error) {
 	query := `SELECT id, nome, preco, xprecompensa, duracaominutos FROM Servicos WHERE id = $1`
 	var s domain.Servico
 	err := r.db.QueryRow(query, id).Scan(&s.ID, &s.Nome, &s.Preco, &s.XpRecompensa, &s.DuracaoMinutos)
@@ -921,7 +916,7 @@ func (r *ClientePgRepository) BuscarServico(id int) (*domain.Servico, error) {
 	return &s, nil
 }
 
-func (r *ClientePgRepository) ListarAgendamentosDoBarbeiro(barbeiroID int, data string) ([]domain.Agendamento, error) {
+func (r *ClientePgRepository) ListarAgendamentosDoBarbeiro(ctx context.Context, barbeiroID int, data string) ([]domain.Agendamento, error) {
 	query := `
 		SELECT a.id, a.clienteid, u.nome, a.barbeiroid, b.nome, a.servicoid, s.nome, s.duracaominutos, a.datahora, a.status
 		FROM Agendamentos a
@@ -951,8 +946,7 @@ func (r *ClientePgRepository) ListarAgendamentosDoBarbeiro(barbeiroID int, data 
 	return agendamentos, nil
 }
 
-func (r *ClientePgRepository) CriarAgendamento(clienteID, barbeiroID, servicoID int, dataHora time.Time) (int, error) {
-	ctx := context.Background()
+func (r *ClientePgRepository) CriarAgendamento(ctx context.Context, clienteID, barbeiroID, servicoID int, dataHora time.Time) (int, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, err
@@ -1125,7 +1119,7 @@ func (r *ClientePgRepository) CriarAgendamento(clienteID, barbeiroID, servicoID 
 	return id, nil
 }
 
-func (r *ClientePgRepository) ListarAgendamentosDoCliente(clienteID int) ([]domain.Agendamento, error) {
+func (r *ClientePgRepository) ListarAgendamentosDoCliente(ctx context.Context, clienteID int) ([]domain.Agendamento, error) {
 	query := `
 		SELECT a.id, a.clienteid, u.nome, a.barbeiroid, b.nome, a.servicoid, s.nome, s.duracaominutos, a.datahora, a.status
 		FROM Agendamentos a
@@ -1155,7 +1149,7 @@ func (r *ClientePgRepository) ListarAgendamentosDoCliente(clienteID int) ([]doma
 	return agendamentos, nil
 }
 
-func (r *ClientePgRepository) ObterConfiguracoes() (*domain.Configuracoes, error) {
+func (r *ClientePgRepository) ObterConfiguracoes(ctx context.Context) (*domain.Configuracoes, error) {
 	var cfg domain.Configuracoes
 	query := "SELECT id, COALESCE(ChaveAPIWhatsApp, ''), COALESCE(UrlWebhook, ''), COALESCE(TokenValidacao, ''), COALESCE(AceitaDinheiro, TRUE), COALESCE(AceitaPix, TRUE), COALESCE(AceitaCartao, TRUE), COALESCE(ChavePix, ''), COALESCE(MercadoPagoToken, '') FROM Configuracoes ORDER BY id ASC LIMIT 1"
 	err := r.db.QueryRow(query).Scan(&cfg.ID, &cfg.ChaveAPIWhatsApp, &cfg.UrlWebhook, &cfg.TokenValidacao, &cfg.AceitaDinheiro, &cfg.AceitaPix, &cfg.AceitaCartao, &cfg.ChavePix, &cfg.MercadoPagoToken)
@@ -1181,7 +1175,7 @@ func (r *ClientePgRepository) ObterConfiguracoes() (*domain.Configuracoes, error
 	return &cfg, nil
 }
 
-func (r *ClientePgRepository) SalvarConfiguracoes(cfg *domain.Configuracoes) error {
+func (r *ClientePgRepository) SalvarConfiguracoes(ctx context.Context, cfg *domain.Configuracoes) error {
 	var count int
 	err := r.db.QueryRow("SELECT COUNT(*) FROM Configuracoes").Scan(&count)
 	if err != nil {
@@ -1198,7 +1192,7 @@ func (r *ClientePgRepository) SalvarConfiguracoes(cfg *domain.Configuracoes) err
 	return err
 }
 
-func (r *ClientePgRepository) BuscarClientePorTelefone(telefone string) (*domain.Cliente, error) {
+func (r *ClientePgRepository) BuscarClientePorTelefone(ctx context.Context, telefone string) (*domain.Cliente, error) {
 	cleanPhone := telefone
 	if len(cleanPhone) > 0 && cleanPhone[0] == '+' {
 		cleanPhone = cleanPhone[1:]
@@ -1236,7 +1230,7 @@ func (r *ClientePgRepository) BuscarClientePorTelefone(telefone string) (*domain
 	return &c, nil
 }
 
-func (r *ClientePgRepository) RegistrarMensagemProcessada(messageID string) (bool, error) {
+func (r *ClientePgRepository) RegistrarMensagemProcessada(ctx context.Context, messageID string) (bool, error) {
 	query := `INSERT INTO MensagensProcessadas (MessageID) VALUES ($1) ON CONFLICT DO NOTHING`
 	res, err := r.db.Exec(query, messageID)
 	if err != nil {
@@ -1249,7 +1243,7 @@ func (r *ClientePgRepository) RegistrarMensagemProcessada(messageID string) (boo
 	return rowsAffected > 0, nil
 }
 
-func (r *ClientePgRepository) CriarServico(s *domain.Servico) (int, error) {
+func (r *ClientePgRepository) CriarServico(ctx context.Context, s *domain.Servico) (int, error) {
 	query := `INSERT INTO Servicos (nome, preco, xprecompensa, duracaominutos) VALUES ($1, $2, $3, $4) RETURNING id`
 	var id int
 	err := r.db.QueryRow(query, s.Nome, s.Preco, s.XpRecompensa, s.DuracaoMinutos).Scan(&id)
@@ -1259,13 +1253,13 @@ func (r *ClientePgRepository) CriarServico(s *domain.Servico) (int, error) {
 	return id, nil
 }
 
-func (r *ClientePgRepository) AtualizarServico(s *domain.Servico) error {
+func (r *ClientePgRepository) AtualizarServico(ctx context.Context, s *domain.Servico) error {
 	query := `UPDATE Servicos SET nome = $1, preco = $2, xprecompensa = $3, duracaominutos = $4 WHERE id = $5`
 	_, err := r.db.Exec(query, s.Nome, s.Preco, s.XpRecompensa, s.DuracaoMinutos, s.ID)
 	return err
 }
 
-func (r *ClientePgRepository) DeletarServico(id int) error {
+func (r *ClientePgRepository) DeletarServico(ctx context.Context, id int) error {
 	query := `DELETE FROM Servicos WHERE id = $1`
 	_, err := r.db.Exec(query, id)
 	return err
@@ -1452,7 +1446,7 @@ func incrementRaidProgress(ctx context.Context, tx *sql.Tx, clienteID int, servi
 	return nil
 }
 
-func (r *ClientePgRepository) ObterDisponibilidadeBarbeiro(barbeiroID int) ([]domain.BarbeiroDisponibilidade, error) {
+func (r *ClientePgRepository) ObterDisponibilidadeBarbeiro(ctx context.Context, barbeiroID int) ([]domain.BarbeiroDisponibilidade, error) {
 	query := `
 		SELECT id, barbeiroid, diasemana, trabalha, 
 		       to_char(horainicio, 'HH24:MI') as horainicio, 
@@ -1495,7 +1489,7 @@ func (r *ClientePgRepository) ObterDisponibilidadeBarbeiro(barbeiroID int) ([]do
 	return disps, nil
 }
 
-func (r *ClientePgRepository) SalvarDisponibilidadeBarbeiro(barbeiroID int, disps []domain.BarbeiroDisponibilidade) error {
+func (r *ClientePgRepository) SalvarDisponibilidadeBarbeiro(ctx context.Context, barbeiroID int, disps []domain.BarbeiroDisponibilidade) error {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return err
@@ -1518,7 +1512,7 @@ func (r *ClientePgRepository) SalvarDisponibilidadeBarbeiro(barbeiroID int, disp
 	return tx.Commit()
 }
 
-func (r *ClientePgRepository) ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.BarbeiroBloqueio, error) {
+func (r *ClientePgRepository) ObterBloqueiosBarbeiro(ctx context.Context, barbeiroID int) ([]domain.BarbeiroBloqueio, error) {
 	query := `
 		SELECT id, barbeiroid, to_char(databloqueio, 'YYYY-MM-DD') as databloqueio, 
 		       to_char(horainicio, 'HH24:MI') as horainicio, 
@@ -1546,7 +1540,7 @@ func (r *ClientePgRepository) ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.B
 	return bloqueios, nil
 }
 
-func (r *ClientePgRepository) AdicionarBloqueioBarbeiro(barbeiroID int, data string, horaInicio string, horaFim string, motivo string) error {
+func (r *ClientePgRepository) AdicionarBloqueioBarbeiro(ctx context.Context, barbeiroID int, data string, horaInicio string, horaFim string, motivo string) error {
 	query := `
 		INSERT INTO BarbeiroBloqueios (barbeiroid, databloqueio, horainicio, horafim, motivo)
 		VALUES ($1, $2::date, NULLIF($3, '')::time, NULLIF($4, '')::time, $5)
@@ -1555,7 +1549,7 @@ func (r *ClientePgRepository) AdicionarBloqueioBarbeiro(barbeiroID int, data str
 	return err
 }
 
-func (r *ClientePgRepository) RemoverBloqueioBarbeiro(barbeiroID int, data string) error {
+func (r *ClientePgRepository) RemoverBloqueioBarbeiro(ctx context.Context, barbeiroID int, data string) error {
 	query := `
 		DELETE FROM BarbeiroBloqueios
 		WHERE barbeiroid = $1 AND databloqueio = $2::date
@@ -1564,13 +1558,13 @@ func (r *ClientePgRepository) RemoverBloqueioBarbeiro(barbeiroID int, data strin
 	return err
 }
 
-func (r *ClientePgRepository) SalvarChavePixBarbeiro(barbeiroID int, chavePix string) error {
+func (r *ClientePgRepository) SalvarChavePixBarbeiro(ctx context.Context, barbeiroID int, chavePix string) error {
 	query := `UPDATE Usuarios SET chave_pix = $1 WHERE id = $2`
 	_, err := r.db.Exec(query, chavePix, barbeiroID)
 	return err
 }
 
-func (r *ClientePgRepository) CriarGorjeta(g *domain.Gorjeta) (int, error) {
+func (r *ClientePgRepository) CriarGorjeta(ctx context.Context, g *domain.Gorjeta) (int, error) {
 	query := `
 		INSERT INTO Gorjetas (agendamentoid, clienteid, barbeiroid, valor, chavepix, pixcopiaecola, status)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -1584,13 +1578,13 @@ func (r *ClientePgRepository) CriarGorjeta(g *domain.Gorjeta) (int, error) {
 	return id, nil
 }
 
-func (r *ClientePgRepository) ConfirmarPagamentoGorjeta(id int) error {
+func (r *ClientePgRepository) ConfirmarPagamentoGorjeta(ctx context.Context, id int) error {
 	query := `UPDATE Gorjetas SET status = 'Pago', pagoem = NOW() WHERE id = $1`
 	_, err := r.db.Exec(query, id)
 	return err
 }
 
-func (r *ClientePgRepository) ObterGorjetasDoBarbeiro(barbeiroID int) ([]domain.Gorjeta, error) {
+func (r *ClientePgRepository) ObterGorjetasDoBarbeiro(ctx context.Context, barbeiroID int) ([]domain.Gorjeta, error) {
 	query := `
 		SELECT id, agendamentoid, clienteid, barbeiroid, valor, chavepix, pixcopiaecola, status, criadoem, pagoem
 		FROM Gorjetas
@@ -1628,7 +1622,7 @@ func (r *ClientePgRepository) ObterGorjetasDoBarbeiro(barbeiroID int) ([]domain.
 	return gorjetas, nil
 }
 
-func (r *ClientePgRepository) ObterUltimoCorteConcluido(clienteID int) (*domain.Agendamento, error) {
+func (r *ClientePgRepository) ObterUltimoCorteConcluido(ctx context.Context, clienteID int) (*domain.Agendamento, error) {
 	query := `
 		SELECT a.id, a.clienteid, a.barbeiroid, u.nome AS barbeironome, a.servicoid, s.nome AS serviconome, a.datahora, a.status
 		FROM Agendamentos a
@@ -1649,7 +1643,7 @@ func (r *ClientePgRepository) ObterUltimoCorteConcluido(clienteID int) (*domain.
 	return &a, nil
 }
 
-func (r *ClientePgRepository) BuscarAvaliacaoPorAgendamento(agendamentoID int) (*domain.Avaliacao, error) {
+func (r *ClientePgRepository) BuscarAvaliacaoPorAgendamento(ctx context.Context, agendamentoID int) (*domain.Avaliacao, error) {
 	query := `SELECT id, agendamentoid, clienteid, barbeiroid, nota, comentario, criadoem FROM Avaliacoes WHERE agendamentoid = $1`
 	var a domain.Avaliacao
 	err := r.db.QueryRow(query, agendamentoID).Scan(&a.ID, &a.AgendamentoID, &a.ClienteID, &a.BarbeiroID, &a.Nota, &a.Comentario, &a.CriadoEm)
@@ -1662,13 +1656,13 @@ func (r *ClientePgRepository) BuscarAvaliacaoPorAgendamento(agendamentoID int) (
 	return &a, nil
 }
 
-func (r *ClientePgRepository) CriarAvaliacao(a *domain.Avaliacao) error {
+func (r *ClientePgRepository) CriarAvaliacao(ctx context.Context, a *domain.Avaliacao) error {
 	query := `INSERT INTO Avaliacoes (agendamentoid, clienteid, barbeiroid, nota, comentario) VALUES ($1, $2, $3, $4, $5)`
 	_, err := r.db.Exec(query, a.AgendamentoID, a.ClienteID, a.BarbeiroID, a.Nota, a.Comentario)
 	return err
 }
 
-func (r *ClientePgRepository) RecalcularAvaliacaoMediaBarbeiro(barbeiroID int) error {
+func (r *ClientePgRepository) RecalcularAvaliacaoMediaBarbeiro(ctx context.Context, barbeiroID int) error {
 	queryAvg := `SELECT COALESCE(AVG(nota), 0) FROM Avaliacoes WHERE barbeiroid = $1`
 	var avg float64
 	err := r.db.QueryRow(queryAvg, barbeiroID).Scan(&avg)
@@ -1680,7 +1674,7 @@ func (r *ClientePgRepository) RecalcularAvaliacaoMediaBarbeiro(barbeiroID int) e
 	return err
 }
 
-func (r *ClientePgRepository) BuscarAgendamentoPorID(id int) (*domain.Agendamento, error) {
+func (r *ClientePgRepository) BuscarAgendamentoPorID(ctx context.Context, id int) (*domain.Agendamento, error) {
 	query := `
 		SELECT a.id, a.clienteid, a.barbeiroid, u.nome AS barbeironome, a.servicoid, s.nome AS serviconome, a.datahora, a.status
 		FROM Agendamentos a

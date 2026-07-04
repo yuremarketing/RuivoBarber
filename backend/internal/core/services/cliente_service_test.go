@@ -372,3 +372,69 @@ func TestObterAgendaBarbeiroComBloqueioParcial(t *testing.T) {
 		}
 	}
 }
+
+func TestObterAgendaBarbeiroComServicoLongo(t *testing.T) {
+	saoPaulo := getSaoPauloLocation()
+	quintaStr := time.Now().In(saoPaulo).AddDate(0, 0, 4).Format("2006-01-02")
+	
+	for {
+		d, _ := time.Parse("2006-01-02", quintaStr)
+		if d.Weekday() == time.Thursday {
+			break
+		}
+		quintaStr = d.AddDate(0, 0, 1).Format("2006-01-02")
+	}
+
+	repo := &mockClienteRepository{
+		servico: &domain.Servico{
+			ID:             2,
+			DuracaoMinutos: 60,
+		},
+		disponibilidades: []domain.BarbeiroDisponibilidade{
+			{
+				BarbeiroID: 1,
+				DiaSemana:  int(time.Thursday),
+				Trabalha:   true,
+				HoraInicio: "09:00",
+				HoraFim:    "12:00",
+			},
+		},
+		agendamentos: []domain.Agendamento{
+			{
+				ID:             10,
+				BarbeiroID:     1,
+				DataHora:       time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 10, 0, 0, 0, saoPaulo).AddDate(0, 0, 4),
+				DuracaoMinutos: 30,
+			},
+		},
+	}
+	
+	d, _ := time.ParseInLocation("2006-01-02", quintaStr, saoPaulo)
+	repo.agendamentos[0].DataHora = time.Date(d.Year(), d.Month(), d.Day(), 10, 0, 0, 0, saoPaulo)
+
+	service := NewClienteService(repo, nil, nil)
+	slots, err := service.ObterAgendaBarbeiro(1, quintaStr, 2)
+	if err != nil {
+		t.Fatalf("erro inesperado: %v", err)
+	}
+
+	if len(slots) != 6 {
+		t.Errorf("esperava 6 slots, obteve %d", len(slots))
+	}
+
+	expectedAvailability := map[string]bool{
+		"09:00": true,
+		"09:30": false,
+		"10:00": false,
+		"10:30": true,
+		"11:00": true,
+		"11:30": false,
+	}
+
+	for _, slot := range slots {
+		expected := expectedAvailability[slot.Time]
+		if slot.Available != expected {
+			t.Errorf("Para o slot %s com duracao 60m, esperava Available=%v, mas obteve %v", slot.Time, expected, slot.Available)
+		}
+	}
+}

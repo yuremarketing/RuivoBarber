@@ -41,7 +41,7 @@ func (h *PdvHandler) AbrirCaixa(c *fiber.Ctx) error {
 	}
 
 	operadorID := c.Locals("userId").(int)
-	caixa, err := h.service.AbrirCaixa(operadorID, req.SaldoInicial)
+	caixa, err := h.service.AbrirCaixa(c.Context(), operadorID, req.SaldoInicial)
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -64,7 +64,7 @@ func (h *PdvHandler) FecharCaixa(c *fiber.Ctx) error {
 	}
 
 	operadorID := c.Locals("userId").(int)
-	caixa, err := h.service.FecharCaixa(operadorID, req.SaldoInformado)
+	caixa, err := h.service.FecharCaixa(c.Context(), operadorID, req.SaldoInformado)
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -78,7 +78,7 @@ func (h *PdvHandler) ObterStatusCaixa(c *fiber.Ctx) error {
 	}
 
 	operadorID := c.Locals("userId").(int)
-	status, err := h.service.ObterStatusCaixa(operadorID)
+	status, err := h.service.ObterStatusCaixa(c.Context(), operadorID)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -103,7 +103,7 @@ func (h *PdvHandler) MovimentarCaixa(c *fiber.Ctx) error {
 	}
 
 	operadorID := c.Locals("userId").(int)
-	err := h.service.MovimentarCaixa(operadorID, req.Tipo, req.Valor, req.Motivo)
+	err := h.service.MovimentarCaixa(c.Context(), operadorID, req.Tipo, req.Valor, req.Motivo)
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -122,7 +122,7 @@ func (h *PdvHandler) ProcessarVenda(c *fiber.Ctx) error {
 	}
 
 	operadorID := c.Locals("userId").(int)
-	venda, err := h.service.ProcessarVenda(operadorID, &req)
+	venda, err := h.service.ProcessarVenda(c.Context(), operadorID, &req)
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
 	}
