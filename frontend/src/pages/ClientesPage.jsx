@@ -11,6 +11,24 @@ export default function ClientesPage() {
   const [showModal, setShowModal] = useState(false)
   const [selectedCliente, setSelectedCliente] = useState(null)
   const [error, setError] = useState(null)
+  const [revealedPhones, setRevealedPhones] = useState({})
+
+  const handleRevelarTelefone = async (e, id) => {
+    e.stopPropagation()
+    try {
+      const res = await fetch(`/api/clientes/${id}/revelar-telefone`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('ruivobarber_token')}`
+        }
+      })
+      if (!res.ok) throw new Error('Falha ao auditar/revelar telefone')
+      const data = await res.json()
+      setRevealedPhones(prev => ({...prev, [id]: data.telefone}))
+    } catch (err) {
+      alert(err.message)
+    }
+  }
 
   // Estados para o cadastro/edição de cliente
   const [nomeNovo, setNomeNovo] = useState('')
@@ -130,12 +148,12 @@ export default function ClientesPage() {
       </div>
 
       {error && (
-        <div style={{ padding: '0.75rem', marginBottom: '1.5rem', borderRadius: '6px', background: 'rgba(233, 69, 96, 0.15)', border: '1px solid #e94560', color: '#ff8a8a', fontSize: '0.9rem' }}>
+        <div className="clientes-page-alert-error">
           ⚠️ {error}
         </div>
       )}
 
-      <div style={{ marginBottom: '1.5rem' }}>
+      <div className="clientes-page-search-wrapper">
         <div className="search-bar">
           <span className="search-icon">🔍</span>
           <input type="text" placeholder="Buscar usuário..." value={busca} onChange={e => setBusca(e.target.value)} />
@@ -149,7 +167,7 @@ export default function ClientesPage() {
         ) : (
           <div className="table-container">
             <table className="data-table">
-              <thead><tr><th>ID</th><th>Nome</th><th>Login</th><th>Cargo / Nível</th><th>XP</th><th>Progresso</th><th>Ações</th></tr></thead>
+              <thead><tr><th>ID</th><th>Nome</th><th>Telefone</th><th>Login</th><th>Cargo / Nível</th><th>XP</th><th>Progresso</th><th>Ações</th></tr></thead>
               <tbody>
                 {filtered.map(c => {
                   if (!c) return null
@@ -157,34 +175,48 @@ export default function ClientesPage() {
                   const nivelNome = c.nivel || 'Corte Iniciante'
                   const max = niveis[nivelNome] || 300
                   const pct = Math.min((c.xp || 0) / max * 100, 100)
+                  const displayPhone = revealedPhones[c.id] || c.telefone || 'N/A'
                   return (
                     <tr key={c.id}>
-                      <td style={{ color: 'var(--text-muted)' }}>#{c.id}</td>
+                      <td className="clientes-page-td-id">#{c.id}</td>
                       <td className="font-semibold">{c.nome || 'Sem Nome'}</td>
-                      <td style={{ color: 'var(--text-secondary)' }}>{c.login || 'sem-login'}</td>
                       <td>
-                        {c.cargo === 'Adm' ? (
-                          <span className="badge badge-adm" style={{ fontSize: '0.75rem', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>Adm</span>
-                        ) : c.cargo === 'Barbeiro' ? (
-                          <span className="badge badge-barbeiro" style={{ fontSize: '0.75rem', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>Barbeiro</span>
-                        ) : (
-                          <span className="rpg-level-badge" style={{ fontSize: '0.65rem' }}>{nivelNome}</span>
+                        {displayPhone}
+                        {displayPhone.includes('*') && (
+                          <button 
+                            className="btn btn-ghost btn-sm" 
+                            title="Revelar Telefone (Gera Auditoria)" 
+                            onClick={(e) => handleRevelarTelefone(e, c.id)}
+                            style={{marginLeft: '0.5rem'}}
+                          >
+                            👁️
+                          </button>
                         )}
                       </td>
-                      <td style={{ color: c.cargo === 'Cliente' ? 'var(--gold)' : 'var(--text-muted)', fontWeight: 600 }}>
+                      <td className="clientes-page-td-login">{c.login || 'sem-login'}</td>
+                      <td>
+                        {c.cargo === 'Adm' ? (
+                          <span className="badge badge-adm clientes-page-badge-adm">Adm</span>
+                        ) : c.cargo === 'Barbeiro' ? (
+                          <span className="badge badge-barbeiro clientes-page-badge-barbeiro">Barbeiro</span>
+                        ) : (
+                          <span className="rpg-level-badge clientes-page-badge-rpg">{nivelNome}</span>
+                        )}
+                      </td>
+                      <td className={`clientes-page-td-xp ${c.cargo === 'Cliente' ? 'clientes-page-td-xp--cliente' : 'clientes-page-td-xp--other'}`}>
                         {c.cargo === 'Cliente' ? `${c.xp || 0} XP` : '-'}
                       </td>
-                      <td style={{ minWidth: '120px' }}>
+                      <td className="clientes-page-td-progress">
                         {c.cargo === 'Cliente' ? (
                           <div className="xp-bar"><div className="xp-bar-fill" style={{ width: `${pct}%` }} /></div>
                         ) : (
-                          <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>RPG Inativo</span>
+                          <span className="clientes-page-progress-inactive">RPG Inativo</span>
                         )}
                       </td>
                       <td>
                         <button className="btn btn-ghost btn-sm" title="Ver detalhes" onClick={() => setSelectedCliente(c)}>👁️</button>
                         <button className="btn btn-ghost btn-sm" title="Editar" onClick={() => handleOpenEditModal(c)}>✏️</button>
-                        <button className="btn btn-ghost btn-sm" title="Excluir" style={{ color: 'var(--red)' }} onClick={() => handleDeletarCliente(c.id)}>🗑️</button>
+                        <button className="btn btn-ghost btn-sm clientes-page-btn-delete" title="Excluir" onClick={() => handleDeletarCliente(c.id)}>🗑️</button>
                       </td>
                     </tr>
                   )
@@ -203,7 +235,7 @@ export default function ClientesPage() {
               <button className="btn-ghost" onClick={() => setShowModal(false)} disabled={modalSaving}>✕</button>
             </div>
             {modalError && (
-              <div style={{ padding: '0.75rem', marginBottom: '1rem', borderRadius: '6px', background: 'rgba(233, 69, 96, 0.15)', border: '1px solid #e94560', color: '#ff8a8a', fontSize: '0.85rem' }}>
+              <div className="clientes-page-modal-alert">
                 ⚠️ {modalError}
               </div>
             )}
@@ -269,14 +301,14 @@ export default function ClientesPage() {
 
       {selectedCliente && (
         <div className="modal-overlay" onClick={() => setSelectedCliente(null)}>
-          <div className="modal" style={{ maxWidth: '640px', width: '100%' }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header" style={{ marginBottom: '1.25rem' }}>
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>Ficha do Personagem RPG</h3>
+          <div className="modal clientes-page-player-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header clientes-page-player-modal-header">
+              <h3 className="clientes-page-player-modal-title">Ficha do Personagem RPG</h3>
               <button className="btn-ghost" onClick={() => setSelectedCliente(null)}>✕</button>
             </div>
             
-            <div style={{ display: 'flex', flexDirection: 'row', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'start' }}>
-              <div style={{ flex: '1', minWidth: '240px', display: 'flex', justifyContent: 'center' }}>
+            <div className="clientes-page-player-layout">
+              <div className="clientes-page-player-col-preview">
                 <PlayerCard 
                   nome={selectedCliente.nome} 
                   nivel={selectedCliente.nivel} 
@@ -285,7 +317,7 @@ export default function ClientesPage() {
                 />
               </div>
               
-              <div style={{ flex: '1.2', minWidth: '260px', display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
+              <div className="clientes-page-player-col-details">
                 <RpgProgressBar 
                   xpAtual={selectedCliente.xp} 
                   nivel={selectedCliente.nivel} 

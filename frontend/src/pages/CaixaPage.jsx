@@ -142,21 +142,21 @@ export default function CaixaPage() {
 
   if (error && !caixa) {
     return (
-      <div className="main-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
-        <ErrorState message={error} onRetry={fetchCaixa} />
+      <div className="main-content caixa-error-wrapper">
+        <ErrorState message={error} onRetry={loadCaixaStatus} />
       </div>
     )
   }
 
   if (loading && !caixa) {
     return (
-      <div className="main-content" style={{ padding: '2rem' }}>
-        <div className="page-header" style={{ marginBottom: '2rem' }}>
-          <div className="skeleton-pulse" style={{ height: '35px', width: '30%', borderRadius: '4px' }}></div>
+      <div className="main-content caixa-loading-wrapper">
+        <div className="page-header caixa-skeleton-header">
+          <div className="skeleton-pulse caixa-skeleton-title"></div>
         </div>
-        <div style={{ display: 'flex', gap: '2rem' }}>
-          <div className="card skeleton-pulse" style={{ height: '300px', flex: 1, borderRadius: '12px' }}></div>
-          <div className="card skeleton-pulse" style={{ height: '300px', flex: 1, borderRadius: '12px' }}></div>
+        <div className="caixa-skeleton-row">
+          <div className="card skeleton-pulse caixa-skeleton-card"></div>
+          <div className="card skeleton-pulse caixa-skeleton-card"></div>
         </div>
       </div>
     )
@@ -169,13 +169,7 @@ export default function CaixaPage() {
     <div className="main-content">
       {/* Toast Alert */}
       {toast.show && (
-        <div style={{
-          position: 'fixed', top: '20px', right: '20px', zIndex: 1000,
-          background: toast.type === 'success' ? 'rgba(34, 197, 94, 0.95)' : 'rgba(239, 68, 68, 0.95)',
-          color: 'white', padding: '1rem 1.5rem', borderRadius: '8px',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)',
-          fontWeight: 600, animation: 'fadeIn 0.3s ease'
-        }}>
+        <div className={`checkout-toast ${toast.type === 'success' ? 'checkout-toast--success' : 'checkout-toast--error'}`}>
           {toast.type === 'success' ? '✅' : '⚠️'} {toast.msg}
         </div>
       )}
@@ -187,25 +181,23 @@ export default function CaixaPage() {
             <p>Monitore a sessão de caixa, registre movimentações manuais e gerencie o fluxo do estabelecimento.</p>
           </div>
           <div>
-            <span className={`badge ${isCaixaFechado ? 'badge-cancelado' : 'badge-concluido'}`} style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}>
+            <span className={`badge ${isCaixaFechado ? 'badge-cancelado' : 'badge-concluido'} caixa-badge-status`}>
               {isCaixaFechado ? '🔴 Caixa Fechado' : '🟢 Caixa Aberto'}
             </span>
           </div>
         </div>
       </div>
 
-
-
       {isCaixaFechado ? (
         /* ================= TELA CAIXA FECHADO ================= */
-        <div style={{ display: 'flex', justifyContent: 'center', margin: '3rem 0' }}>
-          <div className="card" style={{ maxWidth: '500px', width: '100%', textAlign: 'center', padding: '2.5rem 2rem', border: '1px solid var(--border)' }}>
-            <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}></div>
-            <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--accent)' }}>Sessão de Caixa Fechada</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '2rem' }}>
+        <div className="caixa-closed-wrapper">
+          <div className="card caixa-closed-card">
+            <div className="caixa-closed-icon"></div>
+            <h3 className="caixa-closed-title">Sessão de Caixa Fechada</h3>
+            <p className="caixa-closed-desc">
               Para iniciar o faturamento, registrar vendas e atendimentos, é necessário abrir uma sessão de caixa fornecendo o saldo inicial em dinheiro.
             </p>
-            <button className="btn btn-primary" style={{ width: '100%', padding: '0.85rem', justifyContent: 'center', fontSize: '1rem' }} onClick={() => setShowAbrirModal(true)}>
+            <button className="btn btn-primary caixa-closed-btn" onClick={() => setShowAbrirModal(true)}>
               🔓 Abrir Sessão de Caixa
             </button>
           </div>
@@ -214,16 +206,16 @@ export default function CaixaPage() {
         /* ================= TELA CAIXA ABERTO ================= */
         <div>
           {/* Caixa Informações Gerais */}
-          <div className="card" style={{ marginBottom: '1.5rem', background: 'rgba(22, 33, 62, 0.4)', backdropFilter: 'blur(8px)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <div className="card caixa-header-card">
+            <div className="caixa-header-flex">
               <div>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 600 }}>Sessão Ativa</span>
-                <h4 style={{ fontSize: '1.1rem', margin: '0.1rem 0' }}>ID do Caixa: #{caixa.caixa_id}</h4>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                <span className="caixa-header-subtitle">Sessão Ativa</span>
+                <h4 className="caixa-header-title">ID do Caixa: #{caixa.caixa_id}</h4>
+                <span className="caixa-header-meta">
                   Aberto em: <strong>{formatDate(caixa.aberto_em)}</strong> pelo operador <strong>{user.nome}</strong>
                 </span>
               </div>
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <div className="caixa-header-actions">
                 <button className="btn btn-secondary" onClick={() => { setMovTipo('Entrada'); setShowMovModal(true) }}>
                   ➕ Suprimento
                 </button>
@@ -243,25 +235,25 @@ export default function CaixaPage() {
               <div className="icon"></div>
               <div className="label">Saldo Inicial</div>
               <div className="value">{formatCurrency(caixa.saldo_inicial)}</div>
-              <div className="change" style={{ color: 'var(--text-secondary)' }}>Abertura da sessão</div>
+              <div className="change caixa-stat-desc">Abertura da sessão</div>
             </div>
             <div className="stat-card">
               <div className="icon">📥</div>
               <div className="label">Entradas (Suprimentos)</div>
-              <div className="value" style={{ color: 'var(--green)' }}>+{formatCurrency(caixa.entradas)}</div>
-              <div className="change" style={{ color: 'var(--text-secondary)' }}>Aportes manuais</div>
+              <div className="value caixa-stat-plus">+{formatCurrency(caixa.entradas)}</div>
+              <div className="change caixa-stat-desc">Aportes manuais</div>
             </div>
             <div className="stat-card">
               <div className="icon">📤</div>
               <div className="label">Saídas (Sangrias)</div>
-              <div className="value" style={{ color: 'var(--red)' }}>-{formatCurrency(caixa.saidas)}</div>
-              <div className="change" style={{ color: 'var(--text-secondary)' }}>Retiradas manuais</div>
+              <div className="value caixa-stat-minus">-{formatCurrency(caixa.saidas)}</div>
+              <div className="change caixa-stat-desc">Retiradas manuais</div>
             </div>
-            <div className="stat-card" style={{ border: '1px solid rgba(245, 166, 35, 0.4)', boxShadow: '0 4px 20px rgba(245, 166, 35, 0.05)' }}>
+            <div className="stat-card caixa-stat-expected">
               <div className="icon"></div>
-              <div className="label" style={{ color: 'var(--gold)' }}>Saldo Esperado</div>
-              <div className="value" style={{ color: 'var(--gold)' }}>{formatCurrency(caixa.saldo_atual)}</div>
-              <div className="change" style={{ color: 'var(--green)' }}>Dinheiro físico em gaveta</div>
+              <div className="label">Saldo Esperado</div>
+              <div className="value">{formatCurrency(caixa.saldo_atual)}</div>
+              <div className="change">Dinheiro físico em gaveta</div>
             </div>
           </div>
 
@@ -269,7 +261,7 @@ export default function CaixaPage() {
           <div className="card">
             <div className="card-header">
               <h3>📋 Extrato da Sessão Atual</h3>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{caixa.movimentacoes?.length || 0} lançamentos</span>
+              <span className="caixa-extrato-meta">{caixa.movimentacoes?.length || 0} lançamentos</span>
             </div>
             <div className="table-container">
               <table className="data-table">
@@ -291,7 +283,7 @@ export default function CaixaPage() {
                             {mov.tipo === 'Entrada' ? '📥 Suprimento' : '📤 Sangria'}
                           </span>
                         </td>
-                        <td style={{ fontWeight: 600, color: mov.tipo === 'Entrada' ? 'var(--green)' : 'var(--red)' }}>
+                        <td className={mov.tipo === 'Entrada' ? 'caixa-extrato-val--plus' : 'caixa-extrato-val--minus'}>
                           {mov.tipo === 'Entrada' ? '+' : '-'}{formatCurrency(mov.valor)}
                         </td>
                         <td>{mov.motivo}</td>
@@ -299,7 +291,7 @@ export default function CaixaPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
+                      <td colSpan="4" className="caixa-extrato-empty">
                         Nenhuma movimentação manual registrada nesta sessão.
                       </td>
                     </tr>
@@ -333,11 +325,11 @@ export default function CaixaPage() {
                   required
                   autoFocus
                 />
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginTop: '0.4rem' }}>
+                <span className="caixa-modal-hint">
                   Informe o valor físico total contido no fundo de troco da gaveta de dinheiro.
                 </span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+              <div className="caixa-modal-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowAbrirModal(false)}>Cancelar</button>
                 <button type="submit" className="btn btn-primary">Abrir Caixa</button>
               </div>
@@ -380,7 +372,7 @@ export default function CaixaPage() {
                   required
                 />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+              <div className="caixa-modal-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowMovModal(false)}>Cancelar</button>
                 <button type="submit" className="btn btn-primary">Registrar Lançamento</button>
               </div>
@@ -398,10 +390,10 @@ export default function CaixaPage() {
               <button className="btn-ghost" onClick={() => setShowFecharModal(false)}>✕</button>
             </div>
             <form onSubmit={handleFecharCaixa}>
-              <div style={{ background: 'rgba(245, 166, 35, 0.08)', border: '1px solid rgba(245, 166, 35, 0.2)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Saldo Esperado em Caixa:</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--gold)' }}>{formatCurrency(caixa?.saldo_atual)}</div>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
+              <div className="caixa-fechar-expected">
+                <div className="caixa-fechar-expected-label">Saldo Esperado em Caixa:</div>
+                <div className="caixa-fechar-expected-val">{formatCurrency(caixa?.saldo_atual)}</div>
+                <p className="caixa-fechar-expected-hint">
                   Este valor corresponde ao Fundo Inicial + Suprimentos - Sangrias + Vendas em Dinheiro.
                 </p>
               </div>
@@ -422,22 +414,16 @@ export default function CaixaPage() {
               </div>
 
               {saldoInformado !== '' && (
-                <div style={{
-                  padding: '0.75rem 1rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600,
-                  background: diferencaFechamento === 0 ? 'rgba(34, 197, 94, 0.1)' : (diferencaFechamento > 0 ? 'rgba(59, 130, 246, 0.1)' : 'rgba(239, 68, 68, 0.1)'),
-                  color: diferencaFechamento === 0 ? 'var(--green)' : (diferencaFechamento > 0 ? 'var(--blue)' : 'var(--red)'),
-                  border: `1px solid ${diferencaFechamento === 0 ? 'rgba(34, 197, 94, 0.2)' : (diferencaFechamento > 0 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(239, 68, 68, 0.2)')}`,
-                  marginBottom: '1rem'
-                }}>
+                <div className={`caixa-diff ${diferencaFechamento === 0 ? 'caixa-diff--ok' : (diferencaFechamento > 0 ? 'caixa-diff--plus' : 'caixa-diff--minus')}`}>
                   {diferencaFechamento === 0 && 'Saldo bate perfeitamente com o esperado!'}
                   {diferencaFechamento > 0 && `📈 Sobras no caixa (Diferença positiva): +R$ ${diferencaFechamento.toFixed(2)}`}
                   {diferencaFechamento < 0 && `📉 Quebra de caixa (Diferença negativa): -R$ ${Math.abs(diferencaFechamento).toFixed(2)}`}
                 </div>
               )}
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+              <div className="caixa-modal-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowFecharModal(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary" style={{ backgroundColor: 'var(--red)' }}>Fechar Caixa</button>
+                <button type="submit" className="btn btn-primary caixa-btn-fechar">Fechar Caixa</button>
               </div>
             </form>
           </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import PropTypes from 'prop-types'
 import { resgatarCupom } from '../services/api.js'
+import ChestReward from './ChestReward.jsx'
 
 const rewards = [
   { id: 2, name: 'Barba de Respeito', cost: 300, benefit: '5% de Desconto', icon: '' },
@@ -13,6 +14,7 @@ function RedeemCouponManager({ clienteId, xpAtual = 0, onRedeemSuccess }) {
   const [error, setError] = useState(null)
   const [successCode, setSuccessCode] = useState(null)
   const [copied, setCopied] = useState(false)
+  const [chestData, setChestData] = useState(null)
 
   const handleRedeem = async (nivelId) => {
     setLoadingId(nivelId)
@@ -23,6 +25,12 @@ function RedeemCouponManager({ clienteId, xpAtual = 0, onRedeemSuccess }) {
       const res = await resgatarCupom(clienteId, nivelId)
       if (res && res.data && res.data.codigo) {
         setSuccessCode(res.data.codigo)
+        const rewardInfo = rewards.find(r => r.id === nivelId)
+        setChestData({
+          isOpen: true,
+          title: `Benefício Desbloqueado: ${rewardInfo.benefit}!`,
+          text: `Cupom: ${res.data.codigo}`
+        })
         if (onRedeemSuccess) {
           onRedeemSuccess(res.data)
         }
@@ -45,30 +53,30 @@ function RedeemCouponManager({ clienteId, xpAtual = 0, onRedeemSuccess }) {
   }
 
   return (
-    <div style={{ width: '100%', marginTop: '1.25rem' }}>
-      <h3 style={{ color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem', textAlign: 'left' }}>
+    <div className="redeem-container">
+      <h3 className="redeem-title">
         Recompensas RPG Disponíveis
       </h3>
 
       {error && (
-        <div style={{ padding: '0.6rem', marginBottom: '1rem', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ff8a8a', fontSize: '0.78rem' }}>
+        <div className="redeem-error">
           ⚠️ {error}
         </div>
       )}
 
       {successCode && (
-        <div style={{ padding: '1rem', marginBottom: '1rem', borderRadius: '8px', background: 'rgba(245, 166, 35, 0.12)', border: '1px dashed var(--gold)', textAlign: 'center', position: 'relative', animation: 'slideUp 0.3s ease' }}>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Cupom Resgatado com Sucesso!</div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-            <code style={{ fontSize: '1.2rem', color: 'var(--gold)', fontWeight: 700, letterSpacing: '0.05em' }}>{successCode}</code>
+        <div className="redeem-success-box">
+          <div className="redeem-success-label">Cupom Resgatado com Sucesso!</div>
+          <div className="redeem-success-code-row">
+            <code className="redeem-success-code">{successCode}</code>
             <button 
               onClick={() => handleCopy(successCode)}
-              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-primary)', padding: '0.2rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+              className="redeem-copy-btn"
             >
               {copied ? '✅ Copiado' : '📋 Copiar'}
             </button>
           </div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>Apresente este código no caixa da barbearia.</div>
+          <div className="redeem-success-hint">Apresente este código no caixa da barbearia.</div>
         </div>
       )}
 
@@ -81,24 +89,15 @@ function RedeemCouponManager({ clienteId, xpAtual = 0, onRedeemSuccess }) {
           return (
             <div 
               key={r.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '0.75rem 1rem',
-                borderRadius: '10px',
-                background: unlocked ? 'rgba(233, 69, 96, 0.04)' : 'rgba(255, 255, 255, 0.01)',
-                border: `1px solid ${unlocked ? 'rgba(233, 69, 96, 0.25)' : 'var(--border)'}`,
-                transition: 'all var(--transition)'
-              }}
+              className={`redeem-reward-card ${unlocked ? 'unlocked' : 'locked'}`}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontSize: '1.5rem' }}>{r.icon}</span>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.88rem', color: unlocked ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+              <div className="redeem-reward-info">
+                <span className="redeem-reward-icon">{r.icon}</span>
+                <div className="redeem-reward-text">
+                  <div className={unlocked ? 'redeem-reward-name-unlocked' : 'redeem-reward-name-locked'}>
                     {r.name}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: unlocked ? 'var(--accent)' : 'var(--text-muted)', fontWeight: 500 }}>
+                  <div className={unlocked ? 'redeem-reward-benefit-unlocked' : 'redeem-reward-benefit-locked'}>
                     {r.benefit}
                   </div>
                 </div>
@@ -110,12 +109,11 @@ function RedeemCouponManager({ clienteId, xpAtual = 0, onRedeemSuccess }) {
                     className="btn btn-primary btn-sm"
                     disabled={isRedeeming}
                     onClick={() => handleRedeem(r.id)}
-                    style={{ padding: '0.4rem 0.85rem' }}
                   >
                     {isRedeeming ? '...' : 'Resgatar'}
                   </button>
                 ) : (
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                  <span className="redeem-locked-label">
                     🔒 Falta {missingXp} XP
                   </span>
                 )}
@@ -124,6 +122,13 @@ function RedeemCouponManager({ clienteId, xpAtual = 0, onRedeemSuccess }) {
           )
         })}
       </div>
+
+      <ChestReward 
+        isOpen={chestData !== null && chestData.isOpen} 
+        rewardTitle={chestData?.title} 
+        rewardText={chestData?.text} 
+        onClose={() => setChestData(null)} 
+      />
     </div>
   )
 }

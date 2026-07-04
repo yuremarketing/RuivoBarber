@@ -71,17 +71,15 @@ function AdminValidationPanel() {
             <div className="flex-row gap-0-5">
               <input
                 type="text"
-                className="form-input"
+                className="form-input admin-val-input"
                 placeholder="EX: BARBA5-X1Y2Z3"
                 value={codigoCupom}
                 onChange={e => setCodigoCupom(e.target.value)}
-                style={{ textTransform: 'uppercase', fontFamily: 'monospace', fontSize: '1rem', fontWeight: 600, letterSpacing: '0.05em' }}
               />
               <button 
                 type="submit" 
-                className="btn btn-primary"
+                className="btn btn-primary admin-val-btn"
                 disabled={validating}
-                style={{ padding: '0 1.5rem' }}
               >
                 {validating ? '...' : 'Validar'}
               </button>
@@ -90,18 +88,18 @@ function AdminValidationPanel() {
         </form>
 
         {validationError && (
-          <div style={{ padding: '0.75rem', marginTop: '1rem', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ff8a8a', fontSize: '0.82rem' }}>
+          <div className="admin-val-error">
             ❌ {validationError}
           </div>
         )}
 
         {validationResult && (
-          <div style={{ padding: '1rem', marginTop: '1rem', borderRadius: '8px', background: 'rgba(34, 197, 94, 0.12)', border: '1px solid rgba(34, 197, 94, 0.3)', color: '#a3e635' }}>
-            <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.25rem' }}>✅ Cupom Validado com Sucesso!</div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-primary)' }}>
+          <div className="admin-val-success">
+            <div className="admin-val-success-title">✅ Cupom Validado com Sucesso!</div>
+            <div className="admin-val-success-text">
               Desconto de <strong>{validationResult.desconto_percent}%</strong> aplicado para o cliente ID {validationResult.cliente_id}.
             </div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+            <div className="admin-val-success-desc">
               Descrição: {validationResult.descricao}
             </div>
           </div>
@@ -115,7 +113,7 @@ function AdminValidationPanel() {
         </div>
 
         {error && (
-          <div style={{ padding: '0.75rem', marginBottom: '1rem', borderRadius: '6px', background: 'rgba(233, 69, 96, 0.15)', border: '1px solid #e94560', color: '#ff8a8a', fontSize: '0.85rem' }}>
+          <div className="admin-val-rpg-error">
             ⚠️ {error}
           </div>
         )}
@@ -138,7 +136,7 @@ function AdminValidationPanel() {
                 {clientes.map(c => (
                   <tr key={c.id}>
                     <td className="font-semibold">{c.nome}</td>
-                    <td><span className="rpg-level-badge" style={{ fontSize: '0.55rem', padding: '0.2rem 0.5rem' }}>{c.nivel || 'Iniciante'}</span></td>
+                    <td><span className="rpg-level-badge admin-val-rpg-badge">{c.nivel || 'Iniciante'}</span></td>
                     <td className="text-gold font-bold">{c.xp || 0} XP</td>
                   </tr>
                 ))}

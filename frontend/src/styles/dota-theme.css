@@ -1,0 +1,182 @@
+/* ============================================================
+   Dota 2 Dark Fantasy Theme Utilities & Visual Effects
+   ============================================================ */
+
+/* ── Global Overlays ─── */
+.dota-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.7) 100%);
+  z-index: 100;
+}
+
+.dota-noise-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  z-index: 99;
+}
+
+/* ── Ornamental Borders & Accents ─── */
+.dota-border-gold {
+  border: 1px solid var(--border-gold);
+  box-shadow: 0 0 10px var(--gold-15), inset 0 0 10px var(--gold-15);
+  position: relative;
+}
+
+.dota-border-gold::before,
+.dota-border-gold::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--gold);
+}
+
+.dota-border-gold::before {
+  top: -4px;
+  left: -4px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.dota-border-gold::after {
+  bottom: -4px;
+  right: -4px;
+  border-left: none;
+  border-top: none;
+}
+
+.dota-divider {
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 1rem 0;
+  opacity: 0.5;
+}
+
+/* ── Interactive Elements (Buttons) ─── */
+.dota-btn {
+  background: linear-gradient(180deg, var(--bg-card-hover), var(--bg-card));
+  border: 1px solid var(--border-gold);
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.75rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition);
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+  border-radius: 2px;
+  letter-spacing: 1px;
+}
+
+.dota-btn:hover {
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.2), rgba(var(--accent-rgb), 0.4));
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 15px var(--accent-60), inset 0 0 10px var(--accent-30);
+  transform: translateY(-2px);
+}
+
+.dota-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transform: skewX(-20deg);
+  transition: all 0.5s;
+}
+
+.dota-btn:hover::after {
+  left: 150%;
+}
+
+/* ── Modals & Cards ─── */
+.dota-card {
+  background: rgba(var(--bg-card-rgb), 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-gold);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+  border-radius: 4px;
+}
+
+.dota-modal-backdrop {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(5px);
+}
+
+/* ── Keyframes & Particles ─── */
+@keyframes embers {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-100px) scale(0.5); opacity: 0; }
+}
+
+.particle {
+  position: absolute;
+  background: var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: 0 0 10px var(--accent), 0 0 20px var(--gold);
+}
+
+@keyframes forgeGlow {
+  0% { box-shadow: 0 0 5px var(--accent-40); }
+  50% { box-shadow: 0 0 20px var(--accent-80), 0 0 30px var(--gold-25); }
+  100% { box-shadow: 0 0 5px var(--accent-40); }
+}
+
+.forge-glow {
+  animation: forgeGlow 3s infinite;
+}
+
+/* ── Fase 2: Sidebar Dota 2 Style ─── */
+.sidebar {
+  background: var(--bg-sidebar) url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='stoneFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.05' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0, 0 1 0 0 0, 0 0 1 0 0, 0 0 0 0.1 0' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23stoneFilter)'/%3E%3C/svg%3E") !important;
+  border-right: 1px solid var(--border-gold) !important;
+  box-shadow: 2px 0 15px rgba(0, 0, 0, 0.8) !important;
+}
+
+.sidebar-section {
+  position: relative;
+  text-align: center;
+  color: var(--gold) !important;
+  font-family: var(--font-display);
+  letter-spacing: 2px;
+}
+
+.sidebar-section::before, .sidebar-section::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 20%;
+  height: 1px;
+  background: var(--border-gold);
+}
+.sidebar-section::before { left: 5%; }
+.sidebar-section::after { right: 5%; }
+
+.sidebar-link {
+  border-radius: 4px !important;
+  margin: 0 0.5rem;
+  width: auto !important;
+}
+
+.sidebar-link:hover .icon {
+  color: var(--accent);
+  filter: drop-shadow(0 0 5px var(--accent-glow));
+}
+
+.sidebar-link.active {
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.2), transparent) !important;
+  border-left: 2px solid var(--accent) !important;
+  box-shadow: inset 20px 0 20px -20px var(--accent-60) !important;
+}

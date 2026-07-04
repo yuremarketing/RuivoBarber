@@ -16,6 +16,8 @@ type Cliente struct {
 	EfeitoEquipado  string  `json:"efeitoEquipado"`
 	WhatsappConsent bool    `json:"whatsappConsent"`
 	Telefone        string  `json:"telefone"`
+	LgpdAceito      bool    `json:"lgpdAceito"`
+	LgpdAceitoEm    *string `json:"lgpdAceitoEm"`
 }
 
 type Configuracoes struct {

@@ -40,7 +40,7 @@ api.interceptors.response.use(
 )
 
 export const login = (login, senha) => api.post('/auth/login', { login, senha })
-export const registrarPublico = (nome, login, senha) => api.post('/auth/register', { nome, login, senha })
+export const registrarPublico = (nome, login, senha, whatsappConsent) => api.post('/auth/register', { nome, login, senha, whatsappConsent })
 export const loginComGoogle = (idToken) => api.post('/auth/google', { id_token: idToken })
 export const listarClientes = () => api.get('/clientes')
 export const cadastrarCliente = (nome, login, senha, cargo) => api.post('/clientes', { nome, login, senha, cargo })
@@ -51,6 +51,8 @@ export const resgatarCupom = (clienteId, nivelId) => api.post('/cupons/resgatar'
 export const validarCupom = (codigo) => api.post('/cupons/validar', { codigo })
 export const concluirAtendimento = (agendamentoId) => api.post('/atendimentos/concluir', { agendamento_id: Number(agendamentoId) })
 export const registrarFalta = (agendamentoId) => api.post('/atendimentos/falta', { agendamento_id: Number(agendamentoId) })
+export const registrarCheckIn = (id) => api.post(`/atendimentos/${id}/checkin`)
+export const registrarEmCadeira = (id) => api.post(`/atendimentos/${id}/em-cadeira`)
 export const atualizarPerfil = (id, dados) => api.put(`/clientes/${id}/perfil`, dados)
 export const deletarCliente = (id) => api.delete(`/clientes/${id}`)
 export const fetchConfiguracoes = () => api.get('/configuracoes')
@@ -94,7 +96,13 @@ export const fetchAgendaBarbeiro = (barbeiroId, data, servicoId) => {
   }
   return api.get(url)
 }
-export const fetchAgendamentos = () => api.get('/agendamentos')
+export const fetchAgendamentos = (data) => {
+  let url = '/agendamentos'
+  if (data) {
+    url += `?data=${data}`
+  }
+  return api.get(url)
+}
 export const criarAgendamento = (barbeiroId, servicoId, dataHora) => api.post('/agendamentos', {
   barbeiro_id: Number(barbeiroId),
   servico_id: Number(servicoId),
@@ -135,6 +143,8 @@ export const fetchStatusCaixa = () => api.get('/pdv/caixa/status')
 export const movimentarCaixa = (tipo, valor, motivo) => api.post('/pdv/caixa/movimentar', { tipo, valor: Number(valor), motivo })
 export const processarVenda = (dadosVenda) => api.post('/pdv/venda', dadosVenda)
 
+// Relatórios
+export const fetchRelatorioComissoes = (inicio, fim) => api.get(`/relatorios/comissoes?inicio=${inicio}&fim=${fim}`)
 export const streamChat = async (message, history, onChunk, onError, onDone) => {
   try {
     const userSessionStr = localStorage.getItem('ruivobarber_user')

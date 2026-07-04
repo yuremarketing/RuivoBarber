@@ -11,7 +11,8 @@ CREATE TABLE Usuarios (
     Comissao DECIMAL(5,2),
     AvatarURL TEXT DEFAULT '',
     FotoURL VARCHAR(300) DEFAULT '',
-    AvaliacaoMedia DECIMAL(3,2) DEFAULT 5.00
+    AvaliacaoMedia DECIMAL(3,2) DEFAULT 5.00,
+    WhatsappConsent BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE Niveis (
@@ -60,6 +61,9 @@ CREATE TABLE Agendamentos (
     ServicoID INT REFERENCES Servicos(ID),
     DataHora TIMESTAMPTZ NOT NULL,
     Status VARCHAR(20) DEFAULT 'Pendente' CHECK (Status IN ('Pendente', 'Confirmado', 'Concluido', 'Cancelado', 'Falta', 'Presente', 'EmCadeira')),
+    DiasAntecedencia INT DEFAULT 0,
+    DiaDaSemana INT DEFAULT 0,
+    Turno VARCHAR(10) DEFAULT 'Manhã',
     CheckInTime TIMESTAMPTZ,
     EmCadeiraTime TIMESTAMPTZ,
     ConcluidoTime TIMESTAMPTZ,

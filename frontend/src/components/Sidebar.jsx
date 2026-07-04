@@ -4,7 +4,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { 
   Swords, Ticket, Hourglass, Shield, Tv, Backpack, Trophy, 
   Calendar, Settings, LayoutDashboard, Users, Banknote, ShoppingCart, 
-  Scissors, CalendarDays, ChevronLeft, ChevronRight, LogOut, Palette
+  Scissors, CalendarDays, ChevronLeft, ChevronRight, LogOut, Palette, PieChart
 } from 'lucide-react'
 
 export default function Sidebar({ collapsed, onToggle, theme, onSetTheme, onPreviewTheme }) {
@@ -55,7 +55,7 @@ export default function Sidebar({ collapsed, onToggle, theme, onSetTheme, onPrev
       return [
         { section: 'Atendimentos' },
         { path: '/dashboard', icon: <LayoutDashboard size={20} strokeWidth={1.5} />, label: 'Painel Geral' },
-        { path: '/agendamentos', icon: <Calendar size={20} strokeWidth={1.5} />, label: 'Agenda' },
+        { path: '/agenda-barbeiro', icon: <Calendar size={20} strokeWidth={1.5} />, label: 'Minha Agenda' },
         { path: '/clientes', icon: <Users size={20} strokeWidth={1.5} />, label: 'Clientes' },
         
         { section: 'PDV & Finanças' },
@@ -83,6 +83,7 @@ export default function Sidebar({ collapsed, onToggle, theme, onSetTheme, onPrev
       { section: 'PDV & Finanças' },
       { path: '/checkout', icon: <ShoppingCart size={20} strokeWidth={1.5} />, label: 'PDV' },
       { path: '/caixa', icon: <Banknote size={20} strokeWidth={1.5} />, label: 'Caixas' },
+      { path: '/relatorios', icon: <PieChart size={20} strokeWidth={1.5} />, label: 'Relatórios' },
       
       { section: 'RPG & Engajamento' },
       { path: '/niveis', icon: <Swords size={20} strokeWidth={1.5} />, label: 'Gerenciar Níveis' },

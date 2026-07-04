@@ -1,6 +1,8 @@
 package services
 
 import (
+	"context"
+
 	"strings"
 	"testing"
 	"time"
@@ -21,52 +23,52 @@ type mockClienteRepository struct {
 	recalculado      bool
 }
 
-func (m *mockClienteRepository) BuscarServico(id int) (*domain.Servico, error) {
+func (m *mockClienteRepository) BuscarServico(ctx context.Context, id int) (*domain.Servico, error) {
 	return m.servico, nil
 }
 
-func (m *mockClienteRepository) ListarAgendamentosDoBarbeiro(barbeiroID int, data string) ([]domain.Agendamento, error) {
+func (m *mockClienteRepository) ListarAgendamentosDoBarbeiro(ctx context.Context, barbeiroID int, data string) ([]domain.Agendamento, error) {
 	return m.agendamentos, nil
 }
 
-func (m *mockClienteRepository) ObterDisponibilidadeBarbeiro(barbeiroID int) ([]domain.BarbeiroDisponibilidade, error) {
+func (m *mockClienteRepository) ObterDisponibilidadeBarbeiro(ctx context.Context, barbeiroID int) ([]domain.BarbeiroDisponibilidade, error) {
 	return m.disponibilidades, nil
 }
 
-func (m *mockClienteRepository) ObterBloqueiosBarbeiro(barbeiroID int) ([]domain.BarbeiroBloqueio, error) {
+func (m *mockClienteRepository) ObterBloqueiosBarbeiro(ctx context.Context, barbeiroID int) ([]domain.BarbeiroBloqueio, error) {
 	return m.bloqueios, nil
 }
 
-func (m *mockClienteRepository) ListarBarbeiros() ([]domain.Barbeiro, error) {
+func (m *mockClienteRepository) ListarBarbeiros(ctx context.Context) ([]domain.Barbeiro, error) {
 	return []domain.Barbeiro{
 		{ID: 1, Nome: "Vitor Navalha", ChavePix: "vitor@navalha.com"},
 		{ID: 2, Nome: "Thiago Barba", ChavePix: ""},
 	}, nil
 }
 
-func (m *mockClienteRepository) CriarGorjeta(g *domain.Gorjeta) (int, error) {
+func (m *mockClienteRepository) CriarGorjeta(ctx context.Context, g *domain.Gorjeta) (int, error) {
 	return 100, nil
 }
 
-func (m *mockClienteRepository) ObterUltimoCorteConcluido(clienteID int) (*domain.Agendamento, error) {
+func (m *mockClienteRepository) ObterUltimoCorteConcluido(ctx context.Context, clienteID int) (*domain.Agendamento, error) {
 	return m.ultimoCorte, nil
 }
 
-func (m *mockClienteRepository) BuscarAvaliacaoPorAgendamento(agendamentoID int) (*domain.Avaliacao, error) {
+func (m *mockClienteRepository) BuscarAvaliacaoPorAgendamento(ctx context.Context, agendamentoID int) (*domain.Avaliacao, error) {
 	return m.avaliacao, nil
 }
 
-func (m *mockClienteRepository) CriarAvaliacao(a *domain.Avaliacao) error {
+func (m *mockClienteRepository) CriarAvaliacao(ctx context.Context, a *domain.Avaliacao) error {
 	m.avaliacaoSalva = a
 	return nil
 }
 
-func (m *mockClienteRepository) RecalcularAvaliacaoMediaBarbeiro(barbeiroID int) error {
+func (m *mockClienteRepository) RecalcularAvaliacaoMediaBarbeiro(ctx context.Context, barbeiroID int) error {
 	m.recalculado = true
 	return nil
 }
 
-func (m *mockClienteRepository) BuscarAgendamentoPorID(id int) (*domain.Agendamento, error) {
+func (m *mockClienteRepository) BuscarAgendamentoPorID(ctx context.Context, id int) (*domain.Agendamento, error) {
 	return m.agendamento, nil
 }
 

@@ -102,29 +102,24 @@ export default function LojaPage() {
 
   return (
     <div className="fade-in-up">
-      <div className="page-header" style={{ marginBottom: '1.5rem' }}>
+      <div className="page-header loja-page-header">
         <h2>Loja & Bolsa de Itens</h2>
         <p>Gaste suas moedas de ouro conquistadas nos atendimentos para equipar cosméticos lendários!</p>
       </div>
 
       {toastMsg && <div className="toast">✅ {toastMsg}</div>}
       {errorMsg && (
-        <div style={{
-          position: 'fixed', bottom: '1.5rem', right: '1.5rem', padding: '0.85rem 1.25rem',
-          background: 'rgba(233, 69, 96, 0.95)', border: '1px solid var(--red)', borderRadius: 'var(--radius-sm)',
-          color: '#fff', fontSize: '0.875rem', boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-          animation: 'slideUp 0.3s ease', zIndex: 300
-        }}>
+        <div className="loja-page-error-msg">
           ⚠️ {errorMsg}
         </div>
       )}
 
       {/* Grid Principal: PlayerCard Preview e Menu da Loja */}
-      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'start' }}>
+      <div className="loja-page-layout">
         
         {/* Preview do PlayerCard */}
-        <div style={{ flex: '1', minWidth: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-          <h3 style={{ fontSize: '1.1rem', color: 'var(--text-secondary)' }}>Visualização do Personagem</h3>
+        <div className="loja-page-preview-col">
+          <h3 className="loja-page-preview-title">Visualização do Personagem</h3>
           <PlayerCard 
             nome={clientData.nome}
             nivel={clientData.nomeDoNivel || clientData.nivel}
@@ -134,24 +129,22 @@ export default function LojaPage() {
             fundoEquipado={clientData.fundoEquipado}
             efeitoEquipado={clientData.efeitoEquipado}
           />
-          <div className="stat-card" style={{ width: '100%', maxWidth: '400px', background: 'rgba(22, 33, 62, 0.4)', border: '1px solid var(--border)', textAlign: 'center', padding: '1rem' }}>
+          <div className="stat-card loja-page-coins-card">
             <div className="label">Suas Moedas Disponíveis</div>
-            <div className="value" style={{ color: 'var(--gold)', fontSize: '2rem', fontWeight: 800, marginTop: '0.25rem' }}>
+            <div className="value loja-page-coins-val">
               🪙 {moedasDisponiveis}
             </div>
           </div>
         </div>
 
         {/* Área de Seleção e Abas */}
-        <div style={{ flex: '2', minWidth: '320px' }}>
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', gap: '1.5rem', marginBottom: '1.5rem' }}>
+        <div className="loja-page-content-col">
+          <div className="loja-page-tabs">
             <button 
-              className={`btn-ghost ${activeTab === 'loja' ? 'active' : ''}`}
+              className={`btn-ghost loja-page-tab-btn ${activeTab === 'loja' ? 'active' : ''}`}
               onClick={() => setActiveTab('loja')}
               style={{
-                paddingBottom: '0.75rem', 
                 borderBottom: activeTab === 'loja' ? '2px solid var(--accent)' : '2px solid transparent',
-                borderRadius: 0,
                 color: activeTab === 'loja' ? 'var(--text-primary)' : 'var(--text-secondary)',
                 fontWeight: activeTab === 'loja' ? 600 : 500
               }}
@@ -159,12 +152,10 @@ export default function LojaPage() {
               Loja de Cosméticos ({itensLoja.length})
             </button>
             <button 
-              className={`btn-ghost ${activeTab === 'inventario' ? 'active' : ''}`}
+              className={`btn-ghost loja-page-tab-btn ${activeTab === 'inventario' ? 'active' : ''}`}
               onClick={() => setActiveTab('inventario')}
               style={{
-                paddingBottom: '0.75rem', 
                 borderBottom: activeTab === 'inventario' ? '2px solid var(--accent)' : '2px solid transparent',
-                borderRadius: 0,
                 color: activeTab === 'inventario' ? 'var(--text-primary)' : 'var(--text-secondary)',
                 fontWeight: activeTab === 'inventario' ? 600 : 500
               }}
@@ -174,13 +165,13 @@ export default function LojaPage() {
           </div>
 
           {errorMsg && itensLoja.length === 0 ? (
-            <div style={{ padding: '1rem' }}>
+            <div className="loja-page-error-state-wrapper">
               <ErrorState message={errorMsg} onRetry={loadData} />
             </div>
           ) : loading ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1.25rem' }}>
+            <div className="loja-page-grid">
               {[1, 2, 3, 4].map(i => (
-                <div key={i} className="card skeleton-pulse" style={{ height: '220px', borderRadius: '12px' }}></div>
+                <div key={i} className="card skeleton-pulse loja-page-skel-card"></div>
               ))}
             </div>
           ) : activeTab === 'loja' ? (
@@ -191,31 +182,29 @@ export default function LojaPage() {
                 <p>Abra a aba "Meu Inventário" para equipá-los.</p>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1.25rem' }}>
+              <div className="loja-page-grid">
                 {itensLoja.map(item => {
                   const podeComprar = moedasDisponiveis >= item.preco
                   return (
-                    <div key={item.id} className="card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                        <span className="badge" style={{
-                          background: item.tipoItem === 'Moldura' ? '#a0a0b8' : item.tipoItem === 'Background' ? '#00f2fe' : '#b026ff',
-                          color: '#fff', fontSize: '0.65rem'
+                    <div key={item.id} className="card loja-page-item-card">
+                      <div className="loja-page-item-header">
+                        <span className="badge loja-page-item-badge" style={{
+                          background: item.tipoItem === 'Moldura' ? '#a0a0b8' : item.tipoItem === 'Background' ? '#00f2fe' : '#b026ff'
                         }}>
                           {item.tipoItem}
                         </span>
-                        <span style={{ color: 'var(--gold)', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                        <span className="loja-page-item-price">
                           🪙 {item.preco}
                         </span>
                       </div>
-                      <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', color: 'var(--text-primary)' }}>{item.nome}</h4>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', flexGrow: 1, margin: '0 0 1rem 0', lineHeight: 1.4 }}>
+                      <h4 className="loja-page-item-title">{item.nome}</h4>
+                      <p className="loja-page-item-desc">
                         {item.descricao}
                       </p>
                       <button 
-                        className="btn-primary" 
+                        className="btn-primary loja-page-item-btn" 
                         disabled={!podeComprar}
                         onClick={() => handleComprar(item.id)}
-                        style={{ width: '100%', fontSize: '0.85rem', padding: '0.5rem 1rem' }}
                       >
                         {podeComprar ? 'Comprar Item' : 'Moedas Insuficientes'}
                       </button>
@@ -232,35 +221,32 @@ export default function LojaPage() {
                 <p>Navegue pela "Loja de Cosméticos" para adquirir itens com suas moedas.</p>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1.25rem' }}>
+              <div className="loja-page-grid">
                 {itensInventario.map(item => (
-                  <div key={item.id} className="card" style={{ display: 'flex', flexDirection: 'column', height: '100%', borderColor: item.equipado ? 'var(--accent)' : 'var(--border)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <span className="badge" style={{
-                        background: item.tipoItem === 'Moldura' ? '#a0a0b8' : item.tipoItem === 'Background' ? '#00f2fe' : '#b026ff',
-                        color: '#fff', fontSize: '0.65rem'
+                  <div key={item.id} className="card loja-page-item-card" style={{ borderColor: item.equipado ? 'var(--accent)' : 'var(--border)' }}>
+                    <div className="loja-page-item-header">
+                      <span className="badge loja-page-item-badge" style={{
+                        background: item.tipoItem === 'Moldura' ? '#a0a0b8' : item.tipoItem === 'Background' ? '#00f2fe' : '#b026ff'
                       }}>
                         {item.tipoItem}
                       </span>
-                      {item.equipado && <span style={{ color: 'var(--accent)', fontWeight: 'bold', fontSize: '0.75rem' }}>Equipado ✅</span>}
+                      {item.equipado && <span className="loja-page-item-equipped-label">Equipado ✅</span>}
                     </div>
-                    <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', color: 'var(--text-primary)' }}>{item.nome}</h4>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', flexGrow: 1, margin: '0 0 1rem 0', lineHeight: 1.4 }}>
+                    <h4 className="loja-page-item-title">{item.nome}</h4>
+                    <p className="loja-page-item-desc">
                       {item.descricao}
                     </p>
                     {item.equipado ? (
                       <button 
-                        className="btn-ghost" 
+                        className="btn-ghost loja-page-item-unequip-btn" 
                         onClick={() => handleDesequipar(item.id)}
-                        style={{ width: '100%', fontSize: '0.85rem', padding: '0.5rem 1rem', borderColor: 'var(--red)', color: 'var(--red)' }}
                       >
                         Desequipar
                       </button>
                     ) : (
                       <button 
-                        className="btn-primary" 
+                        className="btn-primary loja-page-item-btn" 
                         onClick={() => handleEquipar(item.id)}
-                        style={{ width: '100%', fontSize: '0.85rem', padding: '0.5rem 1rem' }}
                       >
                         Equipar Item
                       </button>

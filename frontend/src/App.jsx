@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar.jsx'
 import AiChatWidget from './components/AiChatWidget.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
+import LgpdGatekeeper from './components/LgpdGatekeeper.jsx'
 const LoginPage = React.lazy(() => import('./pages/LoginPage.jsx'))
 const DashboardPage = React.lazy(() => import('./pages/DashboardPage.jsx'))
 const ClientesPage = React.lazy(() => import('./pages/ClientesPage.jsx'))
@@ -58,27 +59,29 @@ export default function App() {
       <main className={isLogin ? 'main-full' : 'main-content'}>
         <ErrorBoundary>
           <React.Suspense fallback={<div className="skeleton-card skeleton-pulse" style={{ height: '100%', minHeight: '50vh', margin: '2rem' }}></div>}>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-              <Route path="/clientes" element={<ProtectedRoute allowedRoles={['Adm', 'Barbeiro']}><ClientesPage /></ProtectedRoute>} />
-              <Route path="/agendamentos" element={<ProtectedRoute><AgendamentosPage /></ProtectedRoute>} />
-              <Route path="/servicos" element={<ProtectedRoute allowedRoles={['Adm']}><ServicosPage /></ProtectedRoute>} />
-              <Route path="/cupons" element={<ProtectedRoute allowedRoles={['Adm']}><CuponsPage /></ProtectedRoute>} />
-              <Route path="/niveis" element={<ProtectedRoute allowedRoles={['Adm']}><NiveisPage /></ProtectedRoute>} />
-              <Route path="/configuracoes" element={<ProtectedRoute allowedRoles={['Adm']}><ConfiguracoesPage /></ProtectedRoute>} />
-              <Route path="/temporadas" element={<ProtectedRoute allowedRoles={['Adm']}><TemporadasPage /></ProtectedRoute>} />
-              <Route path="/lives" element={<ProtectedRoute allowedRoles={['Adm', 'Barbeiro']}><LivesPage /></ProtectedRoute>} />
-              <Route path="/clas" element={<ProtectedRoute><ClasPage /></ProtectedRoute>} />
-              <Route path="/agenda-config" element={<ProtectedRoute allowedRoles={['Adm', 'Barbeiro']}><AgendaConfigPage /></ProtectedRoute>} />
-              <Route path="/agenda-barbeiro" element={<ProtectedRoute><AgendaBarbeiroPage /></ProtectedRoute>} />
-              <Route path="/relatorios" element={<ProtectedRoute allowedRoles={['Adm', 'Barbeiro']}><RelatoriosPage /></ProtectedRoute>} />
-              <Route path="/caixa" element={<ProtectedRoute allowedRoles={['Adm']}><CaixaPage /></ProtectedRoute>} />
-              <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
-              <Route path="/hall-of-fame" element={<ProtectedRoute><HallOfFamePage /></ProtectedRoute>} />
-              <Route path="/loja" element={<ProtectedRoute><LojaPage /></ProtectedRoute>} />
-              <Route path="*" element={<Navigate to="/login" replace />} />
-            </Routes>
+            <LgpdGatekeeper>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                <Route path="/clientes" element={<ProtectedRoute allowedRoles={['Adm', 'Barbeiro']}><ClientesPage /></ProtectedRoute>} />
+                <Route path="/agendamentos" element={<ProtectedRoute><AgendamentosPage /></ProtectedRoute>} />
+                <Route path="/servicos" element={<ProtectedRoute allowedRoles={['Adm']}><ServicosPage /></ProtectedRoute>} />
+                <Route path="/cupons" element={<ProtectedRoute allowedRoles={['Adm']}><CuponsPage /></ProtectedRoute>} />
+                <Route path="/niveis" element={<ProtectedRoute allowedRoles={['Adm']}><NiveisPage /></ProtectedRoute>} />
+                <Route path="/configuracoes" element={<ProtectedRoute allowedRoles={['Adm']}><ConfiguracoesPage /></ProtectedRoute>} />
+                <Route path="/temporadas" element={<ProtectedRoute allowedRoles={['Adm']}><TemporadasPage /></ProtectedRoute>} />
+                <Route path="/lives" element={<ProtectedRoute allowedRoles={['Adm', 'Barbeiro']}><LivesPage /></ProtectedRoute>} />
+                <Route path="/clas" element={<ProtectedRoute><ClasPage /></ProtectedRoute>} />
+                <Route path="/agenda-config" element={<ProtectedRoute allowedRoles={['Adm', 'Barbeiro']}><AgendaConfigPage /></ProtectedRoute>} />
+                <Route path="/agenda-barbeiro" element={<ProtectedRoute><AgendaBarbeiroPage /></ProtectedRoute>} />
+                <Route path="/relatorios" element={<ProtectedRoute allowedRoles={['Adm', 'Barbeiro']}><RelatoriosPage /></ProtectedRoute>} />
+                <Route path="/caixa" element={<ProtectedRoute allowedRoles={['Adm']}><CaixaPage /></ProtectedRoute>} />
+                <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+                <Route path="/hall-of-fame" element={<ProtectedRoute><HallOfFamePage /></ProtectedRoute>} />
+                <Route path="/loja" element={<ProtectedRoute><LojaPage /></ProtectedRoute>} />
+                <Route path="*" element={<Navigate to="/login" replace />} />
+              </Routes>
+            </LgpdGatekeeper>
           </React.Suspense>
         </ErrorBoundary>
       </main>

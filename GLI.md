@@ -4,6 +4,18 @@ Este guia define as regras de desenvolvimento, papéis no repositório e isolame
 
 ---
 
+### 🎯 0. Regras de Engenharia e Execução
+A arquitetura do RuivoBarber está madura e delineada no `TASKS.md`. A partir deste momento crítico pré-lançamento comercial, aplicamos a seguinte disciplina tática:
+1. Planejamentos e diagramas são insumos, não entregáveis finais.
+2. Só existe progresso real aprovado quando houver:
+   - Código implementado fisicamente.
+   - Código compilando sem erros no Go/React.
+   - Código validado por testes contra as regras de negócio.
+   - Código commitado e rastreado no GitHub.
+A execução do dia a dia ocorre sempre vinculada à Issue ativa (atualmente a Issue #66).
+
+---
+
 ## 👥 1. Papéis e Responsabilidades
 
 *   **Gestor do Projeto (Owner)**: **Mark** (`yuremarketing`).

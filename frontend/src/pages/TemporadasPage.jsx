@@ -106,18 +106,18 @@ export default function TemporadasPage() {
 
       {/* Alerta de temporada não ativa */}
       {isAdmin && !temTemporadaAtiva && !loading && (
-        <div className="banner error" style={{ padding: '1rem', marginBottom: '1.5rem', borderLeft: '4px solid #ff4a4a', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <strong style={{ fontSize: '1rem', color: '#ff4a4a' }}>⚠️ Atenção Administrador: Nenhuma Temporada Ativa</strong>
-          <span style={{ fontSize: '0.88rem' }}>
+        <div className="banner error temporadas-page-alert">
+          <strong className="temporadas-page-alert-title">⚠️ Atenção Administrador: Nenhuma Temporada Ativa</strong>
+          <span className="temporadas-page-alert-desc">
             Não há temporadas de RPG ativas no momento. Crie ou ative uma temporada abaixo para habilitar o progresso sazonal dos clientes!
           </span>
         </div>
       )}
 
-      {erro && <div className="banner error" style={{ padding: '0.8rem', marginBottom: '1rem' }}>{erro}</div>}
-      {sucesso && <div className="banner success" style={{ padding: '0.8rem', marginBottom: '1rem', color: '#4caf50' }}>{sucesso}</div>}
+      {erro && <div className="banner error temporadas-page-banner-error">{erro}</div>}
+      {sucesso && <div className="banner success temporadas-page-banner-success">{sucesso}</div>}
 
-      <div style={{ display: 'grid', gridTemplateColumns: isAdmin ? 'repeat(auto-fit, minmax(320px, 1fr))' : '1fr', gap: '1.5rem', alignItems: 'start' }}>
+      <div className={`temporadas-page-grid ${isAdmin ? 'temporadas-page-grid--admin' : 'temporadas-page-grid--client'}`}>
         
         {/* Formulário */}
         {isAdmin && (
@@ -126,7 +126,7 @@ export default function TemporadasPage() {
               <h3>{editingId ? '✏️ Editar Temporada' : '🆕 Nova Temporada'}</h3>
             </div>
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <form onSubmit={handleSubmit} className="temporadas-page-form">
             <div className="form-group">
               <label className="form-label">Nome da Temporada</label>
               <input 
@@ -161,25 +161,24 @@ export default function TemporadasPage() {
               />
             </div>
 
-            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+            <div className="form-group temporadas-page-checkbox-group">
               <input 
                 type="checkbox" 
                 id="ativa"
                 checked={ativa}
                 onChange={e => setAtiva(e.target.checked)} 
               />
-              <label htmlFor="ativa" style={{ fontSize: '0.9rem', color: '#fff', cursor: 'pointer' }}>Ativar imediatamente (isso desativará outras temporadas)</label>
+              <label htmlFor="ativa" className="temporadas-page-checkbox-label">Ativar imediatamente (isso desativará outras temporadas)</label>
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-              <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '0.8rem' }} disabled={loading}>
+            <div className="temporadas-page-actions">
+              <button type="submit" className="btn btn-primary temporadas-page-btn-submit" disabled={loading}>
                 {editingId ? '💾 Salvar Alterações' : 'Iniciar Temporada'}
               </button>
               {editingId && (
                 <button 
                   type="button" 
-                  className="btn btn-ghost" 
-                  style={{ padding: '0.8rem' }} 
+                  className="btn btn-ghost temporadas-page-btn-cancel" 
                   onClick={() => {
                     setEditingId(null)
                     setNome('')
@@ -207,64 +206,47 @@ export default function TemporadasPage() {
               <ErrorState message={erro} onRetry={loadTemporadas} />
             </div>
           ) : loading ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '1rem' }}>
+            <div className="temporadas-page-skel-wrapper">
               {[1, 2, 3].map(i => (
-                <div key={i} className="skeleton-pulse" style={{ height: '50px', width: '100%', borderRadius: '6px' }}></div>
+                <div key={i} className="skeleton-pulse temporadas-page-skel"></div>
               ))}
             </div>
           ) : temporadas.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Nenhuma temporada cadastrada.</div>
+            <div className="temporadas-page-empty">Nenhuma temporada cadastrada.</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="temporadas-page-list">
               {temporadas.map((t, idx) => {
                 const totalDias = Math.ceil((new Date(t.dataFim) - new Date(t.dataInicio)) / (1000 * 60 * 60 * 24))
+                const activeClass = t.ativa ? 'temporadas-page-item--active' : 'temporadas-page-item--inactive'
+                const titleClass = t.ativa ? 'temporadas-page-item-title--active' : 'temporadas-page-item-title--inactive'
+                const badgeClass = t.ativa ? 'temporadas-page-item-badge--active' : 'temporadas-page-item-badge--inactive'
+                const toggleClass = t.ativa ? 'temporadas-page-item-btn-toggle--active' : 'temporadas-page-item-btn-toggle--inactive'
                 return (
-                  <div key={t.id} style={{ 
-                    padding: '1rem', 
-                    borderRadius: '8px', 
-                    background: t.ativa ? 'rgba(57, 255, 20, 0.05)' : 'rgba(255,255,255,0.02)',
-                    border: t.ativa ? '1px solid #39FF14' : '1px solid rgba(255,255,255,0.05)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.5rem'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <strong style={{ color: t.ativa ? '#39FF14' : '#fff' }}>{t.nome}</strong>
-                      <span style={{ 
-                        fontSize: '0.75rem', 
-                        padding: '0.2rem 0.6rem', 
-                        borderRadius: '20px', 
-                        background: t.ativa ? '#39FF14' : 'rgba(255,255,255,0.1)', 
-                        color: t.ativa ? '#000' : 'var(--text-muted)',
-                        fontWeight: 'bold'
-                      }}>
+                  <div key={t.id} className={`temporadas-page-item ${activeClass}`}>
+                    <div className="temporadas-page-item-header">
+                      <strong className={titleClass}>{t.nome}</strong>
+                      <span className={`temporadas-page-item-badge ${badgeClass}`}>
                         {t.ativa ? 'ATIVA' : 'INATIVA'}
                       </span>
                     </div>
 
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    <div className="temporadas-page-item-dates">
                       <strong>Início:</strong> {new Date(t.dataInicio).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} | <strong>Fim:</strong> {new Date(t.dataFim).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} ({totalDias} dias)
                     </div>
 
                     {isAdmin && (
-                      <div style={{ display: 'flex', gap: '0.8rem', marginTop: '0.5rem' }}>
+                      <div className="temporadas-page-item-actions">
                         <button 
                           type="button" 
                           onClick={() => handleEdit(t)} 
-                          className="btn btn-ghost" 
-                          style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem' }}
+                          className="btn btn-ghost temporadas-page-item-btn" 
                         >
                           Editar ✏️
                         </button>
                         <button 
                           type="button" 
                           onClick={() => handleToggleAtiva(t)} 
-                          className="btn btn-ghost" 
-                          style={{ 
-                            fontSize: '0.8rem', 
-                            padding: '0.3rem 0.6rem',
-                            color: t.ativa ? '#ff4a4a' : '#39FF14'
-                          }}
+                          className={`btn btn-ghost temporadas-page-item-btn ${toggleClass}`}
                         >
                           {t.ativa ? 'Desativar ⏹️' : 'Ativar ⚡'}
                         </button>

@@ -1,6 +1,9 @@
 package services
 
 import (
+	"github.com/google/uuid"
+	"fmt"
+
 	"context"
 
 	"errors"
@@ -24,13 +27,15 @@ type PdvService struct {
 	repo        ports.PdvRepository
 	clienteRepo ports.ClienteRepository
 	notifier    ports.NotificationService
+	pagamentoService ports.PagamentoService
 }
 
-func NewPdvService(repo ports.PdvRepository, clienteRepo ports.ClienteRepository, notifier ports.NotificationService) *PdvService {
+func NewPdvService(repo ports.PdvRepository, clienteRepo ports.ClienteRepository, notifier ports.NotificationService, pagamentoService ports.PagamentoService) *PdvService {
 	return &PdvService{
 		repo:        repo,
 		clienteRepo: clienteRepo,
 		notifier:    notifier,
+		pagamentoService: pagamentoService,
 	}
 }
 
@@ -181,7 +186,7 @@ type ProcessarVendaRequest struct {
 	Itens           []VendaItemRequest `json:"itens"`
 }
 
-func (s *PdvService) ProcessarVenda(ctx context.Context, operadorID int, req *ProcessarVendaRequest) (*domain.Venda, error) {
+func (s *PdvService) ProcessarVenda(ctx context.Context, operadorID int, req *ProcessarVendaRequest) (interface{}, error) {
 	if req.MetodoPagamento != "Dinheiro" && req.MetodoPagamento != "Pix" && req.MetodoPagamento != "Debito" && req.MetodoPagamento != "Credito" {
 		return nil, errors.New("método de pagamento inválido. Deve ser 'Dinheiro', 'Pix', 'Debito' ou 'Credito'")
 	}
@@ -313,5 +318,35 @@ func (s *PdvService) ProcessarVenda(ctx context.Context, operadorID int, req *Pr
 		return nil, err
 	}
 
+	if req.MetodoPagamento == "Pix" && s.pagamentoService != nil {
+		idempotencyKey := uuid.New().String()
+		venda.IdempotencyKey = &idempotencyKey
+		venda.StatusPagamento = "Pendente"
+		
+		pixReq := ports.CobrancaPixRequest{
+			VendaID:        venda.ID,
+			Valor:          venda.ValorLiquido,
+			Descricao:      "Venda RuivoBarber #" + fmt.Sprint(venda.ID),
+			IdempotencyKey: idempotencyKey,
+		}
+		
+		pixResp, err := s.pagamentoService.CriarCobrancaPix(ctx, pixReq)
+		if err != nil {
+			return nil, err
+		}
+		
+		venda.GatewayID = &pixResp.IdempotencyKey // Or we could use fmt.Sprint(pixResp.ID)
+		gatewayIDStr := fmt.Sprint(pixResp.ID)
+		venda.GatewayID = &gatewayIDStr
+		
+		// Note: Normally we'd UPDATE the venda in the database here with the gateway_id.
+		// For now, we return it to the handler.
+		return map[string]interface{}{
+			"venda": venda,
+			"pix":   pixResp,
+		}, nil
+	}
+	
+	venda.StatusPagamento = "Aprovado" // Dinheiro, etc
 	return venda, nil
 }

@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import PlayerCard from '../components/PlayerCard.jsx'
 import RpgProgressBar from '../components/RpgProgressBar.jsx'
 import RedeemCouponManager from '../components/RedeemCouponManager.jsx'
 import BadgeShowcase from '../components/BadgeShowcase.jsx'
 import AvaliacaoModal from '../components/AvaliacaoModal.jsx'
+import AgendaConsolidada from '../components/AgendaConsolidada.jsx'
 import { buscarCliente, listarClientes, fetchTemporadaAtiva, fetchMeusBadges, fetchUltimoCorte, fetchGorjetasBarbeiro, confirmarPagamentoGorjeta, fetchDashboard } from '../services/api.js'
+import { playLevelUpSound, fireConfetti } from '../services/soundEffects.js'
 import ErrorState from '../components/ErrorState.jsx'
 // Stats format: { icon, label, value, change }
 // Agendamentos format: { id, cliente, servico, barbeiro, horario, status }
@@ -27,6 +29,7 @@ export default function DashboardPage() {
  
   const isClient = user.cargo === 'Cliente'
   const hoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+  const previousLevelRef = useRef(null)
 
  
   const loadRanking = async () => {
@@ -94,6 +97,13 @@ export default function DashboardPage() {
       const res = await buscarCliente(user.id)
       if (res && res.data) {
         setClientData(res.data)
+        
+        // Verifica se subiu de nível para tocar o som de Level Up
+        if (previousLevelRef.current !== null && res.data.nivel > previousLevelRef.current) {
+          playLevelUpSound()
+          fireConfetti()
+        }
+        previousLevelRef.current = res.data.nivel
       }
     } catch (err) {
       console.error('Erro ao buscar dados do cliente logado em tempo real:', err)
@@ -153,17 +163,17 @@ export default function DashboardPage() {
       return (
         <div className="fade-in-up">
           <div className="page-header">
-            <div className="skeleton-pulse skeleton-text" style={{ width: '60%', height: '2rem' }}></div>
-            <div className="skeleton-pulse skeleton-text" style={{ width: '80%' }}></div>
+            <div className="skeleton-pulse skeleton-text dashboard-page-skel-1"></div>
+            <div className="skeleton-pulse skeleton-text dashboard-page-skel-2"></div>
           </div>
           <div className="dashboard-hero-section">
             <div className="dashboard-player-card-wrapper">
-               <div className="skeleton-pulse skeleton-card" style={{ minHeight: '350px', width: '100%', maxWidth: '400px' }}></div>
+               <div className="skeleton-pulse skeleton-card dashboard-page-skel-card"></div>
             </div>
             <div className="card dashboard-rpg-panel">
-               <div className="skeleton-pulse skeleton-text" style={{ width: '40%', height: '1.5rem', marginBottom: '1.5rem' }}></div>
-               <div className="skeleton-pulse skeleton-text" style={{ width: '100%', height: '14px', borderRadius: '10px', marginBottom: '2rem' }}></div>
-               <div className="skeleton-pulse skeleton-text" style={{ width: '100%', height: '100px', borderRadius: '8px' }}></div>
+               <div className="skeleton-pulse skeleton-text dashboard-page-skel-3"></div>
+               <div className="skeleton-pulse skeleton-text dashboard-page-skel-4"></div>
+               <div className="skeleton-pulse skeleton-text dashboard-page-skel-5"></div>
             </div>
           </div>
         </div>
@@ -185,8 +195,8 @@ export default function DashboardPage() {
         {ultimoCorte && ultimoCorte.avaliacao_pendente && (
           <div className="dashboard-evaluation-card">
             <div className="flex-center gap-1">
-              <span style={{ fontSize: '2rem' }}>⭐</span>
-              <div style={{ textAlign: 'left' }}>
+              <span className="dashboard-page-eval-icon">⭐</span>
+              <div className="dashboard-page-eval-content">
                 <h4 className="dashboard-evaluation-title">Como foi seu último corte?</h4>
                 <p className="dashboard-evaluation-text">
                   Você foi atendido por <strong>{ultimoCorte.barbeiro_nome}</strong> ({ultimoCorte.servico_nome}). Sua avaliação nos ajuda muito!
@@ -194,9 +204,8 @@ export default function DashboardPage() {
               </div>
             </div>
             <button 
-              className="btn btn-primary" 
+              className="btn btn-primary dashboard-page-eval-btn" 
               onClick={() => setShowAvaliacaoModal(true)}
-              style={{ whiteSpace: 'nowrap' }}
             >
               Avaliar Atendimento
             </button>
@@ -214,14 +223,14 @@ export default function DashboardPage() {
             />
             
             {/* Vitrine de Conquistas movida para baixo do PlayerCard */}
-            <div style={{ width: '100%', maxWidth: '340px', marginTop: '0.5rem' }}>
+            <div className="dashboard-page-showcase-wrapper">
               <BadgeShowcase badges={badges} loading={loadingBadges} />
             </div>
           </div>
 
           {/* Painel de Recompensas e Progresso */}
           <div className="card dashboard-rpg-panel">
-            <div className="card-header" style={{ paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
+            <div className="card-header dashboard-page-rpg-header">
               <h3>Seu Progresso RPG</h3>
             </div>
             
@@ -241,7 +250,7 @@ export default function DashboardPage() {
 
             {temporadaAtiva ? (
               <div className="dashboard-season-active">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="dashboard-page-season-header">
                   <h4 className="dashboard-season-title">Temporada Ativa: {temporadaAtiva.nome}</h4>
                   <span className="dashboard-season-end">
                     Término: {new Date(temporadaAtiva.dataFim).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
@@ -272,11 +281,16 @@ export default function DashboardPage() {
                 const niveis = { 'Corte Iniciante': 300, 'Barba de Respeito': 600, 'Lenda da Navalha': 1000, 'Rei da Cadeira': 1000 }
                 const max = niveis[c.nivel] || 300
                 const pct = Math.min((c.xp || 0) / max * 100, 100)
+                let numClass = 'dashboard-page-ranking-num--other';
+                if (i === 0) numClass = 'dashboard-page-ranking-num--1';
+                else if (i === 1) numClass = 'dashboard-page-ranking-num--2';
+                else if (i === 2) numClass = 'dashboard-page-ranking-num--3';
+
                 return (
                   <div key={i}>
                     <div className="dashboard-ranking-item">
                       <div>
-                        <span style={{ marginRight: '0.5rem', fontWeight: 'bold', color: i === 0 ? 'var(--gold)' : i === 1 ? 'silver' : i === 2 ? '#cd7f32' : 'var(--text-muted)' }}>
+                        <span className={`dashboard-page-ranking-num ${numClass}`}>
                           {i + 1}º
                         </span>
                         <span className="dashboard-ranking-name">{c.nome}</span>
@@ -304,11 +318,11 @@ export default function DashboardPage() {
               <span className="dashboard-rule-desc">A cada serviço concluído você ganha XP automático (Corte Simples = 10 XP, Barba = 15 XP, Corte+Barba = 25 XP).</span>
             </div>
             <div className="dashboard-rule-card">
-              <span className="dashboard-rule-title" style={{ color: 'var(--gold)' }}>Descontos Lendários</span>
+              <span className="dashboard-rule-title dashboard-page-rule-title-gold">Descontos Lendários</span>
               <span className="dashboard-rule-desc">Resgate cupons conforme atinge as patentes (Nível 2 = 5% off, Nível 3 = 10% off, Nível 4 = 1 Corte Grátis).</span>
             </div>
             <div className="dashboard-rule-card">
-              <span className="dashboard-rule-title" style={{ color: 'var(--red)' }}>Regra Anti-Falta</span>
+              <span className="dashboard-rule-title dashboard-page-rule-title-red">Regra Anti-Falta</span>
               <span className="dashboard-rule-desc">Evite faltas sem aviso prévio. Faltas deduzem 100 XP do seu progresso geral de forma penalizada.</span>
             </div>
           </div>
@@ -324,6 +338,41 @@ export default function DashboardPage() {
             }}
           />
         )}
+        <div className="card mt-3" style={{ border: '1px solid #FF4D4D', backgroundColor: 'rgba(255, 77, 77, 0.05)' }}>
+          <div className="card-header">
+            <h3 style={{ color: '#FF4D4D' }}>🛡️ Privacidade e Segurança (LGPD)</h3>
+          </div>
+          <div style={{ padding: '1rem', color: '#ccc' }}>
+            <p style={{ marginBottom: '1rem' }}>
+              Seus dados estão protegidos por criptografia de ponta a ponta. Você tem o <strong>Direito ao Esquecimento</strong> garantido pela Lei Geral de Proteção de Dados (LGPD).
+            </p>
+            <button 
+              className="btn" 
+              style={{ backgroundColor: '#FF4D4D', color: '#fff', border: 'none' }}
+              onClick={async () => {
+                if (window.confirm("ATENÇÃO: Deseja realmente excluir sua conta? Seus dados pessoais serão anonimizados e o acesso será perdido irrevogavelmente. As transações financeiras (para relatórios do salão) serão mantidas sem ligação com você.")) {
+                  try {
+                    const res = await fetch('/api/usuarios/esquecer', {
+                      method: 'DELETE',
+                      headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('ruivobarber_token')}`
+                      }
+                    });
+                    if (!res.ok) throw new Error("Erro ao excluir conta");
+                    alert("Conta excluída com sucesso.");
+                    localStorage.removeItem('ruivobarber_token');
+                    localStorage.removeItem('ruivobarber_user');
+                    window.location.href = '/login';
+                  } catch (err) {
+                    alert(err.message);
+                  }
+                }
+              }}
+            >
+              Excluir Minha Conta Permanentemente
+            </button>
+          </div>
+        </div>
       </div>
     )
   }
@@ -358,12 +407,12 @@ export default function DashboardPage() {
         </div>
         <div className="stats-grid">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="stat-card skeleton-pulse" style={{ height: '120px', borderRadius: '12px' }}></div>
+            <div key={i} className="stat-card skeleton-pulse dashboard-page-admin-skel-1"></div>
           ))}
         </div>
-        <div className="grid-2" style={{ marginTop: '2rem' }}>
-          <div className="card skeleton-pulse" style={{ height: '350px', borderRadius: '12px' }}></div>
-          <div className="card skeleton-pulse" style={{ height: '350px', borderRadius: '12px' }}></div>
+        <div className="grid-2 dashboard-page-admin-grid-2">
+          <div className="card skeleton-pulse dashboard-page-admin-skel-2"></div>
+          <div className="card skeleton-pulse dashboard-page-admin-skel-2"></div>
         </div>
       </div>
     )
@@ -389,18 +438,18 @@ export default function DashboardPage() {
         <div className="card">
           <div className="card-header">
             <h3>Agendamentos de Hoje</h3>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{adminDashboard.agendamentos.length} total</span>
+            <span className="dashboard-page-admin-total">{adminDashboard.agendamentos.length} total</span>
           </div>
           <div className="table-container">
             {adminDashboard.agendamentos.length === 0 ? (
-               <p style={{ padding: '1rem', textAlign: 'center' }}>Nenhum agendamento para hoje.</p>
+               <p className="dashboard-page-admin-table-empty">Nenhum agendamento para hoje.</p>
             ) : (
             <table className="data-table">
               <thead><tr><th>Cliente</th><th>Serviço</th><th>Barbeiro</th><th>Hora</th><th>Status</th></tr></thead>
               <tbody>
                 {adminDashboard.agendamentos.map(a => (
                   <tr key={a.id}>
-                    <td style={{ fontWeight: 500 }}>{a.cliente}</td>
+                    <td className="dashboard-page-admin-td-client">{a.cliente}</td>
                     <td>{a.servico}</td>
                     <td>{a.barbeiro}</td>
                     <td><strong>{a.horario}</strong></td>
@@ -424,11 +473,16 @@ export default function DashboardPage() {
                 const niveis = { 'Corte Iniciante': 300, 'Barba de Respeito': 600, 'Lenda da Navalha': 1000, 'Rei da Cadeira': 1000 }
                 const max = niveis[c.nivel] || 300
                 const pct = Math.min((c.xp || 0) / max * 100, 100)
+                let numClass = 'dashboard-page-ranking-num--other';
+                if (i === 0) numClass = 'dashboard-page-ranking-num--1';
+                else if (i === 1) numClass = 'dashboard-page-ranking-num--2';
+                else if (i === 2) numClass = 'dashboard-page-ranking-num--3';
+                
                 return (
                   <div key={i}>
                     <div className="dashboard-ranking-item">
                       <div>
-                        <span style={{ marginRight: '0.5rem', fontWeight: 'bold', color: i === 0 ? 'var(--gold)' : i === 1 ? 'silver' : i === 2 ? '#cd7f32' : 'var(--text-muted)' }}>
+                        <span className={`dashboard-page-ranking-num ${numClass}`}>
                           {i + 1}º
                         </span>
                         <span className="dashboard-ranking-name">{c.nome}</span>
@@ -447,17 +501,21 @@ export default function DashboardPage() {
         </div>
       </div>
       
+      <div className="dashboard-page-admin-agenda">
+        <AgendaConsolidada />
+      </div>
+
       {/* Seção de Gorjetas Pix Recebidas */}
       <div className="card mt-3">
         <div className="card-header">
           <h3>Registro de Gorjetas Pix Recebidas</h3>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{gorjetas.length} total</span>
+          <span className="dashboard-page-admin-total">{gorjetas.length} total</span>
         </div>
         <div className="table-container mt-1">
           {loadingGorjetas ? (
-            <div className="skeleton-pulse" style={{ height: '150px', width: '100%', borderRadius: '6px' }}></div>
+            <div className="skeleton-pulse dashboard-page-admin-gorjetas-skel"></div>
           ) : gorjetas.length === 0 ? (
-            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>Nenhuma gorjeta recebida.</p>
+            <p className="dashboard-page-admin-gorjetas-empty">Nenhuma gorjeta recebida.</p>
           ) : (
             <table className="data-table">
               <thead>
@@ -475,8 +533,8 @@ export default function DashboardPage() {
                   <tr key={g.id}>
                     <td>#{g.id}</td>
                     <td>{new Date(g.criado_em).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
-                    <td style={{ fontWeight: 500 }}>{g.cliente_nome || `Cliente #${g.cliente_id}`}</td>
-                    <td style={{ fontWeight: 'bold', color: 'var(--gold)' }}>R$ {g.valor ? g.valor.toFixed(2) : '0.00'}</td>
+                    <td className="dashboard-page-admin-td-client">{g.cliente_nome || `Cliente #${g.cliente_id}`}</td>
+                    <td className="dashboard-page-admin-gorjeta-val">R$ {g.valor ? g.valor.toFixed(2) : '0.00'}</td>
                     <td>
                       <span className={`badge badge-${g.status.toLowerCase()}`}>
                         {g.status}
@@ -485,14 +543,13 @@ export default function DashboardPage() {
                     <td>
                       {g.status === 'Pendente' ? (
                         <button 
-                          className="btn btn-primary btn-sm" 
+                          className="btn btn-primary btn-sm dashboard-page-admin-gorjeta-btn" 
                           onClick={() => handleConfirmarGorjeta(g.id)}
-                          style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
                         >
                           Confirmar Recebimento
                         </button>
                       ) : (
-                        <span style={{ color: 'var(--green)', fontSize: '0.85rem' }}>Confirmado</span>
+                        <span className="dashboard-page-admin-gorjeta-ok">Confirmado</span>
                       )}
                     </td>
                   </tr>

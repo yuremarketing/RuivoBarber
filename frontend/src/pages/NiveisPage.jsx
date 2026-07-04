@@ -17,7 +17,7 @@ export default function NiveisPage() {
       <div className="niveis-grid">
         {niveis.map(n => (
           <div key={n.id} className="nivel-card">
-            <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{n.icon}</div>
+            <div className="niveis-page-icon">{n.icon}</div>
             <div className="nivel-number">{n.id}</div>
             <div className="nivel-name">{n.nome}</div>
             <div className="nivel-xp">{n.xp} XP necessários</div>
@@ -25,21 +25,21 @@ export default function NiveisPage() {
           </div>
         ))}
       </div>
-      <div className="card" style={{ marginTop: '2rem' }}>
+      <div className="card niveis-page-info-card">
         <div className="card-header">
           <h3>📖 Como funciona a Gamificação</h3>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+        <div className="niveis-page-steps-grid">
           <div>
-            <h4 style={{ color: 'var(--accent)', marginBottom: '0.5rem', fontSize: '0.95rem' }}>1. Acumule XP</h4>
+            <h4 className="niveis-page-step-title-1">1. Acumule XP</h4>
             <p className="text-secondary text-sm">Cada serviço realizado concede pontos de experiência (XP) ao cliente.</p>
           </div>
           <div>
-            <h4 style={{ color: 'var(--gold)', marginBottom: '0.5rem', fontSize: '0.95rem' }}>2. Suba de Nível</h4>
+            <h4 className="niveis-page-step-title-2">2. Suba de Nível</h4>
             <p className="text-secondary text-sm">Ao atingir o XP necessário, o cliente sobe automaticamente de nível.</p>
           </div>
           <div>
-            <h4 style={{ color: 'var(--green)', marginBottom: '0.5rem', fontSize: '0.95rem' }}>3. Ganhe Recompensas</h4>
+            <h4 className="niveis-page-step-title-3">3. Ganhe Recompensas</h4>
             <p className="text-secondary text-sm">Cada nível desbloqueia bônus exclusivos como descontos e serviços grátis.</p>
           </div>
         </div>

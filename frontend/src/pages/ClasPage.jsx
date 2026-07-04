@@ -220,7 +220,7 @@ export default function ClasPage() {
   // VIEW: User has NO clan
   if (error && ranking.length === 0 && !meuCla) {
     return (
-      <div className="main-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+      <div className="main-content clas-error-wrapper">
         <ErrorState message={error} onRetry={loadData} />
       </div>
     )
@@ -228,13 +228,13 @@ export default function ClasPage() {
 
   if (initialLoading) {
     return (
-      <div className="main-content" style={{ padding: '2rem' }}>
-        <div className="page-header" style={{ marginBottom: '2rem' }}>
+      <div className="main-content">
+        <div className="page-header clas-skeleton-header">
           <div className="skeleton-pulse" style={{ height: '35px', width: '30%', borderRadius: '4px' }}></div>
         </div>
-        <div style={{ display: 'flex', gap: '2rem' }}>
-          <div className="card skeleton-pulse" style={{ height: '400px', flex: 1, borderRadius: '12px' }}></div>
-          <div className="card skeleton-pulse" style={{ height: '400px', flex: 1, borderRadius: '12px' }}></div>
+        <div className="clas-skeleton-row">
+          <div className="card skeleton-pulse clas-skeleton-card"></div>
+          <div className="card skeleton-pulse clas-skeleton-card"></div>
         </div>
       </div>
     )
@@ -249,25 +249,25 @@ export default function ClasPage() {
         </div>
 
         {success && (
-          <div style={{ padding: '0.75rem', borderRadius: '4px', backgroundColor: 'rgba(76, 175, 80, 0.1)', border: '1px solid #4CAF50', color: '#4CAF50', marginBottom: '1rem', fontSize: '0.9rem' }}>
+          <div className="clas-alert-success">
             {success}
           </div>
         )}
         {error && (
-          <div style={{ padding: '0.75rem', borderRadius: '4px', backgroundColor: 'rgba(244, 67, 54, 0.1)', border: '1px solid #f44336', color: '#f44336', marginBottom: '1rem', fontSize: '0.9rem' }}>
+          <div className="clas-alert-error">
             {error}
           </div>
         )}
 
-        <div className="grid-2" style={{ alignItems: 'start' }}>
+        <div className="grid-2 clas-grid-top">
           {/* Left Column: Create and Invites */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="clas-column">
             {/* Create Clan */}
             <div className="card">
               <div className="card-header mb-1">
                 <h3>Fundar Nova Guilda</h3>
               </div>
-              <form onSubmit={handleCriarCla} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <form onSubmit={handleCriarCla} className="clas-form">
                 <div className="form-group">
                   <label className="form-label">Nome do Clã / Guilda</label>
                   <input 
@@ -291,7 +291,7 @@ export default function ClasPage() {
                     maxLength="250"
                   />
                 </div>
-                <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-end' }} disabled={loading}>
+                <button type="submit" className="btn btn-primary clas-btn-end" disabled={loading}>
                   Fundar Clã
                 </button>
               </form>
@@ -304,7 +304,7 @@ export default function ClasPage() {
               </div>
               
               {convites.length === 0 ? (
-                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '1rem' }}>
+                <p className="clas-empty-text">
                   Nenhum convite pendente.
                 </p>
               ) : (
@@ -312,34 +312,24 @@ export default function ClasPage() {
                   {convites.map(inv => (
                     <div 
                       key={inv.id}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '0.75rem',
-                        background: 'rgba(255, 255, 255, 0.02)',
-                        border: '1px solid var(--border)',
-                        borderRadius: '6px'
-                      }}
+                      className="clas-invite-row"
                     >
                       <div>
-                        <strong style={{ color: 'var(--gold)', fontSize: '0.92rem' }}>{inv.nomeCla}</strong>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                        <strong className="clas-invite-name">{inv.nomeCla}</strong>
+                        <div className="clas-invite-meta">
                           Convidado por: {inv.enviadoPor} • {formatData(inv.criadoEm)}
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: '0.4rem' }}>
+                      <div className="clas-invite-actions">
                         <button 
-                          className="btn btn-primary" 
-                          style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem' }}
+                          className="btn btn-primary clas-btn-small"
                           onClick={() => handleAceitarConvite(inv.id)}
                           disabled={loading}
                         >
                           Aceitar
                         </button>
                         <button 
-                          className="btn btn-ghost" 
-                          style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem', color: 'var(--red)' }}
+                          className="btn btn-ghost clas-btn-decline"
                           onClick={() => handleRecusarConvite(inv.id)}
                           disabled={loading}
                         >
@@ -360,7 +350,7 @@ export default function ClasPage() {
             </div>
             
             {ranking.length === 0 ? (
-              <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '1rem' }}>
+              <p className="clas-empty-text">
                 Nenhum clã fundado no reino ainda.
               </p>
             ) : (
@@ -368,41 +358,25 @@ export default function ClasPage() {
                 {ranking.map((rk, idx) => (
                   <div 
                     key={rk.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '0.75rem',
-                      background: 'rgba(255, 255, 255, 0.01)',
-                      border: '1px solid var(--border)',
-                      borderRadius: '6px',
-                      gap: '1rem'
-                    }}
+                    className="clas-ranking-row"
                   >
-                    <div style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '50%',
+                    <div className="clas-ranking-position" style={{
                       background: idx === 0 ? 'var(--gold)' : idx === 1 ? '#c0c0c0' : idx === 2 ? '#cd7f32' : 'var(--bg-input)',
-                      color: idx < 3 ? '#000' : 'var(--text-primary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 'bold',
-                      fontSize: '0.9rem'
+                      color: idx < 3 ? '#000' : 'var(--text-primary)'
                     }}>
                       {idx + 1}º
                     </div>
                     
-                    <div style={{ flex: 1, overflow: 'hidden' }}>
-                      <strong style={{ color: '#fff', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', display: 'block' }}>{rk.nome}</strong>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Líder: {rk.nomeLider} • {rk.membrosQtd} membros</span>
+                    <div className="clas-ranking-info">
+                      <strong className="clas-ranking-name">{rk.nome}</strong>
+                      <span className="clas-ranking-subtitle">Líder: {rk.nomeLider} • {rk.membrosQtd} membros</span>
                     </div>
 
-                    <div style={{ textAlign: 'right' }}>
-                      <span className="rpg-level-badge" style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}>
+                    <div className="clas-ranking-stats">
+                      <span className="rpg-level-badge clas-ranking-level-badge">
                         Nível {rk.nivelAtual}
                       </span>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--gold)', marginTop: '0.2rem' }}>
+                      <div className="clas-ranking-xp">
                         {rk.xpColetivo} XP
                       </div>
                     </div>
@@ -422,54 +396,40 @@ export default function ClasPage() {
   return (
     <div className="fade-in-up">
       {/* Clan Header Banner */}
-      <div 
-        className="card" 
-        style={{ 
-          padding: '1.5rem', 
-          background: 'linear-gradient(135deg, rgba(20, 20, 25, 0.95) 0%, rgba(35, 30, 25, 0.95) 100%)', 
-          border: '1px solid var(--gold)',
-          boxShadow: '0 0 15px rgba(212, 175, 55, 0.1)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1rem',
-          marginBottom: '1.5rem'
-        }}
-      >
+      <div className="card clas-banner">
         <div>
-          <span className="rpg-level-badge" style={{ fontSize: '0.8rem', padding: '0.25rem 0.6rem', background: 'var(--gold)', color: '#000', fontWeight: 'bold' }}>
+          <span className="rpg-level-badge clas-banner-level">
             GUILDA NÍVEL {meuCla.nivelAtual}
           </span>
-          <h2 style={{ marginTop: '0.5rem', color: '#fff', fontSize: '1.75rem' }}>{meuCla.nome}</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.25rem', italic: 'true' }}>
+          <h2 className="clas-banner-title">{meuCla.nome}</h2>
+          <p className="clas-banner-desc">
             "{meuCla.descricao || 'Nenhum lema cadastrado.'}"
           </p>
         </div>
 
-        <div style={{ textAlign: 'right', minWidth: '150px' }}>
-          <div style={{ color: 'var(--gold)', fontWeight: 'bold', fontSize: '1.1rem' }}>
+        <div className="clas-banner-right">
+          <div className="clas-banner-xp">
             {meuCla.xpColetivo} XP Coletivo
           </div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+          <div className="clas-banner-members">
             Membros: {membros.length}
           </div>
         </div>
       </div>
 
       {success && (
-        <div style={{ padding: '0.75rem', borderRadius: '4px', backgroundColor: 'rgba(76, 175, 80, 0.1)', border: '1px solid #4CAF50', color: '#4CAF50', marginBottom: '1rem', fontSize: '0.9rem' }}>
+        <div className="clas-alert-success">
           {success}
         </div>
       )}
       {error && (
-        <div style={{ padding: '0.75rem', borderRadius: '4px', backgroundColor: 'rgba(244, 67, 54, 0.1)', border: '1px solid #f44336', color: '#f44336', marginBottom: '1rem', fontSize: '0.9rem' }}>
+        <div className="clas-alert-error">
           {error}
         </div>
       )}
 
       {/* Tabs Menu */}
-      <div className="tab-menu" style={{ display: 'flex', borderBottom: '1px solid var(--border)', gap: '1rem', marginBottom: '1.5rem' }}>
+      <div className="clas-tab-menu">
         {[
           { id: 'painel', label: 'Painel do Clã' },
           { id: 'mural', label: '📜 Mural de Recados' },
@@ -478,17 +438,7 @@ export default function ClasPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            style={{
-              padding: '0.75rem 1.25rem',
-              backgroundColor: 'transparent',
-              border: 'none',
-              borderBottom: activeTab === tab.id ? '2px solid var(--gold)' : '2px solid transparent',
-              color: activeTab === tab.id ? 'var(--gold)' : 'var(--text-secondary)',
-              fontWeight: activeTab === tab.id ? 'bold' : 'normal',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              fontSize: '0.92rem'
-            }}
+            className={`clas-tab-btn ${activeTab === tab.id ? 'clas-tab-btn--active' : 'clas-tab-btn--inactive'}`}
           >
             {tab.label}
           </button>
@@ -497,10 +447,10 @@ export default function ClasPage() {
 
       {/* TAB CONTENT: Painel do Clã */}
       {activeTab === 'painel' && (
-        <div className="grid-2" style={{ alignItems: 'start' }}>
+        <div className="grid-2 clas-grid-top">
           {/* Members list */}
           <div className="card">
-            <div className="card-header" style={{ marginBottom: '1.25rem' }}>
+            <div className="card-header clas-card-header">
               <h3>Guerreiros do Clã</h3>
             </div>
             
@@ -516,55 +466,28 @@ export default function ClasPage() {
                 return (
                   <div 
                     key={memb.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '0.6rem 0.75rem',
-                      background: 'rgba(255, 255, 255, 0.01)',
-                      border: '1px solid var(--border)',
-                      borderRadius: '6px'
-                    }}
+                    className="clas-member-row"
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div className="clas-member-left">
                       <div 
-                        style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '50%',
-                          background: isMemLider ? 'linear-gradient(135deg, var(--gold), #ffb700)' : 'var(--bg-input)',
-                          color: isMemLider ? '#000' : 'var(--text-primary)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 'bold',
-                          fontSize: '0.85rem',
-                          overflow: 'hidden'
-                        }}
+                        className={`clas-member-avatar ${isMemLider ? 'clas-member-avatar--leader' : 'clas-member-avatar--normal'}`}
                       >
                         {memb.avatarUrl ? (
-                          <img src={memb.avatarUrl} alt={memb.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={memb.avatarUrl} alt={memb.nome} />
                         ) : memIniciais}
                       </div>
                       <div>
-                        <span style={{ fontWeight: '600', color: '#fff', fontSize: '0.92rem' }}>
+                        <span className="clas-member-name">
                           {memb.nome} {memb.id === user.id && '(Você)'}
                         </span>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                        <div className="clas-member-meta">
                           Patente: {memb.nomeDoNivel} ({memb.xp} XP)
                         </div>
                       </div>
                     </div>
 
                     <span 
-                      className="rpg-level-badge" 
-                      style={{ 
-                        fontSize: '0.68rem', 
-                        padding: '0.15rem 0.5rem', 
-                        backgroundColor: memb.cargo === 'Lider' ? 'rgba(212, 175, 55, 0.15)' : memb.cargo === 'ViceLider' ? 'rgba(192, 192, 192, 0.15)' : 'rgba(255,255,255,0.05)',
-                        borderColor: memb.cargo === 'Lider' ? 'var(--gold)' : memb.cargo === 'ViceLider' ? '#c0c0c0' : 'var(--border)',
-                        color: memb.cargo === 'Lider' ? 'var(--gold)' : memb.cargo === 'ViceLider' ? '#c0c0c0' : 'var(--text-secondary)'
-                      }}
+                      className={`rpg-level-badge clas-member-badge ${memb.cargo === 'Lider' ? 'clas-member-badge--lider' : memb.cargo === 'ViceLider' ? 'clas-member-badge--vice' : 'clas-member-badge--normal'}`}
                     >
                       {memb.cargo}
                     </span>
@@ -575,9 +498,9 @@ export default function ClasPage() {
 
             {/* Invite fast search (Lider only) */}
             {isLider && (
-              <div style={{ marginTop: '1.75rem', borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
-                <h4 style={{ color: 'var(--gold)', marginBottom: '0.5rem', fontSize: '0.92rem' }}>✉️ Convidar Novos Guerreiros</h4>
-                <div style={{ position: 'relative' }}>
+              <div className="clas-invite-section">
+                <h4 className="clas-invite-title">✉️ Convidar Novos Guerreiros</h4>
+                <div className="clas-invite-search">
                   <input 
                     type="text" 
                     className="form-input"
@@ -587,36 +510,15 @@ export default function ClasPage() {
                   />
                   
                   {jogadoresSemCla.length > 0 && (
-                    <div 
-                      style={{
-                        position: 'absolute',
-                        top: '100%',
-                        left: 0,
-                        right: 0,
-                        backgroundColor: '#1a1a20',
-                        border: '1px solid var(--border)',
-                        borderRadius: '4px',
-                        zIndex: 10,
-                        marginTop: '0.25rem',
-                        maxHeight: '180px',
-                        overflowY: 'auto'
-                      }}
-                    >
+                    <div className="clas-invite-dropdown">
                       {jogadoresSemCla.map(jg => (
                         <div 
                           key={jg.id}
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            padding: '0.6rem 0.75rem',
-                            borderBottom: '1px solid rgba(255,255,255,0.05)'
-                          }}
+                          className="clas-invite-dropdown-item"
                         >
-                          <span style={{ fontSize: '0.88rem', color: '#fff' }}>{jg.nome} <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>({jg.login})</span></span>
+                          <span className="clas-invite-player-name">{jg.nome} <span className="clas-invite-player-login">({jg.login})</span></span>
                           <button 
-                            className="btn btn-primary" 
-                            style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+                            className="btn btn-primary clas-btn-xs"
                             onClick={() => handleConvidar(jg.id)}
                             disabled={loading}
                           >
@@ -633,53 +535,42 @@ export default function ClasPage() {
 
           {/* Quests list */}
           <div className="card">
-            <div className="card-header" style={{ marginBottom: '1.25rem' }}>
+            <div className="card-header clas-card-header">
               <h3>Missões Semanais da Guilda</h3>
             </div>
 
             {missoes.length === 0 ? (
-              <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '1rem' }}>
+              <p className="clas-empty-text">
                 Nenhuma missão disponível para esta semana.
               </p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="clas-quest-list">
                 {missoes.map(mis => {
                   const perc = Math.min((mis.progresso / mis.meta) * 100, 100)
                   return (
                     <div 
                       key={mis.questId}
-                      style={{
-                        padding: '1rem',
-                        background: 'rgba(255, 255, 255, 0.02)',
-                        border: mis.completada ? '1px solid #4CAF50' : '1px solid var(--border)',
-                        borderRadius: '6px',
-                        boxShadow: mis.completada ? '0 0 10px rgba(76, 175, 80, 0.05)' : 'none'
-                      }}
+                      className={`clas-quest-card ${mis.completada ? 'clas-quest-card--complete' : 'clas-quest-card--active'}`}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
+                      <div className="clas-quest-header">
                         <div>
-                          <strong style={{ color: mis.completada ? '#4CAF50' : '#fff', fontSize: '0.9rem', display: 'block' }}>
+                          <strong className={`clas-quest-title ${mis.completada ? 'clas-quest-title--complete' : 'clas-quest-title--active'}`}>
                             {mis.descricao}
                           </strong>
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Recompensa: +{mis.xpBonus} XP de Clã</span>
+                          <span className="clas-quest-reward">Recompensa: +{mis.xpBonus} XP de Clã</span>
                         </div>
                         {mis.completada ? (
-                          <span style={{ color: '#4CAF50', fontWeight: 'bold', fontSize: '0.78rem' }}>✔ COMPLETADA</span>
+                          <span className="clas-quest-status clas-quest-status--complete">✔ COMPLETADA</span>
                         ) : (
-                          <span style={{ color: 'var(--gold)', fontWeight: 'bold', fontSize: '0.78rem' }}>{mis.progresso} / {mis.meta}</span>
+                          <span className="clas-quest-status clas-quest-status--active">{mis.progresso} / {mis.meta}</span>
                         )}
                       </div>
 
                       {/* Progress Bar */}
-                      <div style={{ width: '100%', height: '8px', backgroundColor: 'var(--bg-input)', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div className="clas-quest-progress-bar">
                         <div 
-                          style={{ 
-                            width: `${perc}%`, 
-                            height: '100%', 
-                            backgroundColor: mis.completada ? '#4CAF50' : 'var(--gold)',
-                            borderRadius: '4px',
-                            transition: 'width 0.4s ease'
-                          }} 
+                          className={`clas-quest-progress-fill ${mis.completada ? 'clas-quest-progress-fill--complete' : 'clas-quest-progress-fill--active'}`}
+                          style={{ width: `${perc}%` }}
                         />
                       </div>
                     </div>
@@ -693,53 +584,33 @@ export default function ClasPage() {
 
       {/* TAB CONTENT: Mural de Recados (Chat) */}
       {activeTab === 'mural' && (
-        <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>
-          <div className="card-header" style={{ marginBottom: '1.25rem' }}>
+        <div className="card clas-mural-card">
+          <div className="card-header clas-card-header">
             <h3>📜 Mural de Recados da Guilda</h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Deixe avisos e recados para seus companheiros de clã</p>
+            <p className="clas-mural-subtitle">Deixe avisos e recados para seus companheiros de clã</p>
           </div>
 
           {/* Mural Message Scroll */}
-          <div 
-            style={{
-              maxHeight: '400px',
-              overflowY: 'auto',
-              border: '1px solid var(--border)',
-              borderRadius: '6px',
-              padding: '1rem',
-              backgroundColor: 'rgba(0, 0, 0, 0.15)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1rem',
-              marginBottom: '1.5rem'
-            }}
-          >
+          <div className="clas-mural-scroll">
             {mural.length === 0 ? (
-              <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '2rem' }}>
+              <p className="clas-mural-empty">
                 Nenhum recado no mural ainda. Seja o primeiro a postar!
               </p>
             ) : (
               mural.map(msg => (
                 <div 
                   key={msg.id}
-                  style={{
-                    padding: '0.75rem',
-                    borderRadius: '6px',
-                    backgroundColor: msg.usuarioId === user.id ? 'rgba(212, 175, 55, 0.05)' : 'rgba(255, 255, 255, 0.02)',
-                    borderLeft: msg.usuarioId === user.id ? '3px solid var(--gold)' : '3px solid var(--border)',
-                    maxWidth: '85%',
-                    alignSelf: msg.usuarioId === user.id ? 'flex-end' : 'flex-start'
-                  }}
+                  className={`clas-mural-msg ${msg.usuarioId === user.id ? 'clas-mural-msg--own' : 'clas-mural-msg--other'}`}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem', marginBottom: '0.25rem' }}>
-                    <strong style={{ fontSize: '0.82rem', color: msg.usuarioId === user.id ? 'var(--gold)' : '#fff' }}>
+                  <div className="clas-mural-msg-header">
+                    <strong className={`clas-mural-msg-author ${msg.usuarioId === user.id ? 'clas-mural-msg-author--own' : 'clas-mural-msg-author--other'}`}>
                       {msg.nomeUsuario}
                     </strong>
-                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                    <span className="clas-mural-msg-time">
                       {formatData(msg.criadoEm)}
                     </span>
                   </div>
-                  <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.3', whiteSpace: 'pre-wrap' }}>
+                  <p className="clas-mural-msg-body">
                     {msg.mensagem}
                   </p>
                 </div>
@@ -748,7 +619,7 @@ export default function ClasPage() {
           </div>
 
           {/* Send form */}
-          <form onSubmit={handlePostarMural} style={{ display: 'flex', gap: '0.75rem' }}>
+          <form onSubmit={handlePostarMural} className="clas-mural-form">
             <input 
               type="text" 
               className="form-input"
@@ -767,8 +638,8 @@ export default function ClasPage() {
 
       {/* TAB CONTENT: Leaderboard */}
       {activeTab === 'ranking' && (
-        <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>
-          <div className="card-header" style={{ marginBottom: '1.25rem' }}>
+        <div className="card clas-leaderboard-card">
+          <div className="card-header clas-card-header">
             <h3>Classificação Geral das Guildas</h3>
           </div>
 
@@ -776,44 +647,27 @@ export default function ClasPage() {
             {ranking.map((rk, idx) => (
               <div 
                 key={rk.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.75rem',
-                  background: rk.id === meuCla.id ? 'rgba(212, 175, 55, 0.04)' : 'rgba(255, 255, 255, 0.01)',
-                  border: rk.id === meuCla.id ? '1px solid var(--gold)' : '1px solid var(--border)',
-                  borderRadius: '6px',
-                  gap: '1rem',
-                  boxShadow: rk.id === meuCla.id ? '0 0 10px rgba(212, 175, 55, 0.05)' : 'none'
-                }}
+                className={`clas-ranking-row ${rk.id === meuCla.id ? 'clas-ranking-row--own' : ''}`}
               >
-                <div style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
+                <div className="clas-ranking-position" style={{
                   background: idx === 0 ? 'var(--gold)' : idx === 1 ? '#c0c0c0' : idx === 2 ? '#cd7f32' : 'var(--bg-input)',
-                  color: idx < 3 ? '#000' : 'var(--text-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 'bold',
-                  fontSize: '0.9rem'
+                  color: idx < 3 ? '#000' : 'var(--text-primary)'
                 }}>
                   {idx + 1}º
                 </div>
                 
-                <div style={{ flex: 1, overflow: 'hidden' }}>
-                  <strong style={{ color: '#fff', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', display: 'block' }}>
+                <div className="clas-ranking-info">
+                  <strong className="clas-ranking-name">
                     {rk.nome} {rk.id === meuCla.id && '(Seu Clã)'}
                   </strong>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Líder: {rk.nomeLider} • {rk.membrosQtd} membros</span>
+                  <span className="clas-ranking-subtitle">Líder: {rk.nomeLider} • {rk.membrosQtd} membros</span>
                 </div>
 
-                <div style={{ textAlign: 'right' }}>
-                  <span className="rpg-level-badge" style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}>
+                <div className="clas-ranking-stats">
+                  <span className="rpg-level-badge clas-ranking-level-badge">
                     Nível {rk.nivelAtual}
                   </span>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--gold)', marginTop: '0.2rem' }}>
+                  <div className="clas-ranking-xp">
                     {rk.xpColetivo} XP
                   </div>
                 </div>

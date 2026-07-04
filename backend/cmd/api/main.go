@@ -684,20 +684,30 @@ func main() {
     raidHandler := handlers.NewRaidHandler(raidService)
 
     queueRepo := repositories.NewQueuePgRepository(db)
-    queueService := services.NewQueueService(queueRepo)
-    queueHandler := handlers.NewQueueHandler(queueService)
+    sseHub := services.NewSSEHub()
+    queueService := services.NewQueueService(queueRepo, sseHub)
+    queueHandler := handlers.NewQueueHandler(queueService, sseHub)
 
     liveRepo := repositories.NewLivePgRepository(db)
     liveService := services.NewLiveService(liveRepo)
     liveHandler := handlers.NewLiveHandler(liveService)
 
     pdvRepo := repositories.NewPdvPgRepository(db)
-    pdvService := services.NewPdvService(pdvRepo, clienteRepo, notificationService)
+    	pagamentoService, err := services.NewMercadoPagoService()
+	if err != nil {
+		log.Printf("Aviso: Mercado Pago não configurado (%v)", err)
+	}
+
+	pdvService := services.NewPdvService(pdvRepo, clienteRepo, notificationService, pagamentoService)
     pdvHandler := handlers.NewPdvHandler(pdvService)
 
     dashboardRepo := repositories.NewDashboardPgRepository(db)
     dashboardService := services.NewDashboardService(dashboardRepo)
     dashboardHandler := handlers.NewDashboardHandler(dashboardService)
+
+    relatoriosRepo := repositories.NewRelatoriosPgRepository(db)
+    relatoriosService := services.NewRelatoriosService(relatoriosRepo)
+    relatoriosHandler := handlers.NewRelatoriosHandler(relatoriosService)
 
     app := fiber.New(fiber.Config{AppName: "RuivoBarber API v1.0"})
     app.Use(logger.New())
@@ -722,6 +732,11 @@ func main() {
     liveHandler.RegisterRoutes(app)
     pdvHandler.RegisterRoutes(app)
     dashboardHandler.RegisterRoutes(app)
+    
+    // Register Relatorios explicitly here or add RegisterRoutes method.
+    // For simplicity, we can just define the route here or I can create RegisterRoutes in relatorios_handler.go
+    // Let's create RegisterRoutes in relatorios_handler.go and call it here.
+    relatoriosHandler.RegisterRoutes(app)
     port := os.Getenv("PORT")
     if port == "" {
         port = "8080"

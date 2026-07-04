@@ -6,7 +6,7 @@ import (
 )
 
 type QueueRepository interface {
-	RegistrarCheckIn(ctx context.Context, agendamentoID int) error
+	RegistrarCheckIn(ctx context.Context, agendamentoID int) (int, error)
 	RegistrarEmCadeira(ctx context.Context, agendamentoID int) error
 	ObterMetricas(ctx context.Context, barbeiroID *int) (*domain.QueueMetrics, error)
 }

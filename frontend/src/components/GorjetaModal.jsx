@@ -61,7 +61,7 @@ export default function GorjetaModal({ agendamento, onClose, onSuccess }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px', width: '100%' }}>
+      <div className="modal gorjeta-modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h3>Enviar Gorjeta Pix</h3>
           <button className="btn-ghost" onClick={onClose}>✕</button>
@@ -69,25 +69,24 @@ export default function GorjetaModal({ agendamento, onClose, onSuccess }) {
 
         {step === 1 ? (
           <div className="flex-column gap-1-25 py-0-5">
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, textAlign: 'left' }}>
+            <p className="gorjeta-desc">
               Gostou do atendimento? Envie uma gorjeta digital direto para a conta do barbeiro <strong>{barbeiroNome}</strong>.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+            <div className="gorjeta-quick-grid">
               {[5, 10, 15, 20].map(val => (
                 <button
                   key={val}
                   type="button"
-                  className={valor === val && customVal === '' ? 'btn-primary' : 'btn-ghost'}
+                  className={`gorjeta-quick-btn ${valor === val && customVal === '' ? 'btn-primary' : 'btn-ghost'}`}
                   onClick={() => handleQuickSelect(val)}
-                  style={{ padding: '0.5rem 0', fontSize: '0.85rem' }}
                 >
                   R$ {val}
                 </button>
               ))}
             </div>
 
-            <div className="form-group" style={{ textAlign: 'left' }}>
+            <div className="form-group gorjeta-form-group-left">
               <label className="form-label">Ou digite outro valor (R$)</label>
               <input
                 type="number"
@@ -100,59 +99,56 @@ export default function GorjetaModal({ agendamento, onClose, onSuccess }) {
             </div>
 
             {errorMsg && (
-              <div style={{ color: 'var(--red)', fontSize: '0.8rem', padding: '0.5rem', background: 'rgba(233,69,96,0.05)', border: '1px solid var(--red)', borderRadius: '4px', textAlign: 'left' }}>
+              <div className="gorjeta-error">
                 ⚠️ {errorMsg}
               </div>
             )}
 
             <button
               onClick={handleGerarPix}
-              className="btn btn-primary"
-              style={{ width: '100%', marginTop: '0.5rem' }}
+              className="btn btn-primary gorjeta-submit"
               disabled={loading}
             >
               {loading ? 'Gerando Pix...' : 'Gerar QR Code Pix'}
             </button>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem', padding: '0.5rem 0', textAlign: 'center' }}>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+          <div className="gorjeta-pix-container">
+            <p className="gorjeta-pix-desc">
               Escaneie o QR Code ou copie o código Pix abaixo para transferir <strong>R$ {gorjetaResult.valor.toFixed(2)}</strong> para <strong>{barbeiroNome}</strong>.
             </p>
 
             {gorjetaResult.qr_code_url && (
-              <div style={{ background: '#fff', padding: '0.75rem', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                <img src={gorjetaResult.qr_code_url} alt="QR Code Pix" style={{ width: '180px', height: '180px', display: 'block' }} />
+              <div className="gorjeta-qr-box">
+                <img src={gorjetaResult.qr_code_url} alt="QR Code Pix" className="gorjeta-qr-img" />
               </div>
             )}
 
-            <div style={{ width: '100%' }}>
-              <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'left', display: 'block', marginBottom: '0.25rem' }}>Pix Copia e Cola</label>
+            <div className="gorjeta-copy-section">
+              <label className="form-label gorjeta-copy-label">Pix Copia e Cola</label>
               <div className="flex-row gap-0-5">
                 <input
                   type="text"
                   readOnly
-                  className="form-input"
+                  className="form-input gorjeta-copy-input"
                   value={gorjetaResult.pix_copia_e_cola}
-                  style={{ textOverflow: 'ellipsis', fontSize: '0.8rem', background: 'rgba(255,255,255,0.02)' }}
                 />
                 <button
                   type="button"
-                  className="btn btn-secondary"
+                  className="btn btn-secondary gorjeta-copy-btn"
                   onClick={handleCopy}
-                  style={{ fontSize: '0.8rem', padding: '0 1rem', whiteSpace: 'nowrap' }}
                 >
                   {copied ? 'Copiado!' : 'Copiar'}
                 </button>
               </div>
             </div>
 
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border)', width: '100%', paddingTop: '0.75rem' }}>
+            <div className="gorjeta-pix-info">
               ℹ️ O pagamento será creditado na chave do barbeiro:<br />
-              <strong style={{ color: 'var(--text-primary)' }}>{gorjetaResult.chave_pix}</strong>
+              <strong className="gorjeta-pix-key">{gorjetaResult.chave_pix}</strong>
             </div>
 
-            <button onClick={onClose} className="btn btn-ghost" style={{ width: '100%' }}>
+            <button onClick={onClose} className="btn btn-ghost gorjeta-close-btn">
               Fechar Janela
             </button>
           </div>

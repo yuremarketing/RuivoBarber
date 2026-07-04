@@ -431,3 +431,24 @@
     display: none;
   }
 }
+
+/* Efeitos de Glow para o PlayerCard RPG */
+.player-card-glow-royal {
+  box-shadow: 0 0 20px rgba(176, 38, 255, 0.5), inset 0 0 15px rgba(176, 38, 255, 0.2);
+  animation: pulse-glow-royal 3s infinite alternate;
+}
+
+.player-card-glow-gold {
+  box-shadow: 0 0 15px rgba(224, 168, 0, 0.4), inset 0 0 10px rgba(224, 168, 0, 0.2);
+  animation: pulse-glow-gold 3s infinite alternate;
+}
+
+@keyframes pulse-glow-royal {
+  0% { box-shadow: 0 0 20px rgba(176, 38, 255, 0.4), inset 0 0 10px rgba(176, 38, 255, 0.1); }
+  100% { box-shadow: 0 0 35px rgba(176, 38, 255, 0.7), inset 0 0 25px rgba(176, 38, 255, 0.3); border-color: rgba(176, 38, 255, 0.8); }
+}
+
+@keyframes pulse-glow-gold {
+  0% { box-shadow: 0 0 15px rgba(224, 168, 0, 0.3), inset 0 0 5px rgba(224, 168, 0, 0.1); }
+  100% { box-shadow: 0 0 25px rgba(224, 168, 0, 0.6), inset 0 0 15px rgba(224, 168, 0, 0.3); border-color: rgba(224, 168, 0, 0.7); }
+}

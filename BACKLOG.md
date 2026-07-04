@@ -1,5 +1,10 @@
 # 📋 Backlog Técnico e Engenharia de Software - Sistema de Agendamento RuivoBarber
 
+> ⚠️ **AVISO DE VISÃO DE LONGO PRAZO**
+> Este documento representa a visão técnica estrutural, o plano de engenharia de dados (MLOps) e as metas de longo prazo da plataforma.
+> 
+> *Nota de Status:* Antes de prosseguirmos com expansões futuras descritas abaixo, a prioridade máxima e exclusiva da equipe de engenharia hoje é codificar e entregar a **Issue #66 (Go-Live)**.
+
 Este repositório documenta as especificações técnicas, padrões de arquitetura de dados e de software, requisitos de segurança e de negócio estruturados para o Sistema de Agendamento da **RuivoBarber**.
 
 Este backlog foi elaborado sob a ótica de engenharia sênior e governança de dados, visando assegurar a integridade transacional, conformidade legal, segurança nas transações financeiras e prontidão para modelos analíticos preditivos (MLOps). Ele serve como um guia completo para recrutadores e engenheiros de software avaliarem a maturidade técnica do projeto.

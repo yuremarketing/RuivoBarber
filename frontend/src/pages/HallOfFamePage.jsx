@@ -51,16 +51,7 @@ export default function HallOfFamePage() {
       </div>
 
       {error && (
-        <div style={{
-          padding: '0.75rem 1rem',
-          borderRadius: '8px',
-          background: 'rgba(233, 69, 96, 0.1)',
-          border: '1px solid var(--red)',
-          color: 'var(--red)',
-          fontSize: '0.85rem',
-          textAlign: 'center',
-          marginBottom: '1rem'
-        }}>
+        <div className="hof-page-alert">
           ℹ️ {error}
         </div>
       )}
@@ -73,29 +64,28 @@ export default function HallOfFamePage() {
             placeholder="Buscar campeão por nome..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="form-input"
-            style={{ width: '100%' }}
+            className="form-input hof-page-search-input"
           />
         </div>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-secondary)' }}>
-          <div className="spinner" style={{ marginBottom: '1rem', fontSize: '2rem' }}>⌛</div>
+        <div className="hof-page-loading-wrapper">
+          <div className="spinner hof-page-loading-spinner">⌛</div>
           Carregando lendas da barbearia...
         </div>
       ) : filteredRanking.length === 0 ? (
         <div className="empty-state">
           <div className="icon"></div>
           <h4>Nenhum lendário encontrado</h4>
-          <p style={{ color: 'var(--text-secondary)' }}>Nenhum jogador corresponde à sua busca "{searchQuery}".</p>
+          <p className="hof-page-empty-text">Nenhum jogador corresponde à sua busca "{searchQuery}".</p>
         </div>
       ) : (
         <>
           {/* Seção do Pódio - Só mostrada sem busca ativa e se houver ao menos 3 lendas */}
           {showPodium && (
             <div>
-              <h3 style={{ textAlign: 'center', color: 'var(--text-primary)', marginBottom: '1.5rem' }}>👑 O Pódio de Honra</h3>
+              <h3 className="hof-page-podium-title">👑 O Pódio de Honra</h3>
               <div className="hof-podium">
                 {/* 2º Lugar */}
                 <div className="hof-podium-spot second">
@@ -155,7 +145,7 @@ export default function HallOfFamePage() {
           )}
 
           {/* Seção da Lista de Classificação Geral */}
-          <div className="card" style={{ marginTop: '1.5rem' }}>
+          <div className="card hof-page-list-card-mt">
             <div className="card-header">
               <h3>📜 {showPodium ? 'Classificação Geral' : 'Resultados da Busca'}</h3>
             </div>
@@ -166,7 +156,7 @@ export default function HallOfFamePage() {
                 <div className="leaderboard-avatar-col">Avatar</div>
                 <div className="leaderboard-name">Jogador</div>
                 <div className="leaderboard-level-col">Nível / Patente</div>
-                <div className="leaderboard-xp" style={{ textAlign: 'right' }}>XP Total</div>
+                <div className="leaderboard-xp hof-page-xp-col">XP Total</div>
               </div>
 
               {(showPodium ? filteredRanking.slice(3) : filteredRanking).map((player, index) => {
@@ -189,7 +179,7 @@ export default function HallOfFamePage() {
                     </div>
                     <div className="leaderboard-name">
                       {player.nome}
-                      {player.efeitoEquipado && <span style={{ marginLeft: '0.5rem', fontSize: '0.8rem', opacity: 0.8 }} title="Equipado com efeito visual!"></span>}
+                      {player.efeitoEquipado && <span className="hof-page-effect-icon" title="Equipado com efeito visual!"></span>}
                     </div>
                     <div className="leaderboard-level-col">
                       <span className="rpg-level-badge" style={{
@@ -199,7 +189,7 @@ export default function HallOfFamePage() {
                         {player.nomeDoNivel || player.nivel || 'Corte Iniciante'}
                       </span>
                     </div>
-                    <div className="leaderboard-xp" style={{ textAlign: 'right' }}>
+                    <div className="leaderboard-xp hof-page-xp-col">
                       {player.xp} XP
                     </div>
                   </div>

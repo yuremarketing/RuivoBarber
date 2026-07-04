@@ -123,17 +123,17 @@ export default function ServicosPage() {
       </div>
 
       {error ? (
-        <div style={{ padding: '2rem' }}>
+        <div className="servicos-page-error-wrapper">
           <ErrorState message={error} onRetry={loadServicos} />
         </div>
       ) : loading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem', padding: '1rem' }}>
+        <div className="servicos-page-loading-wrapper">
           {[1, 2, 3].map(i => (
-            <div key={i} className="card skeleton-pulse" style={{ height: '220px', borderRadius: '12px' }}></div>
+            <div key={i} className="card skeleton-pulse servicos-page-loading-card"></div>
           ))}
         </div>
       ) : servicos.length === 0 ? (
-        <p style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Nenhum serviço cadastrado.</p>
+        <p className="servicos-page-empty">Nenhum serviço cadastrado.</p>
       ) : (
         <div className="services-grid">
           {servicos.map(s => {
@@ -142,17 +142,17 @@ export default function ServicosPage() {
               <div key={s.id} className="service-card">
                 <div className="service-icon">{details.icon}</div>
                 <div className="service-name">{s.nome}</div>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '0.75rem', lineHeight: 1.4, height: '40px', overflow: 'hidden' }}>
+                <p className="servicos-page-desc">
                   {details.desc}
                 </p>
                 <div className="service-price">R$ {s.preco ? s.preco.toFixed(2) : '0.00'}</div>
                 <div className="service-meta">
                   <div className="service-meta-item"><strong>{s.duracaoMinutos || 30}</strong> min</div>
-                  <div className="service-meta-item"><strong style={{ color: 'var(--gold)' }}>+{s.xpRecompensa || 10} XP</strong></div>
+                  <div className="service-meta-item"><strong className="servicos-page-xp">+{s.xpRecompensa || 10} XP</strong></div>
                 </div>
                 {isAdmin && (
-                  <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-                    <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => handleOpenEdit(s)}>✏️ Editar</button>
+                  <div className="servicos-page-card-actions">
+                    <button className="btn btn-secondary btn-sm servicos-page-btn-edit" onClick={() => handleOpenEdit(s)}>✏️ Editar</button>
                     <button className="btn btn-danger btn-sm" onClick={() => handleDelete(s.id)}>🗑️</button>
                   </div>
                 )}

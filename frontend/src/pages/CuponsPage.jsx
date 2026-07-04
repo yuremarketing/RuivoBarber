@@ -29,9 +29,9 @@ export default function CuponsPage() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'start' }}>
-        <div style={{ flex: '2', minWidth: '350px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', width: '100%', marginBottom: 0 }}>
+      <div className="cupons-page-layout">
+        <div className="cupons-page-main-col">
+          <div className="stats-grid cupons-page-stats-grid">
             <div className="stat-card"><div className="icon"></div><div className="value">{mockCupons.length}</div><div className="label">Total Cupons</div></div>
             <div className="stat-card"><div className="icon">✅</div><div className="value">{mockCupons.filter(c => !c.usado && c.validade >= hoje).length}</div><div className="label">Ativos</div></div>
             <div className="stat-card"><div className="icon">📋</div><div className="value">{mockCupons.filter(c => c.usado).length}</div><div className="label">Utilizados</div></div>
@@ -48,9 +48,9 @@ export default function CuponsPage() {
                     const statusLabel = c.usado ? 'Usado' : expirado ? 'Expirado' : 'Ativo'
                     return (
                       <tr key={c.id}>
-                        <td><code style={{ background: 'var(--bg-input)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.82rem', fontWeight: 600, color: 'var(--gold)' }}>{c.codigo}</code></td>
-                        <td style={{ maxWidth: '250px' }}>{c.descricao}</td>
-                        <td style={{ fontWeight: 700, color: 'var(--accent)' }}>{c.desconto}%</td>
+                        <td><code className="cupons-page-code">{c.codigo}</code></td>
+                        <td className="cupons-page-desc-td">{c.descricao}</td>
+                        <td className="cupons-page-discount">{c.desconto}%</td>
                         <td>{c.cliente}</td>
                         <td>{new Date(c.validade + 'T00:00').toLocaleDateString('pt-BR')}</td>
                         <td><span className={`badge ${statusClass}`}>{statusLabel}</span></td>
@@ -70,7 +70,7 @@ export default function CuponsPage() {
         </div>
 
         {isAdmin && (
-          <div style={{ flex: '1', minWidth: '300px', display: 'flex', flexDirection: 'column' }}>
+          <div className="cupons-page-admin-col">
             <AdminValidationPanel />
           </div>
         )}
@@ -85,7 +85,7 @@ export default function CuponsPage() {
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Código</label>
-                <input type="text" className="form-input" placeholder="Ex: PROMO20" style={{ textTransform: 'uppercase' }} />
+                <input type="text" className="form-input cupons-page-input-upper" placeholder="Ex: PROMO20" />
               </div>
               <div className="form-group">
                 <label className="form-label">Desconto (%)</label>

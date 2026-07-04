@@ -158,37 +158,22 @@ export default function LivesPage() {
         </div>
 
         {liveAtiva ? (
-          <div className="card" style={{ padding: '1.5rem', marginTop: '1rem', background: 'rgba(20, 20, 25, 0.95)', border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <div className="card lives-client-card">
+            <div className="lives-client-header">
               <div>
-                <span className="badge" style={{ backgroundColor: 'var(--red)', color: '#fff', fontSize: '0.75rem', fontWeight: 'bold', padding: '0.25rem 0.6rem', animation: 'pulse 2s infinite' }}>
+                <span className="badge lives-badge-live">
                   🔴 AO VIVO
                 </span>
-                <h3 style={{ marginTop: '0.4rem', color: '#fff', fontSize: '1.4rem' }}>{liveAtiva.titulo}</h3>
+                <h3 className="lives-title-active">{liveAtiva.titulo}</h3>
               </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                Via <strong style={{ color: 'var(--gold)' }}>{liveAtiva.plataforma}</strong>
+              <div className="lives-meta-plat">
+                Via <strong className="lives-plat-highlight">{liveAtiva.plataforma}</strong>
               </div>
             </div>
 
-            <div style={{
-              position: 'relative',
-              paddingBottom: '56.25%', // 16:9 Aspect Ratio
-              height: 0,
-              overflow: 'hidden',
-              borderRadius: '8px',
-              border: '2px solid var(--gold)',
-              boxShadow: '0 0 25px rgba(212, 175, 55, 0.15)',
-              backgroundColor: '#000'
-            }}>
+            <div className="lives-iframe-wrapper">
               <iframe
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%'
-                }}
+                className="lives-iframe"
                 src={getEmbedUrl(liveAtiva.url, liveAtiva.plataforma)}
                 title={liveAtiva.titulo}
                 frameBorder="0"
@@ -197,15 +182,15 @@ export default function LivesPage() {
               />
             </div>
             
-            <p style={{ marginTop: '1rem', fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-              🎥 Problemas com o player? <a href={liveAtiva.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)', textDecoration: 'underline' }}>Clique aqui para abrir na plataforma original</a>.
+            <p className="lives-fallback-msg">
+              🎥 Problemas com o player? <a href={liveAtiva.url} target="_blank" rel="noopener noreferrer" className="lives-fallback-link">Clique aqui para abrir na plataforma original</a>.
             </p>
           </div>
         ) : (
-          <div className="card" style={{ padding: '3rem', textAlign: 'center', marginTop: '1.5rem', border: '1px dashed var(--border)', background: 'rgba(255, 255, 255, 0.02)' }}>
-            <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>🔮</div>
-            <h3 style={{ color: 'var(--gold)', marginBottom: '0.5rem' }}>O Espelho Mágico está Desativado</h3>
-            <p style={{ maxWidth: '500px', margin: '0 auto', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.4' }}>
+          <div className="card lives-empty-state">
+            <div className="lives-empty-icon">🔮</div>
+            <h3 className="lives-empty-title">O Espelho Mágico está Desativado</h3>
+            <p className="lives-empty-desc">
               A taverna está em silêncio. Nenhuma transmissão ao vivo ativa no momento. 
               Fique atento ao nosso canal para assistir campeonatos de RPG, gameplays de barbeiros e eventos da guilda!
             </p>
@@ -224,13 +209,13 @@ export default function LivesPage() {
       </div>
 
       {success && (
-        <div style={{ padding: '0.75rem', borderRadius: '4px', backgroundColor: 'rgba(76, 175, 80, 0.1)', border: '1px solid #4CAF50', color: '#4CAF50', marginBottom: '1rem', fontSize: '0.9rem' }}>
+        <div className="lives-alert-success">
           {success}
         </div>
       )}
       
       {error && (
-        <div style={{ padding: '0.75rem', borderRadius: '4px', backgroundColor: 'rgba(244, 67, 54, 0.1)', border: '1px solid #f44336', color: '#f44336', marginBottom: '1rem', fontSize: '0.9rem' }}>
+        <div className="lives-alert-error">
           {error}
         </div>
       )}
@@ -243,7 +228,7 @@ export default function LivesPage() {
             <div className="card-header mb-1">
               <h3>➕ Cadastrar Nova Transmissão</h3>
             </div>
-            <form onSubmit={handleCriar} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <form onSubmit={handleCriar} className="lives-admin-form">
               <div className="form-group">
                 <label className="form-label">Título da Live</label>
                 <input 
@@ -283,7 +268,7 @@ export default function LivesPage() {
                 </div>
 
                 <div className="form-group" style={{ display: 'flex', alignItems: 'center', height: '100%', marginTop: '1.75rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                  <label className="lives-form-checkbox">
                     <input 
                       type="checkbox" 
                       checked={definirAtiva}
@@ -294,7 +279,7 @@ export default function LivesPage() {
                 </div>
               </div>
 
-              <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-end', marginTop: '0.5rem' }} disabled={loading}>
+              <button type="submit" className="btn btn-primary lives-btn-submit" disabled={loading}>
                 💾 Cadastrar Live
               </button>
             </form>
@@ -307,7 +292,7 @@ export default function LivesPage() {
             </div>
             
             {lives.length === 0 ? (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '1.5rem' }}>
+              <p className="lives-history-empty">
                 Nenhuma transmissão cadastrada ainda.
               </p>
             ) : (
@@ -315,40 +300,30 @@ export default function LivesPage() {
                 {lives.map(live => (
                   <div 
                     key={live.id} 
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '0.75rem',
-                      borderRadius: '6px',
-                      background: 'rgba(255, 255, 255, 0.02)',
-                      border: live.ativa ? '1px solid var(--gold)' : '1px solid var(--border)',
-                      boxShadow: live.ativa ? '0 0 10px rgba(212, 175, 55, 0.1)' : 'none'
-                    }}
+                    className={`lives-list-item ${live.ativa ? 'lives-list-item--active' : 'lives-list-item--inactive'}`}
                   >
-                    <div style={{ overflow: 'hidden', marginRight: '1rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontWeight: '600', fontSize: '0.92rem', color: '#fff', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    <div className="lives-item-left">
+                      <div className="lives-item-title-row">
+                        <span className="lives-item-title">
                           {live.titulo}
                         </span>
                         {live.ativa && (
-                          <span className="badge" style={{ backgroundColor: 'var(--red)', color: '#fff', fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>
+                          <span className="badge lives-badge-small">
                             ATIVA
                           </span>
                         )}
                       </div>
-                      <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.2rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                      <div className="lives-item-meta">
                         <span>Plataforma: <strong>{live.plataforma}</strong></span>
                         <span>•</span>
-                        <a href={live.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)', textDecoration: 'underline' }}>Link original</a>
+                        <a href={live.url} target="_blank" rel="noopener noreferrer" className="lives-fallback-link">Link original</a>
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                    <div className="lives-item-actions">
                       {!live.ativa && (
                         <button 
-                          className="btn btn-ghost" 
-                          style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem', borderColor: 'var(--gold)', color: 'var(--gold)' }}
+                          className="btn btn-ghost lives-btn-activate" 
                           onClick={() => handleAtivar(live.id)}
                           disabled={loading}
                         >
@@ -356,8 +331,7 @@ export default function LivesPage() {
                         </button>
                       )}
                       <button 
-                        className="btn btn-ghost" 
-                        style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem', color: 'var(--red)' }}
+                        className="btn btn-ghost lives-btn-delete" 
                         onClick={() => handleExcluir(live.id)}
                         disabled={loading}
                       >
@@ -372,7 +346,7 @@ export default function LivesPage() {
         </div>
 
         {/* Right Side: Active Live Preview */}
-        <div style={{ position: 'sticky', top: '1.5rem' }}>
+        <div className="lives-monitor-wrapper">
           <div className="card">
             <div className="card-header mb-1">
               <h3>Monitor da Live Ativa</h3>
@@ -380,28 +354,14 @@ export default function LivesPage() {
             
             {liveAtiva ? (
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
-                  <span style={{ color: 'var(--gold)' }}>{liveAtiva.titulo}</span>
-                  <span style={{ color: 'var(--text-muted)' }}>{liveAtiva.plataforma}</span>
+                <div className="lives-monitor-header">
+                  <span className="lives-monitor-title">{liveAtiva.titulo}</span>
+                  <span className="lives-monitor-plat">{liveAtiva.plataforma}</span>
                 </div>
                 
-                <div style={{
-                  position: 'relative',
-                  paddingBottom: '56.25%',
-                  height: 0,
-                  overflow: 'hidden',
-                  borderRadius: '6px',
-                  border: '1px solid var(--border)',
-                  backgroundColor: '#000'
-                }}>
+                <div className="lives-monitor-iframe-wrapper">
                   <iframe
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%'
-                    }}
+                    className="lives-iframe"
                     src={getEmbedUrl(liveAtiva.url, liveAtiva.plataforma)}
                     title="Preview Live Ativa"
                     frameBorder="0"
@@ -410,7 +370,7 @@ export default function LivesPage() {
                 </div>
               </div>
             ) : (
-              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.88rem', border: '1px dashed var(--border)', borderRadius: '6px' }}>
+              <div className="lives-monitor-empty">
                 Nenhuma live ativa no momento. Use o painel ao lado para cadastrar ou ativar uma transmissão.
               </div>
             )}

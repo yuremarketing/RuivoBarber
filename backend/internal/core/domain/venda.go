@@ -11,6 +11,9 @@ type Venda struct {
 	Desconto        float64   `json:"desconto"`
 	ValorLiquido    float64   `json:"valor_liquido"`
 	MetodoPagamento string    `json:"metodo_pagamento"`
+	StatusPagamento string    `json:"status_pagamento"`
+	GatewayID       *string   `json:"gateway_id"`
+	IdempotencyKey  *string   `json:"idempotency_key"`
 	CriadoEm        time.Time `json:"criado_em"`
 }
 

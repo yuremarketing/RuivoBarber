@@ -38,14 +38,31 @@ function PlayerCard({
 
   const { frameClass: defaultFrameClass, crown, color, badgeEmoji } = getPatenteInfo(nivel)
   const frameClass = molduraEquipada || defaultFrameClass
-  const iniciais = (nome || '')
+  const iniciais = String(nome || '')
     .split(' ')
-    .map((n) => n[0])
+    .map((n) => n ? n[0] : '')
     .slice(0, 2)
     .join('')
 
+  const getGlowClass = (levelName) => {
+    let normalized = ''
+    if (typeof levelName === 'number') {
+      const mapeamento = { 1: 'Corte Iniciante', 2: 'Barba de Respeito', 3: 'Lenda da Navalha', 4: 'Rei da Cadeira' }
+      normalized = mapeamento[levelName] || 'Corte Iniciante'
+    } else {
+      normalized = String(levelName || '').trim()
+    }
+    switch (normalized) {
+      case 'Rei da Cadeira': return 'player-card-glow-royal';
+      case 'Lenda da Navalha': return 'player-card-glow-gold';
+      default: return '';
+    }
+  }
+
+  const glowClass = getGlowClass(nivel)
+
   return (
-    <div className={`player-card-rpg ${fundoEquipado} ${efeitoEquipado}`}>
+    <div className={`player-card-rpg dota-card ${fundoEquipado} ${efeitoEquipado} ${glowClass}`}>
       <div className="avatar-rpg-container">
         {crown && <div className="badge-crown-rpg">👑</div>}
         <div className={`avatar-rpg-wrapper ${frameClass}`}>

@@ -188,9 +188,9 @@ export default function AgendaConfigPage() {
 
   if (!isAuthorized) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
+      <div className="agenda-config-unauth">
         <h2>⚠️ Acesso Não Autorizado</h2>
-        <p style={{ color: 'var(--text-muted)' }}>Você não possui permissões para gerenciar escalas de barbeiros.</p>
+        <p className="agenda-config-unauth-text">Você não possui permissões para gerenciar escalas de barbeiros.</p>
       </div>
     )
   }
@@ -199,19 +199,10 @@ export default function AgendaConfigPage() {
     <div className="fade-in-up">
       {/* Toast Alert */}
       {showToast && (
-        <div style={{
-          position: 'fixed',
-          top: '20px',
-          right: '20px',
-          backgroundColor: toastType === 'success' ? '#2ec4b6' : '#e71d36',
-          color: '#fff',
-          padding: '0.75rem 1.5rem',
-          borderRadius: '8px',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-          zIndex: 9999,
-          fontWeight: '600',
-          transition: 'all 0.3s ease'
-        }}>
+        <div 
+          className="agenda-config-toast"
+          style={{ backgroundColor: toastType === 'success' ? '#2ec4b6' : '#e71d36' }}
+        >
           {toastMsg}
         </div>
       )}
@@ -227,12 +218,11 @@ export default function AgendaConfigPage() {
 
       {/* Admin Barber Selector */}
       {isAdmin && (
-        <div className="card" style={{ marginBottom: '1.5rem', padding: '1rem 1.5rem' }}>
-          <div className="form-group" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <label className="form-label" style={{ margin: 0, whiteSpace: 'nowrap' }}>Selecione o Barbeiro:</label>
+        <div className="card agenda-config-barber-card">
+          <div className="form-group agenda-config-barber-form">
+            <label className="form-label agenda-config-barber-label">Selecione o Barbeiro:</label>
             <select
-              className="form-input"
-              style={{ maxWidth: '300px' }}
+              className="form-input agenda-config-barber-select"
               value={selectedBarbeiroId}
               onChange={(e) => setSelectedBarbeiroId(Number(e.target.value))}
             >
@@ -245,9 +235,9 @@ export default function AgendaConfigPage() {
       )}
 
       {loadingConfig ? (
-        <p style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Carregando dados da agenda...</p>
+        <p className="agenda-config-loading">Carregando dados da agenda...</p>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1.5rem' }}>
+        <div className="agenda-config-grid">
           
           {/* Escala Semanal Card */}
           <div className="card">
@@ -268,20 +258,19 @@ export default function AgendaConfigPage() {
                   <tbody>
                     {disponibilidade.map((d, index) => (
                       <tr key={d.dia_semana} style={{ opacity: d.trabalha ? 1 : 0.5 }}>
-                        <td style={{ fontWeight: '600' }}>{DIAS_SEMANA_NOMES[d.dia_semana]}</td>
+                        <td className="agenda-config-table-td">{DIAS_SEMANA_NOMES[d.dia_semana]}</td>
                         <td>
                           <input
                             type="checkbox"
                             checked={d.trabalha}
                             onChange={(e) => handleDispChange(index, 'trabalha', e.target.checked)}
-                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                            className="agenda-config-checkbox"
                           />
                         </td>
                         <td>
                           <input
                             type="time"
-                            className="form-input"
-                            style={{ padding: '0.25rem 0.5rem', width: '100px' }}
+                            className="form-input agenda-config-time"
                             value={d.hora_inicio || '09:00'}
                             disabled={!d.trabalha}
                             onChange={(e) => handleDispChange(index, 'hora_inicio', e.target.value)}
@@ -290,8 +279,7 @@ export default function AgendaConfigPage() {
                         <td>
                           <input
                             type="time"
-                            className="form-input"
-                            style={{ padding: '0.25rem 0.5rem', width: '100px' }}
+                            className="form-input agenda-config-time"
                             value={d.hora_fim || '19:00'}
                             disabled={!d.trabalha}
                             onChange={(e) => handleDispChange(index, 'hora_fim', e.target.value)}
@@ -304,8 +292,7 @@ export default function AgendaConfigPage() {
               </div>
               <button
                 type="submit"
-                className="btn btn-primary"
-                style={{ marginTop: '1.5rem', width: '100%' }}
+                className="btn btn-primary agenda-config-save-btn"
                 disabled={loading}
               >
                 {loading ? 'Salvando...' : 'Salvar Alterações da Escala'}
@@ -314,15 +301,15 @@ export default function AgendaConfigPage() {
           </div>
 
           {/* Bloqueios e Folgas Card */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="agenda-config-right-col">
             
             {/* Configuração de Chave Pix para Gorjetas */}
             <div className="card">
               <div className="card-header mb-1">
                 <h3>🔑 Recebimento de Gorjetas (Pix)</h3>
               </div>
-              <form onSubmit={handleSaveChavePix} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div className="form-group" style={{ textAlign: 'left' }}>
+              <form onSubmit={handleSaveChavePix} className="agenda-config-form-col">
+                <div className="form-group agenda-config-form-left">
                   <label className="form-label">Chave Pix do Barbeiro</label>
                   <input
                     type="text"
@@ -332,11 +319,11 @@ export default function AgendaConfigPage() {
                     onChange={(e) => setChavePix(e.target.value)}
                     required
                   />
-                  <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                  <small className="agenda-config-hint">
                     Esta chave será utilizada para gerar o QR Code de gorjetas digitais Pix para os clientes.
                   </small>
                 </div>
-                <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loadingPix}>
+                <button type="submit" className="btn btn-primary agenda-config-btn-full" disabled={loadingPix}>
                   {loadingPix ? 'Salvar...' : 'Salvar Chave Pix'}
                 </button>
               </form>
@@ -347,8 +334,8 @@ export default function AgendaConfigPage() {
               <div className="card-header mb-1">
                 <h3>🚫 Bloquear Data / Folga</h3>
               </div>
-              <form onSubmit={handleAddBloqueio} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div className="form-group" style={{ textAlign: 'left' }}>
+              <form onSubmit={handleAddBloqueio} className="agenda-config-form-col">
+                <div className="form-group agenda-config-form-left">
                   <label className="form-label">Data de Bloqueio</label>
                   <input
                     type="date"
@@ -360,8 +347,8 @@ export default function AgendaConfigPage() {
                   />
                 </div>
                 
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  <div className="form-group" style={{ textAlign: 'left', flex: 1 }}>
+                <div className="agenda-config-time-row">
+                  <div className="form-group agenda-config-time-col">
                     <label className="form-label">Início (Opcional)</label>
                     <input
                       type="time"
@@ -370,7 +357,7 @@ export default function AgendaConfigPage() {
                       onChange={(e) => setNovaHoraInicio(e.target.value)}
                     />
                   </div>
-                  <div className="form-group" style={{ textAlign: 'left', flex: 1 }}>
+                  <div className="form-group agenda-config-time-col">
                     <label className="form-label">Término (Opcional)</label>
                     <input
                       type="time"
@@ -381,7 +368,7 @@ export default function AgendaConfigPage() {
                   </div>
                 </div>
 
-                <div className="form-group" style={{ textAlign: 'left' }}>
+                <div className="form-group agenda-config-form-left">
                   <label className="form-label">Motivo (Feriado, Férias, Folga...)</label>
                   <input
                     type="text"
@@ -391,7 +378,7 @@ export default function AgendaConfigPage() {
                     onChange={(e) => setNovoMotivo(e.target.value)}
                   />
                 </div>
-                <button type="submit" className="btn btn-secondary" style={{ width: '100%' }}>
+                <button type="submit" className="btn btn-secondary agenda-config-btn-full">
                   Adicionar Bloqueio
                 </button>
               </form>
@@ -403,37 +390,27 @@ export default function AgendaConfigPage() {
                 <h3>📋 Bloqueios Ativos</h3>
               </div>
               {bloqueios.length === 0 ? (
-                <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>
+                <p className="agenda-config-blocks-empty">
                   Nenhum bloqueio cadastrado para este barbeiro.
                 </p>
               ) : (
-                <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                <div className="agenda-config-blocks-list">
                   {bloqueios.map(b => (
                     <div
                       key={b.id || `${b.data_bloqueio}_${b.hora_inicio || ''}`}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '0.75rem 1rem',
-                        borderRadius: '8px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        marginBottom: '0.5rem'
-                      }}
+                      className="agenda-config-block-item"
                     >
-                      <div style={{ textAlign: 'left' }}>
-                        <div style={{ fontWeight: '600', fontSize: '0.85rem' }}>
+                      <div className="agenda-config-block-left">
+                        <div className="agenda-config-block-date">
                           {new Date(b.data_bloqueio + 'T00:00:00').toLocaleDateString('pt-BR')}
                           {b.hora_inicio && b.hora_fim && ` (${b.hora_inicio} - ${b.hora_fim})`}
                         </div>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                        <div className="agenda-config-block-reason">
                           {b.motivo || (b.hora_inicio ? 'Intervalo pontual' : 'Folga pontual')}
                         </div>
                       </div>
                       <button
-                        className="btn btn-ghost btn-sm"
-                        style={{ color: '#e71d36' }}
+                        className="btn btn-ghost btn-sm agenda-config-block-remove"
                         title="Remover Bloqueio"
                         onClick={() => handleRemoveBloqueio(b.data_bloqueio)}
                       >

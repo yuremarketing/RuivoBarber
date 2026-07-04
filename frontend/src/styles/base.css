@@ -62,6 +62,23 @@
   --gold-15: rgba(var(--gold-rgb), 0.15);
   --gold-25: rgba(var(--gold-rgb), 0.25);
   
+  /* Red (Danger/Cancel) */
+  --red-rgb: 239, 68, 68;
+  --red-15: rgba(var(--red-rgb), 0.15);
+  --red-25: rgba(var(--red-rgb), 0.25);
+  --red-30: rgba(var(--red-rgb), 0.30);
+  
+  /* Primary warm (legacy e07a5f) */
+  --primary-rgb: 224, 122, 95;
+  --primary-15: rgba(var(--primary-rgb), 0.15);
+  --primary-20: rgba(var(--primary-rgb), 0.20);
+  --primary-40: rgba(var(--primary-rgb), 0.40);
+  --primary-60: rgba(var(--primary-rgb), 0.60);
+  
+  /* Gold Alt (legacy f5a623) */
+  --gold-alt-rgb: 245, 166, 35;
+  --gold-alt-20: rgba(var(--gold-alt-rgb), 0.20);
+  
   --bg-card-rgb: 22, 26, 36;
   
   /* Fonts */

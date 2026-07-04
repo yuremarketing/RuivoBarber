@@ -51,25 +51,25 @@ export default function AvaliacaoModal({ agendamento, onClose, onSuccess }) {
 
         {success ? (
           <div className="flex-column flex-align-center gap-1 py-2 text-center">
-            <span style={{ fontSize: '3rem', animation: 'bounce 1s infinite' }}>🎉</span>
-            <h4 style={{ color: 'var(--gold)', margin: 0 }}>Obrigado pelo feedback!</h4>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+            <span className="avaliacao-emoji">🎉</span>
+            <h4 className="avaliacao-thanks">Obrigado pelo feedback!</h4>
+            <p className="avaliacao-thanks-desc">
               Sua avaliação ajuda a manter o nível lendário da nossa barbearia.
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex-column gap-1-25 py-0-5">
             <div className="border-b pb-0-75 text-left">
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 0.25rem 0' }}>
+              <p className="avaliacao-desc">
                 Como foi seu último corte com o barbeiro <strong>{agendamento.barbeiro_nome}</strong>?
               </p>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              <span className="avaliacao-meta">
                 Realizado em: {dataFormatada} | Serviço: {agendamento.servico_nome}
               </span>
             </div>
 
             <div className="flex-column flex-align-center gap-0-5">
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+              <span className="avaliacao-nota-label">
                 {nota === 1 && '⭐ Terrível'}
                 {nota === 2 && '⭐⭐ Ruim'}
                 {nota === 3 && '⭐⭐⭐ Regular'}
@@ -82,25 +82,14 @@ export default function AvaliacaoModal({ agendamento, onClose, onSuccess }) {
                   <button
                     key={star}
                     type="button"
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      fontSize: '2rem',
-                      cursor: 'pointer',
-                      padding: 0,
-                      outline: 'none',
-                      transition: 'transform 0.15s ease',
-                      transform: (hoverNota || nota) >= star ? 'scale(1.15)' : 'scale(1)'
-                    }}
+                    className="avaliacao-star-btn"
+                    style={{ transform: (hoverNota || nota) >= star ? 'scale(1.15)' : 'scale(1)' }}
                     onClick={() => setNota(star)}
                     onMouseEnter={() => setHoverNota(star)}
                     onMouseLeave={() => setHoverNota(0)}
                     title={`Nota ${star}`}
                   >
-                    <span style={{
-                      color: (hoverNota || nota) >= star ? 'var(--gold)' : 'var(--text-muted)',
-                      textShadow: (hoverNota || nota) >= star ? '0 0 8px rgba(245, 166, 35, 0.4)' : 'none'
-                    }}>
+                    <span className={(hoverNota || nota) >= star ? 'avaliacao-star-active' : 'avaliacao-star-inactive'}>
                       ★
                     </span>
                   </button>
@@ -108,42 +97,39 @@ export default function AvaliacaoModal({ agendamento, onClose, onSuccess }) {
               </div>
             </div>
 
-            <div className="form-group" style={{ textAlign: 'left' }}>
+            <div className="form-group gorjeta-form-group-left">
               <label className="form-label">Comentário / Sugestão (Opcional)</label>
               <textarea
-                className="form-input"
+                className="form-input avaliacao-textarea"
                 rows="4"
                 placeholder="Conte-nos o que achou do atendimento..."
                 value={comentario}
                 onChange={(e) => setComentario(e.target.value)}
                 maxLength={300}
-                style={{ resize: 'none', padding: '0.5rem', fontFamily: 'inherit' }}
               />
-              <div style={{ textAlign: 'right', fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+              <div className="avaliacao-char-count">
                 {comentario.length}/300 caracteres
               </div>
             </div>
 
             {errorMsg && (
-              <div style={{ color: 'var(--red)', fontSize: '0.8rem', padding: '0.5rem', background: 'rgba(233,69,96,0.05)', border: '1px solid var(--red)', borderRadius: '4px', textAlign: 'left' }}>
+              <div className="avaliacao-error">
                 ⚠️ {errorMsg}
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+            <div className="avaliacao-actions">
               <button
                 type="button"
-                className="btn btn-ghost"
+                className="btn btn-ghost avaliacao-btn-back"
                 onClick={onClose}
-                style={{ flex: 1 }}
                 disabled={loading}
               >
                 Voltar
               </button>
               <button
                 type="submit"
-                className="btn btn-primary"
-                style={{ flex: 2 }}
+                className="btn btn-primary avaliacao-btn-submit"
                 disabled={loading}
               >
                 {loading ? 'Enviando...' : 'Enviar Avaliação'}

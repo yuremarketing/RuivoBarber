@@ -16,24 +16,22 @@ func NewQueuePgRepository(db *sql.DB) ports.QueueRepository {
 	return &QueuePgRepository{db: db}
 }
 
-func (r *QueuePgRepository) RegistrarCheckIn(ctx context.Context, agendamentoID int) error {
+func (r *QueuePgRepository) RegistrarCheckIn(ctx context.Context, agendamentoID int) (int, error) {
 	query := `
 		UPDATE Agendamentos
 		SET Status = 'Presente', CheckInTime = NOW()
 		WHERE ID = $1 AND Status IN ('Confirmado', 'Pendente')
+		RETURNING BarbeiroID
 	`
-	res, err := r.db.ExecContext(ctx, query, agendamentoID)
+	var barbeiroID int
+	err := r.db.QueryRowContext(ctx, query, agendamentoID).Scan(&barbeiroID)
 	if err != nil {
-		return err
+		if err == sql.ErrNoRows {
+			return 0, errors.New("agendamento não encontrado ou em status inválido para check-in")
+		}
+		return 0, err
 	}
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return errors.New("agendamento não encontrado ou em status inválido para check-in")
-	}
-	return nil
+	return barbeiroID, nil
 }
 
 func (r *QueuePgRepository) RegistrarEmCadeira(ctx context.Context, agendamentoID int) error {

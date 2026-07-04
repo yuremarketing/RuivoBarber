@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 
 function RpgProgressBar({ xpAtual = 0, nivel = 'Corte Iniciante' }) {
+  const safeXpAtual = Number(xpAtual) || 0;
   const getProximoNivelXP = (nivelNome, currentXp) => {
     let nomeNormalizado = ''
     if (typeof nivelNome === 'number') {
@@ -28,8 +29,8 @@ function RpgProgressBar({ xpAtual = 0, nivel = 'Corte Iniciante' }) {
     }
   }
 
-  const { nextXp, nextNivel, xpFaltando, maxLevel } = getProximoNivelXP(nivel, xpAtual)
-  const percentual = maxLevel ? 100 : Math.min((xpAtual / nextXp) * 100, 100)
+  const { nextXp, nextNivel, xpFaltando, maxLevel } = getProximoNivelXP(nivel, safeXpAtual)
+  const percentual = maxLevel ? 100 : Math.min((safeXpAtual / nextXp) * 100, 100)
   
   // Média de 15 XP por atendimento
   const atendimentosEstimados = Math.ceil(xpFaltando / 15)
@@ -41,7 +42,7 @@ function RpgProgressBar({ xpAtual = 0, nivel = 'Corte Iniciante' }) {
           {maxLevel ? 'Nível Máximo Atingido!' : `Próximo Nível: ${nextNivel}`}
         </span>
         <span className="rpg-progress-stats">
-          {xpAtual} / {maxLevel ? xpAtual : nextXp} XP
+          {safeXpAtual} / {maxLevel ? safeXpAtual : nextXp} XP
         </span>
       </div>
 

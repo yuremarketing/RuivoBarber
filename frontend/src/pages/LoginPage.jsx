@@ -10,6 +10,13 @@ export default function LoginPage() {
   
   // Login fields
   const [login, setLogin] = useState('')
+  
+  useEffect(() => {
+    const userSessionStr = localStorage.getItem('ruivobarber_user')
+    if (userSessionStr) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [navigate])
   const [senha, setSenha] = useState('')
   const [cargo, setCargo] = useState('Cliente') // default para cliente
   
@@ -17,6 +24,7 @@ export default function LoginPage() {
   const [regNome, setRegNome] = useState('')
   const [regLogin, setRegLogin] = useState('')
   const [regSenha, setRegSenha] = useState('')
+  const [regWhatsappConsent, setRegWhatsappConsent] = useState(false)
 
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
@@ -123,12 +131,17 @@ export default function LoginPage() {
       setErro('Por favor, preencha todos os campos.')
       return
     }
+    
+    if (!regWhatsappConsent) {
+      setErro('Você precisa consentir com os termos para continuar.')
+      return
+    }
 
     setLoading(true)
     setErro('')
     setSucesso('')
 
-    registrarPublico(regNome, regLogin, regSenha)
+    registrarPublico(regNome, regLogin, regSenha, regWhatsappConsent)
       .then(response => {
         const data = response.data
         setSucesso('Conta criada com sucesso! Redirecionando para o painel...')
@@ -212,53 +225,47 @@ export default function LoginPage() {
 
   return (
     <div className="login-page">
-      <div className="login-card fade-in-up">
+      {/* ── Dota 2 Particles ─── */}
+      {Array.from({ length: 15 }).map((_, i) => (
+        <div 
+          key={i} 
+          className="particle forge-glow"
+          style={{
+            left: `${Math.random() * 100}%`,
+            bottom: `-20px`,
+            width: `${Math.random() * 6 + 2}px`,
+            height: `${Math.random() * 6 + 2}px`,
+            animation: `embers ${Math.random() * 3 + 2}s infinite ${Math.random() * 2}s`
+          }}
+        />
+      ))}
+      <div className="login-card dota-card fade-in-up">
         <div className="login-brand">
-          <div className="logo" style={{ fontSize: '3rem', textShadow: '0 0 10px rgba(233,69,96,0.5)' }}></div>
-          <h1 style={{ background: 'linear-gradient(90deg, #e94560, #f5a623)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 800 }}>RuivoBarber</h1>
-          <p>Sistema de Gestão com Gamificação RPG</p>
+          <div className="logo login-page-logo-container forge-glow"></div>
+          <h1 className="login-page-title" style={{ fontFamily: 'var(--font-display)', color: 'var(--gold)', textShadow: '0 0 15px var(--accent)' }}>RuivoBarber</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>Sistema de Gestão com Gamificação RPG</p>
         </div>
 
         {/* Alternar Abas */}
-        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '1.5rem' }}>
+        <div className="login-page-tabs">
           <button 
             type="button" 
             onClick={() => { setIsRegistering(false); setErro(''); setSucesso(''); }}
-            style={{
-              flex: 1,
-              padding: '0.8rem',
-              background: 'none',
-              border: 'none',
-              color: !isRegistering ? '#fff' : 'var(--text-muted)',
-              borderBottom: !isRegistering ? '2px solid #e94560' : 'none',
-              cursor: 'pointer',
-              fontWeight: 600,
-              fontSize: '0.95rem'
-            }}
+            className={`login-page-tab-btn ${!isRegistering ? 'login-page-tab-btn--active' : 'login-page-tab-btn--inactive'}`}
           >
             Entrar
           </button>
           <button 
             type="button" 
             onClick={() => { setIsRegistering(true); setErro(''); setSucesso(''); }}
-            style={{
-              flex: 1,
-              padding: '0.8rem',
-              background: 'none',
-              border: 'none',
-              color: isRegistering ? '#fff' : 'var(--text-muted)',
-              borderBottom: isRegistering ? '2px solid #e94560' : 'none',
-              cursor: 'pointer',
-              fontWeight: 600,
-              fontSize: '0.95rem'
-            }}
+            className={`login-page-tab-btn ${isRegistering ? 'login-page-tab-btn--active' : 'login-page-tab-btn--inactive'}`}
           >
             Criar Conta
           </button>
         </div>
 
-        {erro && <div className="banner error" style={{ padding: '0.8rem', marginBottom: '1rem', fontSize: '0.85rem' }}>{erro}</div>}
-        {sucesso && <div className="banner success" style={{ padding: '0.8rem', marginBottom: '1rem', fontSize: '0.85rem', color: '#4caf50' }}>{sucesso}</div>}
+        {erro && <div className="banner error login-page-alert-error">{erro}</div>}
+        {sucesso && <div className="banner success login-page-alert-success">{sucesso}</div>}
 
         {!isRegistering ? (
           /* Formulário de Login */
@@ -293,28 +300,14 @@ export default function LoginPage() {
                 required 
               />
             </div>
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.8rem' }} disabled={loading}>
+            <button type="submit" className="btn btn-primary login-page-submit-btn" disabled={loading}>
               {loading ? 'Entrando...' : 'Entrar no Sistema'}
             </button>
             {showTestButton && (
               <button 
                 type="button" 
                 onClick={handleTestLogin}
-                style={{ 
-                  width: '100%', 
-                  padding: '0.8rem', 
-                  marginTop: '0.8rem', 
-                  backgroundColor: '#39FF14', 
-                  color: '#000', 
-                  fontWeight: 'bold', 
-                  border: 'none', 
-                  borderRadius: '8px', 
-                  cursor: 'pointer',
-                  boxShadow: '0 0 10px #39FF14',
-                  transition: 'transform 0.1s, box-shadow 0.2s'
-                }}
-                onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 20px #39FF14'}
-                onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 10px #39FF14'}
+                className="login-page-test-btn"
               >
                 ⚡ ENTRAR MODO TESTE (MOCK)
               </button>
@@ -356,17 +349,31 @@ export default function LoginPage() {
                 required 
               />
             </div>
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.8rem' }} disabled={loading}>
+            
+            <div className="form-group checkbox-group" style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginTop: '10px', marginBottom: '20px' }}>
+              <input 
+                type="checkbox" 
+                id="whatsappConsent"
+                checked={regWhatsappConsent}
+                onChange={e => setRegWhatsappConsent(e.target.checked)}
+                style={{ marginTop: '4px' }}
+              />
+              <label htmlFor="whatsappConsent" style={{ fontSize: '0.85rem', color: '#ccc', lineHeight: '1.4' }}>
+                Aceito receber notificações essenciais sobre meus agendamentos e promoções exclusivas via WhatsApp. 
+                <span style={{ display: 'block', fontSize: '0.75rem', opacity: 0.7, marginTop: '4px' }}>(Em conformidade com a LGPD, você poderá revogar este consentimento a qualquer momento.)</span>
+              </label>
+            </div>
+            <button type="submit" className="btn btn-primary login-page-submit-btn" disabled={loading}>
               {loading ? 'Cadastrando...' : 'Criar Minha Conta'}
             </button>
           </form>
         )}
 
         {/* Divisor Social (oculto para administradores e barbeiros via CSS display) */}
-        <div style={{ display: cargo === 'Cliente' ? 'flex' : 'none', alignItems: 'center', margin: '1.5rem 0', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
-          <span style={{ padding: '0 0.8rem' }}>ou continue com</span>
-          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
+        <div className={`login-page-social-divider ${cargo === 'Cliente' ? 'login-page-social-divider--visible' : 'login-page-social-divider--hidden'}`}>
+          <div className="login-page-social-line" />
+          <span className="login-page-social-text">ou continue com</span>
+          <div className="login-page-social-line" />
         </div>
 
         {/* Container do Google One Tap / Sign In (oculto para administradores e barbeiros via CSS display) */}
@@ -436,16 +443,16 @@ export default function LoginPage() {
         </div>
         */}
 
-        <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+        <div className="login-page-dev-section">
           {devMode ? (
             <>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-                Demos: <strong style={{ color: 'var(--text-secondary)' }}>admin/admin</strong> | <strong style={{ color: 'var(--text-secondary)' }}>cliente/cliente</strong>
+              <p className="login-page-dev-hint">
+                Demos: <strong className="login-page-dev-hint-strong">admin/admin</strong> | <strong className="login-page-dev-hint-strong">cliente/cliente</strong>
               </p>
               <button 
                 type="button" 
                 onClick={() => setDevMode(false)}
-                style={{ background: 'none', border: 'none', color: '#e94560', fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline' }}
+                className="login-page-dev-btn"
               >
                 Voltar para o Modo Produção 🔒
               </button>
@@ -454,9 +461,7 @@ export default function LoginPage() {
             <button 
               type="button" 
               onClick={() => setDevMode(true)}
-              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', fontSize: '0.72rem', cursor: 'pointer', transition: 'color 0.2s' }}
-              onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
-              onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.2)'}
+              className="login-page-dev-toggle"
             >
               🛠️ Modo de Desenvolvimento
             </button>

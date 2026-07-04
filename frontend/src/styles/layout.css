@@ -164,8 +164,8 @@
 .alert-error {
   padding: 0.75rem;
   border-radius: var(--radius-xs);
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: var(--red-15);
+  border: 1px solid var(--red-30);
   color: var(--red);
   font-size: 0.9rem;
 }

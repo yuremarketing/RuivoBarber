@@ -1,5 +1,15 @@
 # 📋 TASKS.md - Roadmap de Engenharia RuivoBarber (MVP)
 
+> ⚠️ **SITUAÇÃO ATUAL DO PROJETO (Julho/2026)**
+> 
+> **Fase Atual:** IMPLEMENTAÇÃO DA ISSUE #66 (Go-Live)
+> **Progresso Real:** Arquitetura madura, Issue #66 parcialmente implementada, Piloto e Go-Live NÃO iniciados.
+> 
+> **Governança do Repositório:**
+> - **TASKS.md:** Contexto estratégico e fundações consolidadas. As tarefas marcadas abaixo representam a base já arquitetada e estruturada do sistema.
+> - **Issues (GitHub):** Fonte oficial da execução diária. É lá que a escrita do código está acontecendo agora.
+> - **Regra de Ouro:** A métrica definitiva de progresso na fase atual é exclusivamente código implementado, compilando, testado e commitado na branch de trabalho.
+
 ## 📌 Contexto e Governança
 Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arquitetura Hexagonal (Ports and Adapters)** no backend (Go) e o isolamento de regras de negócios via **Services/Hooks** no frontend (React). 
 > **Regra para Agentes de IA:** Sempre leia este arquivo antes de iniciar uma tarefa, escolha uma tarefa não marcada, implemente-a seguindo as regras de `.antigravityrules`, e ao final, marque a caixa com `[x]`.
@@ -139,25 +149,27 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 - [x] [PDV-BE] Task 62: Controle de Sessão de Caixa (Abertura/Fechamento) (Issue #19)
 - [x] [PDV-BE] Task 63: Processamento de Venda e Integração de Fidelidade (Issue #20)
 - [x] [Agenda-Slots] Task #28 (#69): Bloqueio e Liberação de Horários Específicos do Barbeiro
+- [x] [Agenda-Slots] Task #24 (38-C): Algoritmo de Validação de Slots de Duração Variável
+- [x] [MLOps] Task #27 (#68): Modelagem de Metadados Preditivos de Agendamento
 
 ### 🖥️ Frontend (Telas React)
-- [ ] [Wizard] Task 38-BC-FE: Wizard de Agendamento Passo a Passo (BookingWizard) com Fotos e Estrelas Reais (Issue #14/15)
+- [x] [Wizard] Task 38-BC-FE: Wizard de Agendamento Passo a Passo (BookingWizard) com Fotos e Estrelas Reais (Issue #14/15)
 - [x] [Checkout] Task 38-D-FE: Painel do Admin para Cadastrar Chave Pix e Modal de Gorjeta para Clientes (Issue #16)
 - [x] [Review/Rewards] Task 38-E/40-FE: Modal de Avaliação Pós-Atendimento e Card do "Último Corte" no Portal do Cliente (Issues #5 e #17)
 - [x] [PDV-FE] Task 64: Tela de Abertura/Fechamento e Painel do Caixa (Issue #21)
 - [x] [PDV-FE] Task 65: Tela de Checkout / Caixa Registradora (Interface PDV) (Issue #22)
-- [ ] [PDV-FE/BE] Task 66: Relatório Financeiro e Comissões dos Barbeiros (Issue #23)
-- [ ] [Queue] Task 41: Controle de Presença (Check-in/Check-out) e Tempo Médio
+- [x] [PDV-FE/BE] Task 66: Relatório Financeiro e Comissões dos Barbeiros (Issue #23)
+- [x] [Queue] Task 41: Controle de Presença (Check-in/Check-out) e Tempo Médio
   - [x] Backend: Gerenciamento do status "Em Cadeira" e cálculo automático de tempo médio do corte.
-  - [ ] Frontend: Painel operacional administrativo para controle físico da fila da barbearia (Issue #6)
-- [ ] [Badges] Task 52: Vitrine de Badges no PlayerCard do Cliente
+  - [x] Frontend: Painel operacional administrativo para controle físico da fila da barbearia (Issue #6)
+- [x] [Badges] Task 52: Vitrine de Badges no PlayerCard do Cliente
 - [x] [Store] Task 50: Inventário do Cliente no Frontend (Bolsa de Itens/Poções)
 - [x] [Fame] Task 57: Galeria Histórica de Lendários (Hall of Fame)
 
 ### 🎨 UX (Experiência, Animações e Mídias)
 - [x] [UX-Themes] Task 70: Implementação de Sistema de Temas com Popover e Hover Preview (Dark, Light, Royal, Frostbite, Forest, Bloodmoon, Mystic)
-- [ ] [UX-Audio] Task 55: Efeitos Sonoros e Efeitos Visuais de Level Up no Frontend
-  - [ ] Frontend: Integrar transições com sons arcade e confetes ao subir de nível ou resgatar cupons.
+- [x] [UX-Audio] Task 55: Efeitos Sonoros e Efeitos Visuais de Level Up no Frontend
+  - [x] Frontend: Integrar transições com sons arcade e confetes ao subir de nível ou resgatar cupons.
 
 ### 🛡️ Auditoria do Admin (Tasks Geradas)
 - [x] [Admin-Dashboard] Task 71: Criar rota backend `/api/v1/dashboard` e integrar no `DashboardPage.jsx` para remover os mocks de KPIs e Agendamentos.
@@ -172,5 +184,5 @@ Este arquivo é o mapa de execução oficial do projeto. O sistema segue a **Arq
 - [x] [Admin-CRUD] Task 81: Gestão de cargo (promover/rebaixar).
 
 ### 🚀 DevOps / Infraestrutura (CI/CD)
-- [ ] [DevOps] Task 60: Implantação do Harness.io (CI/CD)
+- [x] [DevOps] Task 60: Implantação de CI/CD (Substituída pelo GitHub Actions `ci.yml` e `deploy.yml`)
 

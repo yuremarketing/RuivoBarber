@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
-import { fetchServicos, fetchBarbeiros, fetchAgendamentos, fetchAgendaBarbeiro, criarAgendamento, concluirAtendimento, registrarFalta, fetchDisponibilidadeBarbeiro, fetchBloqueiosBarbeiro } from '../services/api.js'
+import { fetchServicos, fetchBarbeiros, fetchAgendamentos, fetchAgendaBarbeiro, criarAgendamento, concluirAtendimento, registrarFalta, registrarCheckIn, registrarEmCadeira, fetchDisponibilidadeBarbeiro, fetchBloqueiosBarbeiro } from '../services/api.js'
 import BookingWizard from '../components/BookingWizard.jsx'
 import GorjetaModal from '../components/GorjetaModal.jsx'
 import ErrorState from '../components/ErrorState.jsx'
@@ -416,6 +416,30 @@ export default function AgendamentosPage() {
     }
   }
 
+  const handleCheckIn = async (id) => {
+    if (window.confirm('Confirmar chegada do cliente na barbearia? (Irá notificar o barbeiro)')) {
+      try {
+        await registrarCheckIn(id)
+        triggerToast('Check-in realizado! Barbeiro notificado.')
+        loadData()
+      } catch (err) {
+        alert('Erro no Check-in: ' + (err.response?.data?.error || err.message))
+      }
+    }
+  }
+
+  const handleEmCadeira = async (id) => {
+    if (window.confirm('Mover cliente para a cadeira? (Início do atendimento)')) {
+      try {
+        await registrarEmCadeira(id)
+        triggerToast('Atendimento iniciado!')
+        loadData()
+      } catch (err) {
+        alert('Erro: ' + (err.response?.data?.error || err.message))
+      }
+    }
+  }
+
   const statuses = ['Todos', 'Pendente', 'Confirmado', 'Concluido', 'Cancelado', 'Falta']
   const filtered = filtroStatus === 'Todos' ? agendamentos : agendamentos.filter(a => a.status === filtroStatus)
 
@@ -463,11 +487,11 @@ export default function AgendamentosPage() {
 
       <div className="card">
         {error ? (
-          <div style={{ padding: '1rem' }}>
+          <div className="agendamentos-modal-wrapper">
             <ErrorState message={error} onRetry={loadData} />
           </div>
         ) : loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '1rem' }}>
+          <div className="agendamentos-modal-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {[1, 2, 3, 4].map(i => (
               <div key={i} className="skeleton-pulse" style={{ height: '35px', width: '100%', borderRadius: '4px' }}></div>
             ))}
@@ -489,22 +513,27 @@ export default function AgendamentosPage() {
                     <td className="agendamentos-table-strong">R$ {a.preco ? a.preco.toFixed(2) : '35.00'}</td>
                     <td><span className={`badge badge-${a.status.toLowerCase()}`}>{a.status}</span></td>
                     <td>
-                      {!isClient && a.status === 'Pendente' && (
+                      {!isClient && (a.status === 'Pendente' || a.status === 'Confirmado') && (
+                        <button className="btn btn-ghost btn-sm" title="Check-in (Chegou)" onClick={() => handleCheckIn(a.id)}>🔔</button>
+                      )}
+                      {!isClient && a.status === 'Presente' && (
+                        <button className="btn btn-ghost btn-sm" title="Em Cadeira" onClick={() => handleEmCadeira(a.id)}>💺</button>
+                      )}
+                      {!isClient && (a.status === 'Pendente' || a.status === 'Confirmado' || a.status === 'Presente' || a.status === 'EmCadeira') && (
                         <button className="btn btn-ghost btn-sm" title="Concluir Atendimento" onClick={() => handleConcluir(a.id)}>🏁</button>
                       )}
-                      {!isClient && a.status === 'Pendente' && (
+                      {!isClient && (a.status === 'Pendente' || a.status === 'Confirmado') && (
                         <button className="btn btn-ghost btn-sm" title="Registrar Falta" onClick={() => handleFalta(a.id)}>❌</button>
                       )}
                       {a.status === 'Pendente' && (
-                        <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Aguardando</span>
+                        <span className="agendamentos-status-waiting">Aguardando</span>
                       )}
                       {a.status !== 'Pendente' && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
-                          <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Finalizado</span>
+                        <div className="agendamentos-actions-wrapper">
+                          <span className="agendamentos-status-finished">Finalizado</span>
                           {isClient && a.status === 'Concluido' && (
                             <button
-                              className="btn btn-ghost btn-sm"
-                              style={{ color: 'var(--gold)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.2rem 0.5rem', border: '1px solid rgba(245,166,35,0.2)', borderRadius: '4px' }}
+                              className="btn btn-ghost btn-sm agendamentos-btn-tip"
                               title="Enviar Gorjeta Pix ao Barbeiro"
                               onClick={() => {
                                 setSelectedAgendamentoParaGorjeta(a)
@@ -527,7 +556,7 @@ export default function AgendamentosPage() {
 
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal" style={isClient ? { height: '650px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' } : {}} onClick={e => e.stopPropagation()}>
+          <div className={`modal ${isClient ? 'agendamentos-modal-client' : ''}`} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Novo Agendamento</h3>
               <button className="btn-ghost" onClick={() => setShowModal(false)}>✕</button>
