@@ -752,6 +752,7 @@ func main() {
     relatoriosHandler := handlers.NewRelatoriosHandler(relatoriosService)
 
     healthHandler := handlers.NewHealthHandler(db)
+    opsHandler := handlers.NewOpsHandler(db, rpgWorker, generalSSEHub)
 
     app := fiber.New(fiber.Config{AppName: "RuivoBarber API v1.0"})
     
@@ -802,6 +803,7 @@ func main() {
     })
 
     healthHandler.RegisterRoutes(app)
+    opsHandler.RegisterRoutes(app)
     questHandler.RegisterRoutes(app)
     clienteHandler.RegisterRoutes(app)
     claHandler.RegisterRoutes(app)
@@ -837,5 +839,6 @@ func main() {
     }()
 
     log.Printf("🚀 RuivoBarber API a correr na porta %s", port)
+    services.SendDiscordAlert("🚀 RuivoBarber API (Backend) iniciada com sucesso na porta " + port)
     log.Fatal(app.Listen(":" + port))
 }

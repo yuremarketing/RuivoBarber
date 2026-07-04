@@ -4,7 +4,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { 
   Swords, Ticket, Hourglass, Shield, Tv, Backpack, Trophy, 
   Calendar, Settings, LayoutDashboard, Users, Banknote, ShoppingCart, 
-  Scissors, CalendarDays, ChevronLeft, ChevronRight, LogOut, Palette, PieChart
+  Scissors, CalendarDays, ChevronLeft, ChevronRight, LogOut, Palette, PieChart, Activity
 } from 'lucide-react'
 
 export default function Sidebar({ collapsed, onToggle, theme, onSetTheme, onPreviewTheme }) {
@@ -93,6 +93,7 @@ export default function Sidebar({ collapsed, onToggle, theme, onSetTheme, onPrev
       
       { section: 'Mídia & Sistema' },
       { path: '/lives', icon: <Tv size={20} strokeWidth={1.5} />, label: 'Lives & Transmissões' },
+      { path: '/operacoes', icon: <Activity size={20} strokeWidth={1.5} />, label: 'Saúde & Operações' },
     ]
   }
 

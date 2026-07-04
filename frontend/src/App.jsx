@@ -23,7 +23,7 @@ const CaixaPage = React.lazy(() => import('./pages/CaixaPage.jsx'))
 const CheckoutPage = React.lazy(() => import('./pages/CheckoutPage.jsx'))
 const HallOfFamePage = React.lazy(() => import('./pages/HallOfFamePage.jsx'))
 const LojaPage = React.lazy(() => import('./pages/LojaPage.jsx'))
-
+const OperationsPage = React.lazy(() => import('./pages/OperationsPage.jsx'))
 
 import RpgListener from './components/RpgListener.jsx'
 import { ToastContainer } from 'react-toastify'
@@ -106,6 +106,7 @@ export default function App() {
                 <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
                 <Route path="/hall-of-fame" element={<ProtectedRoute><HallOfFamePage /></ProtectedRoute>} />
                 <Route path="/loja" element={<ProtectedRoute><LojaPage /></ProtectedRoute>} />
+                <Route path="/operacoes" element={<ProtectedRoute allowedRoles={['Adm']}><OperationsPage /></ProtectedRoute>} />
                 <Route path="/debug-sentry" element={<button onClick={() => { throw new Error("Sentry Frontend Test Error"); }}>Throw Test Error</button>} />
                 <Route path="*" element={<Navigate to="/login" replace />} />
               </Routes>

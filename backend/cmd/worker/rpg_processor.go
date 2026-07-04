@@ -49,6 +49,12 @@ func (p *RPGProcessor) Wait() {
 	log.Println("[RPG_PROCESSOR] Encerrado com segurança.")
 }
 
+func (p *RPGProcessor) IsHealthy() bool {
+    // If the process is running, we consider it healthy for now.
+    // In a real scenario, we could track the last processed event timestamp.
+    return p.db != nil
+}
+
 type OutboxEvent struct {
 	ID       int
 	VendaID  int
@@ -131,6 +137,9 @@ func (p *RPGProcessor) processBatch(ctx context.Context) {
                     scope.SetTag("venda_id", fmt.Sprintf("%d", e.VendaID))
                     sentry.CaptureException(fmt.Errorf("DLQ Reached for Event %d: %w", e.ID, err))
                 })
+
+				// Enviar Alerta Discord
+				// Use um goroutine ou importe o pacote services
 			}
 		} else {
 			_, _ = tx.ExecContext(ctx, "UPDATE eventos_rpg_outbox SET processado = true, erro_ultimo = NULL WHERE id = $1", e.ID)
