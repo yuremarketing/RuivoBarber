@@ -14,6 +14,8 @@ type Cliente struct {
 	MolduraEquipada string  `json:"molduraEquipada"`
 	FundoEquipado   string  `json:"fundoEquipado"`
 	EfeitoEquipado  string  `json:"efeitoEquipado"`
+	WhatsappConsent bool    `json:"whatsappConsent"`
+	Telefone        string  `json:"telefone"`
 }
 
 type Configuracoes struct {
@@ -21,4 +23,9 @@ type Configuracoes struct {
 	ChaveAPIWhatsApp string `json:"chaveApiWhatsapp"`
 	UrlWebhook       string `json:"urlWebhook"`
 	TokenValidacao   string `json:"tokenValidacao"`
+	AceitaDinheiro   bool   `json:"aceitaDinheiro"`
+	AceitaPix        bool   `json:"aceitaPix"`
+	AceitaCartao     bool   `json:"aceitaCartao"`
+	ChavePix         string `json:"chavePix"`
+	MercadoPagoToken string `json:"mercadoPagoToken"`
 }

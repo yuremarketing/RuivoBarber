@@ -31,7 +31,8 @@ func (r *ClientePgRepository) FindAll() ([]domain.Cliente, error) {
                COALESCE(p.moedas, 0) as moedas,
                COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Moldura' LIMIT 1), '') as moldura_equipada,
                COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Background' LIMIT 1), '') as fundo_equipado,
-               COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Efeito' LIMIT 1), '') as efeito_equipado
+               COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Efeito' LIMIT 1), '') as efeito_equipado,
+               COALESCE(u.whatsappconsent, FALSE) as whatsapp_consent
         FROM Usuarios u
         LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
         LEFT JOIN Niveis n ON p.nivelatual = n.id
@@ -44,7 +45,7 @@ func (r *ClientePgRepository) FindAll() ([]domain.Cliente, error) {
     var clientes []domain.Cliente
     for rows.Next() {
         var c domain.Cliente
-        err := rows.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado)
+        err := rows.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado, &c.WhatsappConsent)
         if err != nil {
             return nil, err
         }
@@ -68,14 +69,15 @@ func (r *ClientePgRepository) FindByID(id int) (*domain.Cliente, error) {
                COALESCE(p.moedas, 0) as moedas,
                COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Moldura' LIMIT 1), '') as moldura_equipada,
                COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Background' LIMIT 1), '') as fundo_equipado,
-               COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Efeito' LIMIT 1), '') as efeito_equipado
+               COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Efeito' LIMIT 1), '') as efeito_equipado,
+               COALESCE(u.whatsappconsent, FALSE) as whatsapp_consent
         FROM Usuarios u
         LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
         LEFT JOIN Niveis n ON p.nivelatual = n.id
         WHERE u.id = $1
     `
     row := r.db.QueryRow(query, id)
-    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado)
+    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado, &c.WhatsappConsent)
     if err != nil {
         return nil, err
     }
@@ -94,14 +96,15 @@ func (r *ClientePgRepository) FindByLogin(login string) (*domain.Cliente, error)
                COALESCE(p.moedas, 0) as moedas,
                COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Moldura' LIMIT 1), '') as moldura_equipada,
                COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Background' LIMIT 1), '') as fundo_equipado,
-               COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Efeito' LIMIT 1), '') as efeito_equipado
+               COALESCE((SELECT styleclass FROM UsuarioItens ui JOIN ItensLoja i ON ui.itemid = i.id WHERE ui.usuarioid = u.id AND ui.equipado = TRUE AND i.tipoitem = 'Efeito' LIMIT 1), '') as efeito_equipado,
+               COALESCE(u.whatsappconsent, FALSE) as whatsapp_consent
         FROM Usuarios u
         LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
         LEFT JOIN Niveis n ON p.nivelatual = n.id
         WHERE u.login = $1
     `
     row := r.db.QueryRow(query, login)
-    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado)
+    err := row.Scan(&c.ID, &c.Nome, &c.Login, &c.Cargo, &c.XP, &c.Nivel, &c.BarraPercentual, &c.NomeDoNivel, &c.AvatarURL, &c.Moedas, &c.MolduraEquipada, &c.FundoEquipado, &c.EfeitoEquipado, &c.WhatsappConsent)
     if err != nil {
         return nil, err
     }
@@ -127,8 +130,8 @@ func (r *ClientePgRepository) Save(c *domain.Cliente, hashedSenha string) error 
     defer tx.Rollback()
 
     var id int
-    queryUser := "INSERT INTO Usuarios (nome, login, senha, cargo, avatar_url) VALUES ($1, $2, $3, $4, $5) RETURNING id"
-    err = tx.QueryRowContext(ctx, queryUser, c.Nome, c.Login, hashedSenha, c.Cargo, c.AvatarURL).Scan(&id)
+    queryUser := "INSERT INTO Usuarios (nome, login, senha, cargo, avatar_url, whatsappconsent) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
+    err = tx.QueryRowContext(ctx, queryUser, c.Nome, c.Login, hashedSenha, c.Cargo, c.AvatarURL, c.WhatsappConsent).Scan(&id)
     if err != nil {
         return err
     }
@@ -147,18 +150,30 @@ func (r *ClientePgRepository) Save(c *domain.Cliente, hashedSenha string) error 
 }
 
 func (r *ClientePgRepository) Update(c *domain.Cliente, hashedSenha string) error {
-    if hashedSenha != "" {
-        query := "UPDATE Usuarios SET nome = $1, login = $2, senha = $3, cargo = $4, avatar_url = $5 WHERE id = $6"
-        _, err := r.db.Exec(query, c.Nome, c.Login, hashedSenha, c.Cargo, c.AvatarURL, c.ID)
-        return err
-    }
-    query := "UPDATE Usuarios SET nome = $1, login = $2, cargo = $3, avatar_url = $4 WHERE id = $5"
-    _, err := r.db.Exec(query, c.Nome, c.Login, c.Cargo, c.AvatarURL, c.ID)
-    return err
+	var err error
+	if hashedSenha != "" {
+		query := "UPDATE Usuarios SET nome = $1, login = $2, senha = $3, cargo = $4, avatar_url = $5, whatsappconsent = $6, telefone = $7 WHERE id = $8"
+		_, err = r.db.Exec(query, c.Nome, c.Login, hashedSenha, c.Cargo, c.AvatarURL, c.WhatsappConsent, c.Telefone, c.ID)
+	} else {
+		query := "UPDATE Usuarios SET nome = $1, login = $2, cargo = $3, avatar_url = $4, whatsappconsent = $5, telefone = $6 WHERE id = $7"
+		_, err = r.db.Exec(query, c.Nome, c.Login, c.Cargo, c.AvatarURL, c.WhatsappConsent, c.Telefone, c.ID)
+	}
+	return err
 }
+
 func (r *ClientePgRepository) Delete(id int) error {
-	query := "DELETE FROM Usuarios WHERE id = $1"
-	_, err := r.db.Exec(query, id)
+	// Pseudonimização (LGPD) - Direito ao Esquecimento em vez de exclusão física
+	pseudoID := fmt.Sprintf("%d", id) // Simple suffix
+	query := `
+		UPDATE Usuarios 
+		SET nome = 'CLIENTE_EXCLUIDO_' || $1,
+		    login = 'DELETED_' || $1,
+		    senha = 'DELETED',
+		    avatar_url = '',
+		    whatsappconsent = false
+		WHERE id = $1
+	`
+	_, err := r.db.Exec(query, pseudoID)
 	return err
 }
 func (r *ClientePgRepository) ConcluirAtendimento(agendamentoID int) (*ports.NotificationEvent, error) {
@@ -997,7 +1012,42 @@ func (r *ClientePgRepository) CriarAgendamento(clienteID, barbeiroID, servicoID 
 		}
 	}
 
-	// 7. Inserir o agendamento
+	// 7. Calcular Metadados Preditivos (MLOps)
+	hoje := time.Now().In(loc)
+	
+	diaSemana := int(dataHoraSaoPaulo.Weekday())
+	turno := "Manhã"
+	if dataHoraSaoPaulo.Hour() >= 12 && dataHoraSaoPaulo.Hour() < 18 {
+		turno = "Tarde"
+	} else if dataHoraSaoPaulo.Hour() >= 18 {
+		turno = "Noite"
+	}
+
+	// --- NOVO MLOPS: Cálculos precisos ---
+	tempoAntecedenciaHoras := dataHoraSaoPaulo.Sub(hoje).Hours()
+	if tempoAntecedenciaHoras < 0 {
+		tempoAntecedenciaHoras = 0
+	}
+
+	var concluidos, faltas int
+	err = tx.QueryRowContext(ctx, `
+		SELECT 
+			COUNT(CASE WHEN status = 'Concluido' THEN 1 END),
+			COUNT(CASE WHEN status = 'Falta' THEN 1 END)
+		FROM Agendamentos 
+		WHERE clienteid = $1
+	`, clienteID).Scan(&concluidos, &faltas)
+	if err != nil {
+		return 0, err
+	}
+
+	historicoAssiduidade := 1.0 // Padrão 100% para clientes novos
+	if concluidos+faltas > 0 {
+		historicoAssiduidade = float64(concluidos) / float64(concluidos+faltas)
+	}
+	// -------------------------------------
+
+	// 8. Inserir o agendamento (mantendo apenas campos novos)
 	var id int
 	queryInsert := `
 		INSERT INTO Agendamentos (clienteid, barbeiroid, servicoid, datahora, status)
@@ -1008,6 +1058,17 @@ func (r *ClientePgRepository) CriarAgendamento(clienteID, barbeiroID, servicoID 
 	if err != nil {
 		return 0, err
 	}
+
+	// 9. Inserir os metadados MLOps na nova tabela estruturada
+	queryMlops := `
+		INSERT INTO MlopsAgendamentoMetadata (agendamentoid, tempoantecedenciahoras, diasemana, faixahoraria, historicoassiduidadecliente)
+		VALUES ($1, $2, $3, $4, $5)
+	`
+	_, err = tx.ExecContext(ctx, queryMlops, id, tempoAntecedenciaHoras, diaSemana, turno, historicoAssiduidade)
+	if err != nil {
+		return 0, err
+	}
+
 
 	err = tx.Commit()
 	if err != nil {
@@ -1049,11 +1110,11 @@ func (r *ClientePgRepository) ListarAgendamentosDoCliente(clienteID int) ([]doma
 
 func (r *ClientePgRepository) ObterConfiguracoes() (*domain.Configuracoes, error) {
 	var cfg domain.Configuracoes
-	query := "SELECT id, COALESCE(ChaveAPIWhatsApp, ''), COALESCE(UrlWebhook, ''), COALESCE(TokenValidacao, '') FROM Configuracoes ORDER BY id ASC LIMIT 1"
-	err := r.db.QueryRow(query).Scan(&cfg.ID, &cfg.ChaveAPIWhatsApp, &cfg.UrlWebhook, &cfg.TokenValidacao)
+	query := "SELECT id, COALESCE(ChaveAPIWhatsApp, ''), COALESCE(UrlWebhook, ''), COALESCE(TokenValidacao, ''), COALESCE(AceitaDinheiro, TRUE), COALESCE(AceitaPix, TRUE), COALESCE(AceitaCartao, TRUE), COALESCE(ChavePix, ''), COALESCE(MercadoPagoToken, '') FROM Configuracoes ORDER BY id ASC LIMIT 1"
+	err := r.db.QueryRow(query).Scan(&cfg.ID, &cfg.ChaveAPIWhatsApp, &cfg.UrlWebhook, &cfg.TokenValidacao, &cfg.AceitaDinheiro, &cfg.AceitaPix, &cfg.AceitaCartao, &cfg.ChavePix, &cfg.MercadoPagoToken)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			insertQuery := "INSERT INTO Configuracoes (ChaveAPIWhatsApp, UrlWebhook, TokenValidacao) VALUES ('', '', '') RETURNING id"
+			insertQuery := "INSERT INTO Configuracoes (ChaveAPIWhatsApp, UrlWebhook, TokenValidacao, AceitaDinheiro, AceitaPix, AceitaCartao, ChavePix, MercadoPagoToken) VALUES ('', '', '', TRUE, TRUE, TRUE, '', '') RETURNING id"
 			err = r.db.QueryRow(insertQuery).Scan(&cfg.ID)
 			if err != nil {
 				return nil, err
@@ -1061,6 +1122,11 @@ func (r *ClientePgRepository) ObterConfiguracoes() (*domain.Configuracoes, error
 			cfg.ChaveAPIWhatsApp = ""
 			cfg.UrlWebhook = ""
 			cfg.TokenValidacao = ""
+			cfg.AceitaDinheiro = true
+			cfg.AceitaPix = true
+			cfg.AceitaCartao = true
+			cfg.ChavePix = ""
+			cfg.MercadoPagoToken = ""
 			return &cfg, nil
 		}
 		return nil, err
@@ -1076,11 +1142,11 @@ func (r *ClientePgRepository) SalvarConfiguracoes(cfg *domain.Configuracoes) err
 	}
 
 	if count == 0 {
-		query := "INSERT INTO Configuracoes (ChaveAPIWhatsApp, UrlWebhook, TokenValidacao) VALUES ($1, $2, $3)"
-		_, err = r.db.Exec(query, cfg.ChaveAPIWhatsApp, cfg.UrlWebhook, cfg.TokenValidacao)
+		query := "INSERT INTO Configuracoes (ChaveAPIWhatsApp, UrlWebhook, TokenValidacao, AceitaDinheiro, AceitaPix, AceitaCartao, ChavePix, MercadoPagoToken) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
+		_, err = r.db.Exec(query, cfg.ChaveAPIWhatsApp, cfg.UrlWebhook, cfg.TokenValidacao, cfg.AceitaDinheiro, cfg.AceitaPix, cfg.AceitaCartao, cfg.ChavePix, cfg.MercadoPagoToken)
 	} else {
-		query := "UPDATE Configuracoes SET ChaveAPIWhatsApp = $1, UrlWebhook = $2, TokenValidacao = $3 WHERE id = (SELECT id FROM Configuracoes ORDER BY id ASC LIMIT 1)"
-		_, err = r.db.Exec(query, cfg.ChaveAPIWhatsApp, cfg.UrlWebhook, cfg.TokenValidacao)
+		query := "UPDATE Configuracoes SET ChaveAPIWhatsApp = $1, UrlWebhook = $2, TokenValidacao = $3, AceitaDinheiro = $4, AceitaPix = $5, AceitaCartao = $6, ChavePix = $7, MercadoPagoToken = $8 WHERE id = (SELECT id FROM Configuracoes ORDER BY id ASC LIMIT 1)"
+		_, err = r.db.Exec(query, cfg.ChaveAPIWhatsApp, cfg.UrlWebhook, cfg.TokenValidacao, cfg.AceitaDinheiro, cfg.AceitaPix, cfg.AceitaCartao, cfg.ChavePix, cfg.MercadoPagoToken)
 	}
 	return err
 }

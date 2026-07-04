@@ -5,7 +5,8 @@ import {
   listarClientes,
   fetchServicos,
   fetchBarbeiros,
-  processarVenda
+  processarVenda,
+  fetchConfiguracoes
 } from '../services/api.js'
 import ErrorState from '../components/ErrorState.jsx'
 
@@ -33,6 +34,7 @@ export default function CheckoutPage() {
   const [itensVenda, setItensVenda] = useState([])
   const [desconto, setDesconto] = useState(0)
   const [metodoPagamento, setMetodoPagamento] = useState('Dinheiro')
+  const [config, setConfig] = useState(null)
 
   const showToast = (msg, type = 'success') => {
     setToast({ show: true, msg, type })
@@ -53,12 +55,26 @@ export default function CheckoutPage() {
       setCaixaAtivo(statusRes.data)
 
       // 2. Carregar outros dados
-      const [agRes, cliRes, servRes, barbRes] = await Promise.all([
+      const [agRes, cliRes, servRes, barbRes, configRes] = await Promise.all([
         fetchAgendamentos(),
         listarClientes(),
         fetchServicos(),
-        fetchBarbeiros()
+        fetchBarbeiros(),
+        fetchConfiguracoes().catch(() => ({ data: { aceitaDinheiro: true, aceitaPix: true, aceitaCartao: true } }))
       ])
+
+      if (configRes && configRes.data) {
+        setConfig(configRes.data)
+        
+        // Define o método padrão baseado no primeiro ativo
+        if (configRes.data.aceitaDinheiro !== false) {
+          setMetodoPagamento('Dinheiro')
+        } else if (configRes.data.aceitaPix !== false) {
+          setMetodoPagamento('Pix')
+        } else if (configRes.data.aceitaCartao !== false) {
+          setMetodoPagamento('Debito')
+        }
+      }
 
       if (agRes && agRes.data) {
         const pendentes = agRes.data.filter(a => a.status !== 'Concluido' && a.status !== 'Cancelado')
@@ -225,7 +241,7 @@ export default function CheckoutPage() {
 
   if (errorMsg) {
     return (
-      <div className="main-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+      <div className="main-content checkout-error-wrapper">
         <ErrorState message={errorMsg} onRetry={loadData} />
       </div>
     )
@@ -233,13 +249,13 @@ export default function CheckoutPage() {
 
   if (loading) {
     return (
-      <div className="main-content" style={{ padding: '2rem' }}>
-        <div className="page-header" style={{ marginBottom: '2rem' }}>
+      <div className="main-content">
+        <div className="page-header checkout-skeleton-header">
           <div className="skeleton-pulse" style={{ height: '35px', width: '30%', borderRadius: '4px' }}></div>
         </div>
-        <div style={{ display: 'flex', gap: '2rem' }}>
-          <div className="card skeleton-pulse" style={{ height: '400px', flex: 2, borderRadius: '12px' }}></div>
-          <div className="card skeleton-pulse" style={{ height: '400px', flex: 1, borderRadius: '12px' }}></div>
+        <div className="checkout-skeleton-row">
+          <div className="card skeleton-pulse checkout-skeleton-main"></div>
+          <div className="card skeleton-pulse checkout-skeleton-side"></div>
         </div>
       </div>
     )
@@ -247,14 +263,14 @@ export default function CheckoutPage() {
 
   if (!caixaAtivo) {
     return (
-      <div className="main-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
-        <div className="card" style={{ maxWidth: '500px', width: '100%', textAlign: 'center', padding: '2.5rem 2rem', border: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>🔒</div>
-          <h3 style={{ fontSize: '1.4rem', marginBottom: '0.5rem', color: 'var(--accent)' }}>Caixa Fechado</h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.5rem' }}>
+      <div className="main-content checkout-closed-wrapper">
+        <div className="card checkout-closed-card">
+          <div className="checkout-closed-icon">🔒</div>
+          <h3 className="checkout-closed-title">Caixa Fechado</h3>
+          <p className="checkout-closed-text">
             A tela de checkout/venda só pode ser acessada se houver uma sessão de caixa aberta pelo operador atual.
           </p>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+          <p className="checkout-closed-hint">
             Vá em <strong>Meu Caixa</strong> para abrir a sessão antes de realizar checkouts.
           </p>
         </div>
@@ -266,13 +282,7 @@ export default function CheckoutPage() {
     <div className="main-content">
       {/* Toast Alert */}
       {toast.show && (
-        <div style={{
-          position: 'fixed', top: '20px', right: '20px', zIndex: 1000,
-          background: toast.type === 'success' ? 'rgba(34, 197, 94, 0.95)' : 'rgba(239, 68, 68, 0.95)',
-          color: 'white', padding: '1rem 1.5rem', borderRadius: '8px',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)',
-          fontWeight: 600, animation: 'fadeIn 0.3s ease'
-        }}>
+        <div className={`checkout-toast ${toast.type === 'success' ? 'checkout-toast--success' : 'checkout-toast--error'}`}>
           {toast.type === 'success' ? '✅' : '⚠️'} {toast.msg}
         </div>
       )}
@@ -282,58 +292,55 @@ export default function CheckoutPage() {
         <p>Gere registros de vendas, conclua agendamentos de clientes e dê baixa automática no estoque.</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1.3fr', gap: '1.5rem', alignItems: 'stretch' }}>
+      <div className="checkout-grid">
         
         {/* ================= COLUNA 1: SELEÇÃO DE CLIENTE ================= */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div className="checkout-column">
           
           {/* Cliente Ativo/Selecionado */}
-          <div className="card" style={{ border: selectedCliente ? '1px solid rgba(245, 166, 35, 0.4)' : '1px solid var(--border)' }}>
-            <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Cliente Selecionado</h4>
+          <div className={`card ${selectedCliente ? 'checkout-client-card--selected' : 'checkout-client-card--default'}`}>
+            <h4 className="checkout-section-title">Cliente Selecionado</h4>
             {selectedCliente ? (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="checkout-client-row">
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--gold)' }}>{selectedCliente.nome}</div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  <div className="checkout-client-name">{selectedCliente.nome}</div>
+                  <span className="checkout-client-sub">
                     {selectedAgendamento ? `Agendamento #${selectedAgendamento.id}` : 'Seleção Avulsa'}
                   </span>
                 </div>
                 <button className="btn btn-ghost" onClick={() => { setSelectedCliente(null); setSelectedAgendamento(null); }} title="Remover cliente">✕</button>
               </div>
             ) : (
-              <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic' }}>
+              <div className="checkout-client-empty">
                 Nenhum cliente selecionado. A venda será processada como anônima caso prossiga.
               </div>
             )}
           </div>
 
           {/* Abas de Seleção */}
-          <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--bg-input)', padding: '0.25rem', borderRadius: '8px', marginBottom: '1rem' }}>
+          <div className="card checkout-tab-card">
+            <div className="checkout-tab-bar">
               <button 
-                className={`btn btn-sm ${clientMode === 'agendamento' ? 'btn-primary' : 'btn-ghost'}`}
-                style={{ flex: 1, padding: '0.5rem', borderRadius: '6px' }}
+                className={`btn btn-sm checkout-tab-btn ${clientMode === 'agendamento' ? 'btn-primary' : 'btn-ghost'}`}
                 onClick={() => setClientMode('agendamento')}
               >
                 Agendas
               </button>
               <button 
-                className={`btn btn-sm ${clientMode === 'avulso' ? 'btn-primary' : 'btn-ghost'}`}
-                style={{ flex: 1, padding: '0.5rem', borderRadius: '6px' }}
+                className={`btn btn-sm checkout-tab-btn ${clientMode === 'avulso' ? 'btn-primary' : 'btn-ghost'}`}
                 onClick={() => setClientMode('avulso')}
               >
                 Clientes
               </button>
               <button 
-                className={`btn btn-sm ${clientMode === 'anonimo' ? 'btn-primary' : 'btn-ghost'}`}
-                style={{ flex: 1, padding: '0.5rem', borderRadius: '6px' }}
+                className={`btn btn-sm checkout-tab-btn ${clientMode === 'anonimo' ? 'btn-primary' : 'btn-ghost'}`}
                 onClick={() => { setClientMode('anonimo'); handleSelectAnonimo(); }}
               >
                 👤 Anônimo
               </button>
             </div>
 
-            <div style={{ flex: 1, overflowY: 'auto', maxHeight: '350px' }}>
+            <div className="checkout-list-scroll">
               {clientMode === 'agendamento' && (
                 <div className="flex-column gap-0-75">
                   {agendamentos.length > 0 ? (
@@ -341,24 +348,22 @@ export default function CheckoutPage() {
                       <div 
                         key={ag.id} 
                         onClick={() => handleSelectAgendamento(ag)}
-                        style={{
-                          background: 'var(--bg-input)', border: selectedAgendamento?.id === ag.id ? '1px solid var(--accent)' : '1px solid var(--border)',
-                          borderRadius: '8px', padding: '0.75rem', cursor: 'pointer', transition: 'all var(--transition)'
-                        }}
+                        className="checkout-agenda-item"
+                        style={{ border: selectedAgendamento?.id === ag.id ? '1px solid var(--accent)' : '1px solid var(--border)' }}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{ag.clienteNome}</span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--accent)' }}>
+                        <div className="checkout-agenda-row">
+                          <span className="checkout-agenda-name">{ag.clienteNome}</span>
+                          <span className="checkout-agenda-time">
                             {new Date(ag.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                        <div className="checkout-agenda-detail">
                           Serviço: <strong>{ag.servicoNome}</strong> ({ag.barbeiroNome})
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem', padding: '2rem 0' }}>
+                    <div className="checkout-empty-text">
                       Nenhum agendamento pendente para hoje.
                     </div>
                   )}
@@ -374,23 +379,21 @@ export default function CheckoutPage() {
                     value={searchClientQuery}
                     onChange={(e) => setSearchClientQuery(e.target.value)}
                   />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto', maxHeight: '280px' }}>
+                  <div className="checkout-client-list">
                     {filteredClientes.length > 0 ? (
                       filteredClientes.map((cli) => (
                         <div 
                           key={cli.id} 
                           onClick={() => handleSelectClienteAvulso(cli)}
-                          style={{
-                            background: 'var(--bg-input)', border: selectedCliente?.id === cli.id && !selectedAgendamento ? '1px solid var(--gold)' : '1px solid var(--border)',
-                            borderRadius: '6px', padding: '0.6rem 0.75rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                          }}
+                          className="checkout-client-item"
+                          style={{ border: selectedCliente?.id === cli.id && !selectedAgendamento ? '1px solid var(--gold)' : '1px solid var(--border)' }}
                         >
-                          <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>{cli.nome}</span>
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>@{cli.login}</span>
+                          <span className="checkout-client-item-name">{cli.nome}</span>
+                          <span className="checkout-client-item-login">@{cli.login}</span>
                         </div>
                       ))
                     ) : (
-                      <div style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem', padding: '2rem 0' }}>
+                      <div className="checkout-empty-text">
                         Nenhum cliente cadastrado encontrado.
                       </div>
                     )}
@@ -399,11 +402,11 @@ export default function CheckoutPage() {
               )}
 
               {clientMode === 'anonimo' && (
-                <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-secondary)' }}>
-                  <p style={{ fontSize: '0.85rem', marginBottom: '1rem' }}>
+                <div className="checkout-anon-section">
+                  <p className="checkout-anon-text">
                     O cliente não quer se identificar. O checkout será efetuado de forma genérica.
                   </p>
-                  <div style={{ background: 'rgba(233, 69, 96, 0.05)', border: '1px solid var(--border)', padding: '1rem', borderRadius: '8px', fontSize: '0.8rem' }}>
+                  <div className="checkout-anon-warning">
                     ⚠️ Vendas para clientes anônimos <strong>não acumulam pontos de XP</strong> ou fidelidade e não interagem com o sistema de Clãs.
                   </div>
                 </div>
@@ -413,32 +416,27 @@ export default function CheckoutPage() {
         </div>
 
         {/* ================= COLUNA 2: LISTA DE SERVIÇOS ================= */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
-          <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '1rem' }}>Serviços Disponíveis</h4>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem', overflowY: 'auto', maxHeight: '490px' }}>
+        <div className="card checkout-services-card">
+          <h4 className="checkout-section-title checkout-section-title--mb1">Serviços Disponíveis</h4>
+          <div className="checkout-services-list">
             {servicos.length > 0 ? (
               servicos.map((serv) => (
                 <div 
                   key={serv.id}
                   onClick={() => handleAddServico(serv)}
-                  style={{
-                    background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: '8px',
-                    padding: '0.85rem 1rem', cursor: 'pointer', transition: 'all var(--transition)',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                  }}
-                  className="servico-item-card"
+                  className="checkout-service-item"
                 >
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{serv.nome}</div>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{serv.duracaoMinutos} min | +{serv.xpRecompensa} XP</span>
+                    <div className="checkout-service-name">{serv.nome}</div>
+                    <span className="checkout-service-meta">{serv.duracaoMinutos} min | +{serv.xpRecompensa} XP</span>
                   </div>
-                  <div style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.95rem' }}>
+                  <div className="checkout-service-price">
                     {formatCurrency(serv.preco)}
                   </div>
                 </div>
               ))
             ) : (
-              <div style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem', padding: '2rem 0' }}>
+              <div className="checkout-empty-text">
                 Nenhum serviço cadastrado encontrado.
               </div>
             )}
@@ -446,46 +444,44 @@ export default function CheckoutPage() {
         </div>
 
         {/* ================= COLUNA 3: CARRINHO DA VENDA ================= */}
-        <form onSubmit={handleCheckout} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', border: '1px solid var(--border)' }}>
-          <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Resumo do Caixa Registradora</h4>
+        <form onSubmit={handleCheckout} className="card checkout-cart">
+          <h4 className="checkout-cart-title">Resumo do Caixa Registradora</h4>
 
           {/* Lista de Itens do Carrinho */}
-          <div style={{ flex: 1, overflowY: 'auto', maxHeight: '200px', display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'var(--bg-input)', padding: '0.5rem', borderRadius: '8px' }}>
+          <div className="checkout-cart-items">
             {itensVenda.length > 0 ? (
               itensVenda.map((item, index) => (
-                <div key={index} style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', marginBottom: '0.5rem', position: 'relative' }}>
-                  <div style={{ display: 'flex', justifycontent: 'space-between', alignItems: 'flex-start', paddingRight: '1.5rem' }}>
-                    <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{item.nome}</div>
-                    <button type="button" className="btn-ghost" style={{ position: 'absolute', right: 0, top: '-2px', padding: 0 }} onClick={() => handleRemoveItem(index)}>✕</button>
+                <div key={index} className="checkout-cart-item">
+                  <div className="checkout-cart-item-header">
+                    <div className="checkout-cart-item-name">{item.nome}</div>
+                    <button type="button" className="btn-ghost checkout-cart-remove" onClick={() => handleRemoveItem(index)}>✕</button>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem', alignItems: 'center' }}>
-                    <div style={{ flex: 1 }}>
-                      <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', display: 'block' }}>Preço Unitário</span>
+                  <div className="checkout-cart-item-fields">
+                    <div className="checkout-cart-field-price">
+                      <span className="checkout-cart-field-label">Preço Unitário</span>
                       <input 
                         type="number" 
                         step="0.01"
                         min="0"
-                        className="form-input" 
-                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+                        className="form-input checkout-cart-field-input"
                         value={item.preco_unitario}
                         onChange={(e) => handleUpdatePrice(index, e.target.value)}
                         required
                       />
                     </div>
-                    <div style={{ width: '70px' }}>
-                      <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', display: 'block' }}>Qtd</span>
+                    <div className="checkout-cart-field-qty">
+                      <span className="checkout-cart-field-label">Qtd</span>
                       <input 
                         type="number" 
                         min="1"
-                        className="form-input" 
-                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+                        className="form-input checkout-cart-field-input"
                         value={item.quantidade}
                         onChange={(e) => handleUpdateQty(index, e.target.value)}
                         required
                       />
                     </div>
-                    <div style={{ textAlign: 'right', minWidth: '70px', paddingTop: '10px' }}>
-                      <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                    <div className="checkout-cart-field-total">
+                      <strong>
                         {formatCurrency(item.preco_unitario * item.quantidade)}
                       </strong>
                     </div>
@@ -493,14 +489,14 @@ export default function CheckoutPage() {
                 </div>
               ))
             ) : (
-              <div style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '3rem 0', fontStyle: 'italic' }}>
+              <div className="checkout-cart-empty">
                 Carrinho vazio. Selecione serviços na lista ao lado para adicionar.
               </div>
             )}
           </div>
 
           {/* Barbeiro Responsável */}
-          <div className="form-group" style={{ marginBottom: 0 }}>
+          <div className="form-group checkout-form-group--flush">
             <label className="form-label">💈 Barbeiro Responsável</label>
             <select 
               className="form-select"
@@ -516,7 +512,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* Desconto */}
-          <div className="form-group" style={{ marginBottom: 0 }}>
+          <div className="form-group checkout-form-group--flush">
             <label className="form-label">Desconto (R$)</label>
             <input 
               type="number" 
@@ -532,13 +528,18 @@ export default function CheckoutPage() {
           {/* Método de Pagamento */}
           <div>
             <label className="form-label">💳 Método de Pagamento</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-              {['Dinheiro', 'Pix', 'Debito', 'Credito'].map(method => (
+            <div className="checkout-payment-grid">
+              {['Dinheiro', 'Pix', 'Debito', 'Credito'].filter(method => {
+                if (!config) return true;
+                if (method === 'Dinheiro') return config.aceitaDinheiro !== false;
+                if (method === 'Pix') return config.aceitaPix !== false;
+                if (method === 'Debito' || method === 'Credito') return config.aceitaCartao !== false;
+                return true;
+              }).map(method => (
                 <button
                   key={method}
                   type="button"
-                  className={`btn btn-sm ${metodoPagamento === method ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ padding: '0.5rem 0.25rem', fontSize: '0.8rem', justifyContent: 'center' }}
+                  className={`btn btn-sm checkout-payment-btn ${metodoPagamento === method ? 'btn-primary' : 'btn-secondary'}`}
                   onClick={() => setMetodoPagamento(method)}
                 >
                   {method === 'Dinheiro' && ''}
@@ -552,26 +553,25 @@ export default function CheckoutPage() {
           </div>
 
           {/* Totais Finais e Ação */}
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+          <div className="checkout-totals">
+            <div className="checkout-total-row">
               <span>Total Bruto:</span>
               <span>{formatCurrency(calculateTotalBruto())}</span>
             </div>
             {desconto > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--red)', marginBottom: '0.25rem' }}>
+              <div className="checkout-total-row checkout-total-row--discount">
                 <span>Desconto:</span>
                 <span>-{formatCurrency(desconto)}</span>
               </div>
             )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: 700, color: 'var(--gold)', marginBottom: '1rem' }}>
+            <div className="checkout-total-row checkout-total-row--final">
               <span>Valor Líquido:</span>
               <span>{formatCurrency(calculateTotalLiquido())}</span>
             </div>
 
             <button 
               type="submit" 
-              className="btn btn-primary" 
-              style={{ width: '100%', padding: '0.85rem', justifyContent: 'center', fontSize: '1rem' }}
+              className="btn btn-primary checkout-submit"
               disabled={submitting || itensVenda.length === 0}
             >
               {submitting ? 'Finalizando...' : 'Concluir Checkout / Venda'}

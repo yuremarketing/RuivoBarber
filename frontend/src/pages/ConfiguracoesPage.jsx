@@ -7,6 +7,9 @@ export default function ConfiguracoesPage() {
   const user = JSON.parse(localStorage.getItem('ruivobarber_user') || '{"nome":"Administrador","cargo":"Adm"}')
   const isAdmin = user.cargo === 'Adm' || user.cargo === 'Barbeiro'
 
+  // Tabs
+  const [activeTab, setActiveTab] = useState('perfil') // 'perfil' | 'sistema'
+
   // Admin states
   const [whatsappKey, setWhatsappKey] = useState('')
   const [webhookUrl, setWebhookUrl] = useState('')
@@ -14,14 +17,21 @@ export default function ConfiguracoesPage() {
   const [nomeEmpresa, setNomeEmpresa] = useState('RuivoBarber')
   const [toast, setToast] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
+  const [aceitaDinheiro, setAceitaDinheiro] = useState(true)
+  const [aceitaPix, setAceitaPix] = useState(true)
+  const [aceitaCartao, setAceitaCartao] = useState(true)
+  const [chavePix, setChavePix] = useState('')
+  const [mercadoPagoToken, setMercadoPagoToken] = useState('')
 
-  // Client states
+  // Client/User states
   const [clientData, setClientData] = useState(null)
   const [nome, setNome] = useState('')
   const [login, setLogin] = useState('')
   const [senha, setSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
+  const [telefone, setTelefone] = useState('')
+  const [whatsappConsent, setWhatsappConsent] = useState(true)
   const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -73,8 +83,7 @@ export default function ConfiguracoesPage() {
     reader.readAsDataURL(file)
   }
 
-  const loadClientInfo = async () => {
-    if (isAdmin) return
+  const loadUserInfo = async () => {
     try {
       const res = await buscarCliente(user.id)
       if (res && res.data) {
@@ -82,14 +91,15 @@ export default function ConfiguracoesPage() {
         setNome(res.data.nome || '')
         setLogin(res.data.login || '')
         setAvatarUrl(res.data.avatarUrl || '')
+        setTelefone(res.data.telefone || '')
+        setWhatsappConsent(res.data.whatsappConsent !== false) // default true if undefined
       }
     } catch (err) {
-      console.error('Erro ao buscar dados do cliente:', err)
+      console.error('Erro ao buscar dados do usuario:', err)
       setNome(user.nome || '')
       setLogin(user.login || '')
       setAvatarUrl(user.avatarUrl || '')
       setClientData(user)
-      setError('Aviso: Servidor inacessível, utilizando dados salvos localmente.')
     }
   }
 
@@ -101,6 +111,11 @@ export default function ConfiguracoesPage() {
         setWhatsappKey(res.data.chaveApiWhatsapp || '')
         setWebhookUrl(res.data.urlWebhook || '')
         setTokenValidacao(res.data.tokenValidacao || '')
+        setAceitaDinheiro(res.data.aceitaDinheiro !== false)
+        setAceitaPix(res.data.aceitaPix !== false)
+        setAceitaCartao(res.data.aceitaCartao !== false)
+        setChavePix(res.data.chavePix || '')
+        setMercadoPagoToken(res.data.mercadoPagoToken || '')
       }
     } catch (err) {
       console.error('Erro ao carregar configurações:', err)
@@ -110,10 +125,9 @@ export default function ConfiguracoesPage() {
 
   const loadAllData = async () => {
     setInitialLoading(true)
+    await loadUserInfo()
     if (isAdmin) {
       await loadConfiguracoes()
-    } else {
-      await loadClientInfo()
     }
     setInitialLoading(false)
   }
@@ -127,7 +141,12 @@ export default function ConfiguracoesPage() {
       await salvarConfiguracoes({
         chaveApiWhatsapp: whatsappKey,
         urlWebhook: webhookUrl,
-        tokenValidacao: tokenValidacao
+        tokenValidacao: tokenValidacao,
+        aceitaDinheiro: aceitaDinheiro,
+        aceitaPix: aceitaPix,
+        aceitaCartao: aceitaCartao,
+        chavePix: chavePix,
+        mercadoPagoToken: mercadoPagoToken
       })
       setToastMsg('✅ Configurações salvas com sucesso!')
       setToast(true)
@@ -149,7 +168,7 @@ export default function ConfiguracoesPage() {
 
     try {
       setLoading(true)
-      const payload = { nome, login, avatarUrl }
+      const payload = { nome, login, avatarUrl, telefone, whatsappConsent }
       if (senha) {
         payload.senha = senha
       }
@@ -191,203 +210,199 @@ export default function ConfiguracoesPage() {
     }
   }
 
-  if (isAdmin && error) {
-    return (
-      <div className="main-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
-        <ErrorState message={error} onRetry={loadAllData} />
-      </div>
-    )
-  }
-
   if (initialLoading) {
     return (
-      <div className="main-content" style={{ padding: '2rem' }}>
-        <div className="page-header" style={{ marginBottom: '2rem' }}>
-          <div className="skeleton-pulse" style={{ height: '35px', width: '30%', borderRadius: '4px' }}></div>
+      <div className="main-content config-page-padded-layout">
+        <div className="page-header config-page-header-skel-wrapper">
+          <div className="skeleton-pulse config-page-header-skel"></div>
         </div>
-        <div style={{ display: 'flex', gap: '2rem' }}>
-          <div className="card skeleton-pulse" style={{ height: '300px', flex: 1, borderRadius: '12px' }}></div>
-          <div className="card skeleton-pulse" style={{ height: '300px', flex: 1, borderRadius: '12px' }}></div>
+        <div className="config-page-grid-2">
+          <div className="card skeleton-pulse config-page-skel-card"></div>
+          <div className="card skeleton-pulse config-page-skel-card"></div>
         </div>
       </div>
     )
   }
 
-  // Se o usuário logado for Cliente
-  if (!isAdmin) {
-    const currentClient = clientData || user
-    return (
-      <div className="fade-in-up">
-        <div className="page-header">
-          <h2>Minha Conta</h2>
-          <p>Gerencie seus dados de acesso e acompanhe sua ficha de RPG</p>
-        </div>
-        {error && (
-          <div style={{ padding: '0.75rem', marginBottom: '1.5rem', borderRadius: '6px', background: 'rgba(233, 69, 96, 0.15)', border: '1px solid #e94560', color: '#ff8a8a', fontSize: '0.9rem' }}>
-            ⚠️ {error}
-          </div>
-        )}
+  const currentClient = clientData || user
 
-        <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'start', marginTop: '1rem' }}>
-          {/* Lado Esquerdo - Ficha RPG */}
-          <div style={{ flex: '1', minWidth: '280px', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
-            <PlayerCard 
-              nome={currentClient.nome} 
-              nivel={currentClient.nivel} 
-              xp={currentClient.xp} 
-              avatarUrl={avatarUrl}
+  const renderProfileTab = () => (
+    <div className="config-page-client-layout">
+      {/* Lado Esquerdo - Ficha RPG */}
+      {!isAdmin && (
+        <div className="config-page-client-left">
+          <PlayerCard 
+            nome={currentClient.nome} 
+            nivel={currentClient.nivel} 
+            xp={currentClient.xp} 
+            avatarUrl={avatarUrl}
+          />
+          <div className="card config-page-patente-card dota-card">
+            <h4 className="config-page-patente-title">👑 Patente Atual</h4>
+            <span className="rpg-level-badge config-page-patente-badge">
+              {currentClient.nivel || 'Corte Iniciante'}
+            </span>
+            <p className="config-page-patente-desc" style={{color: 'var(--text-secondary)'}}>
+              Ganhe XP fazendo agendamentos para subir de nível e desbloquear novas molduras de avatar.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Lado Direito - Form de Configuração */}
+      <div className={`card config-page-client-right dota-card ${isAdmin ? 'admin-full-width' : ''}`} style={isAdmin ? { width: '100%', maxWidth: '800px', margin: '0 auto' } : {}}>
+        <div className="card-header config-page-card-header">
+          <h3 style={{fontFamily: 'var(--font-display)', color: 'var(--gold)'}}>📝 Dados Cadastrais</h3>
+        </div>
+        
+        <form onSubmit={salvarCliente} className="config-page-form">
+          <div className="form-group">
+            <label className="form-label">Nome Completo</label>
+            <input 
+              type="text" 
+              className="form-input" 
+              value={nome} 
+              onChange={e => setNome(e.target.value)} 
+              required 
             />
-            <div className="card" style={{ width: '100%', textAlign: 'center', padding: '1rem' }}>
-              <h4 style={{ color: 'var(--gold)', marginBottom: '0.25rem' }}>👑 Patente Atual</h4>
-              <span className="rpg-level-badge" style={{ fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}>
-                {currentClient.nivel || 'Corte Iniciante'}
-              </span>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
-                Ganhe XP fazendo agendamentos para subir de nível e desbloquear novas molduras de avatar.
-              </p>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Login / E-mail</label>
+              <input 
+                type="text" 
+                className="form-input" 
+                value={login} 
+                onChange={e => setLogin(e.target.value)} 
+                required 
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Celular / WhatsApp</label>
+              <input 
+                type="tel" 
+                className="form-input" 
+                value={telefone} 
+                onChange={e => setTelefone(e.target.value)} 
+                placeholder="(00) 00000-0000"
+              />
             </div>
           </div>
 
-          {/* Lado Direito - Form de Configuração */}
-          <div className="card" style={{ flex: '2', minWidth: '350px' }}>
-            <div className="card-header" style={{ marginBottom: '1.5rem' }}>
-              <h3>📝 Dados Cadastrais</h3>
+          <div className="form-group">
+            <label className="form-label config-page-avatar-label">Aparência do Personagem (Avatar)</label>
+            <div className="config-page-avatar-presets">
+              {[
+                { id: 'viking', name: 'Viking', src: '/avatars/viking.png' },
+                { id: 'cyborg', name: 'Cyborg', src: '/avatars/cyborg.png' },
+                { id: 'knight', name: 'Knight', src: '/avatars/knight.png' },
+                { id: 'wizard', name: 'Wizard', src: '/avatars/wizard.png' }
+              ].map((preset) => (
+                <div 
+                  key={preset.id}
+                  onClick={() => setAvatarUrl(preset.src)}
+                  className="config-page-avatar-preset"
+                  style={{
+                    border: avatarUrl === preset.src ? '2px solid var(--accent)' : '2px solid transparent',
+                    boxShadow: avatarUrl === preset.src ? '0 0 15px var(--accent-60)' : 'none',
+                    borderRadius: '4px'
+                  }}
+                >
+                  <img src={preset.src} alt={preset.name} className="config-page-avatar-img" />
+                </div>
+              ))}
             </div>
             
-            <form onSubmit={salvarCliente} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div className="form-group">
-                <label className="form-label">Nome Completo</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  value={nome} 
-                  onChange={e => setNome(e.target.value)} 
-                  required 
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Nome de Usuário / E-mail</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  value={login} 
-                  onChange={e => setLogin(e.target.value)} 
-                  required 
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" style={{ marginBottom: '0.5rem', display: 'block' }}>Aparência do Personagem (Avatar)</label>
-                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-                  {[
-                    { id: 'viking', name: 'Viking', src: '/avatars/viking.png' },
-                    { id: 'cyborg', name: 'Cyborg', src: '/avatars/cyborg.png' },
-                    { id: 'knight', name: 'Knight', src: '/avatars/knight.png' },
-                    { id: 'wizard', name: 'Wizard', src: '/avatars/wizard.png' }
-                  ].map((preset) => (
-                    <div 
-                      key={preset.id}
-                      onClick={() => setAvatarUrl(preset.src)}
-                      style={{
-                        position: 'relative',
-                        width: '60px',
-                        height: '60px',
-                        borderRadius: '50%',
-                        cursor: 'pointer',
-                        border: avatarUrl === preset.src ? '3px solid var(--gold)' : '3px solid transparent',
-                        boxShadow: avatarUrl === preset.src ? '0 0 10px var(--gold)' : 'none',
-                        transition: 'all 0.2s ease',
-                        overflow: 'hidden',
-                        backgroundColor: 'var(--bg-input)'
-                      }}
-                    >
-                      <img src={preset.src} alt={preset.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                  ))}
-                </div>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  <label className="form-label" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Ou envie uma foto personalizada:</label>
-                  <input 
-                    type="file" 
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    style={{
-                      backgroundColor: 'var(--bg-input)',
-                      border: '1px solid var(--border)',
-                      borderRadius: '4px',
-                      padding: '0.4rem',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.85rem',
-                      width: '100%'
-                    }}
-                  />
-                  <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                    A imagem será comprimida automaticamente (máx. 50KB WebP) para economia de dados.
-                  </small>
-                </div>
-              </div>
-
-              <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '0.5rem 0' }} />
-
-              <div className="card-header" style={{ padding: 0, marginBottom: '0.5rem' }}>
-                <h3 style={{ fontSize: '1.1rem' }}>🔑 Alterar Senha (Opcional)</h3>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Nova Senha</label>
-                  <input 
-                    type="password" 
-                    className="form-input" 
-                    value={senha} 
-                    onChange={e => setSenha(e.target.value)} 
-                    placeholder="Deixe em branco para manter" 
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Confirmar Nova Senha</label>
-                  <input 
-                    type="password" 
-                    className="form-input" 
-                    value={confirmarSenha} 
-                    onChange={e => setConfirmarSenha(e.target.value)} 
-                    placeholder="Deixe em branco para manter" 
-                  />
-                </div>
-              </div>
-
-              {errorMsg && (
-                <div style={{ color: 'var(--red)', fontSize: '0.85rem', fontWeight: 500, padding: '0.5rem', borderRadius: '4px', background: 'rgba(255, 75, 75, 0.05)', border: '1px solid var(--red)' }}>
-                  {errorMsg}
-                </div>
-              )}
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                <button type="submit" className="btn btn-primary" disabled={loading}>
-                  {loading ? '💾 Salvando...' : '💾 Salvar Alterações'}
-                </button>
-              </div>
-            </form>
+            <div className="config-page-avatar-upload-wrapper" style={{ marginTop: '1rem' }}>
+              <label className="form-label config-page-avatar-upload-label" style={{ color: 'var(--text-secondary)'}}>Ou envie uma foto personalizada:</label>
+              <input 
+                type="file" 
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="config-page-avatar-upload-input"
+                style={{ color: 'var(--gold)' }}
+              />
+              <small className="config-page-avatar-upload-hint">
+                A imagem será comprimida automaticamente (máx. 50KB WebP).
+              </small>
+            </div>
           </div>
-        </div>
-        {toast && <div className="toast">{toastMsg}</div>}
-      </div>
-    )
-  }
 
-  // Se o usuário logado for Admin ou Barbeiro (Mantém layout original de config de sistema)
-  return (
-    <div className="fade-in-up">
-      <div className="page-header">
-        <h2>Configurações</h2>
-        <p>Configurações gerais do sistema</p>
+          {/* SESSÃO LGPD */}
+          <div className="card dota-card" style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(233,69,96,0.2)' }}>
+            <h4 style={{ fontFamily: 'var(--font-display)', color: 'var(--accent)', marginBottom: '0.8rem', fontSize: '1rem' }}>🔒 Privacidade & Notificações (LGPD)</h4>
+            <div className="form-group checkbox-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: 0 }}>
+              <input 
+                type="checkbox" 
+                id="whatsappConsent"
+                checked={whatsappConsent}
+                onChange={e => setWhatsappConsent(e.target.checked)}
+                style={{ width: '1.2rem', height: '1.2rem', accentColor: 'var(--accent)' }}
+              />
+              <label htmlFor="whatsappConsent" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4', margin: 0 }}>
+                Aceito receber lembretes de agendamentos e alertas importantes via WhatsApp.
+                <span style={{ display: 'block', fontSize: '0.75rem', opacity: 0.6, marginTop: '2px' }}>Você pode revogar este consentimento a qualquer momento.</span>
+              </label>
+            </div>
+          </div>
+
+          <hr className="config-page-divider" style={{ borderColor: 'var(--border-gold)', opacity: 0.3, margin: '2rem 0' }} />
+
+          <div className="card-header config-page-pw-header">
+            <h3 className="config-page-pw-title" style={{fontFamily: 'var(--font-display)'}}>🔑 Alterar Senha (Opcional)</h3>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Nova Senha</label>
+              <input 
+                type="password" 
+                className="form-input" 
+                value={senha} 
+                onChange={e => setSenha(e.target.value)} 
+                placeholder="Deixe em branco para manter" 
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Confirmar Nova Senha</label>
+              <input 
+                type="password" 
+                className="form-input" 
+                value={confirmarSenha} 
+                onChange={e => setConfirmarSenha(e.target.value)} 
+                placeholder="Deixe em branco para manter" 
+              />
+            </div>
+          </div>
+
+          {errorMsg && (
+            <div className="banner error config-page-form-error" style={{marginTop: '1rem'}}>
+              {errorMsg}
+            </div>
+          )}
+
+          <div className="config-page-form-actions" style={{marginTop: '2rem'}}>
+            <button type="submit" className="btn btn-primary dota-btn" disabled={loading} style={{width: '100%'}}>
+              {loading ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
+            </button>
+          </div>
+        </form>
       </div>
+    </div>
+  )
+
+  const renderSystemTab = () => (
+    <div className="fade-in-up">
+      {error && (
+        <div className="config-page-error-alert" style={{marginBottom: '1rem', color: 'var(--accent)'}}>
+          ⚠️ {error}
+        </div>
+      )}
       <div className="grid-2">
-        <div className="card">
+        <div className="card dota-card">
           <div className="card-header">
-            <h3>🏢 Dados da Empresa</h3>
+            <h3 style={{fontFamily: 'var(--font-display)', color: 'var(--gold)'}}>🏢 Dados da Empresa</h3>
           </div>
           <div className="form-group">
             <label className="form-label">Nome da Empresa</label>
@@ -408,9 +423,9 @@ export default function ConfiguracoesPage() {
             </div>
           </div>
         </div>
-        <div className="card">
+        <div className="card dota-card">
           <div className="card-header">
-            <h3>📲 Integrações</h3>
+            <h3 style={{fontFamily: 'var(--font-display)', color: 'var(--gold)'}}>📲 Integrações</h3>
           </div>
           <div className="form-group">
             <label className="form-label">Chave API WhatsApp</label>
@@ -424,14 +439,44 @@ export default function ConfiguracoesPage() {
             <label className="form-label">Token de Validação Webhook</label>
             <input type="text" className="form-input" value={tokenValidacao} onChange={e => setTokenValidacao(e.target.value)} placeholder="Token de segurança do webhook" />
           </div>
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+          <p className="config-page-admin-security-hint" style={{color: 'var(--text-muted)'}}>
             🔒 As credenciais são armazenadas de forma segura no servidor.
           </p>
         </div>
       </div>
-      <div className="card" style={{ marginTop: '1.5rem' }}>
+
+      <div className="card dota-card" style={{marginTop: '1.5rem'}}>
         <div className="card-header">
-          <h3>🎮 Gamificação RPG</h3>
+          <h3 style={{fontFamily: 'var(--font-display)', color: 'var(--gold)'}}>💳 Meios de Pagamento (PDV)</h3>
+        </div>
+        <div className="form-row" style={{display: 'flex', gap: '2rem', flexWrap: 'wrap', marginBottom: '1.5rem'}}>
+          <div className="form-group checkbox-group" style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+            <input type="checkbox" id="aceitaDinheiro" checked={aceitaDinheiro} onChange={e => setAceitaDinheiro(e.target.checked)} style={{width: '1.2rem', height: '1.2rem'}} />
+            <label htmlFor="aceitaDinheiro" style={{color: 'var(--text-primary)', margin: 0}}>Aceitar Dinheiro</label>
+          </div>
+          <div className="form-group checkbox-group" style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+            <input type="checkbox" id="aceitaPix" checked={aceitaPix} onChange={e => setAceitaPix(e.target.checked)} style={{width: '1.2rem', height: '1.2rem'}} />
+            <label htmlFor="aceitaPix" style={{color: 'var(--text-primary)', margin: 0}}>Aceitar PIX</label>
+          </div>
+          <div className="form-group checkbox-group" style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+            <input type="checkbox" id="aceitaCartao" checked={aceitaCartao} onChange={e => setAceitaCartao(e.target.checked)} style={{width: '1.2rem', height: '1.2rem'}} />
+            <label htmlFor="aceitaCartao" style={{color: 'var(--text-primary)', margin: 0}}>Aceitar Cartão (Débito/Crédito)</label>
+          </div>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Chave PIX Recebimentos</label>
+            <input type="text" className="form-input" value={chavePix} onChange={e => setChavePix(e.target.value)} placeholder="Celular, CNPJ, E-mail ou Chave Aleatória" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Access Token Mercado Pago</label>
+            <input type="password" className="form-input" value={mercadoPagoToken} onChange={e => setMercadoPagoToken(e.target.value)} placeholder="APP_USR-..." />
+          </div>
+        </div>
+      </div>
+      <div className="card dota-card config-page-admin-card-mt" style={{marginTop: '1.5rem'}}>
+        <div className="card-header">
+          <h3 style={{fontFamily: 'var(--font-display)', color: 'var(--gold)'}}>🎮 Gamificação RPG</h3>
         </div>
         <div className="form-row">
           <div className="form-group">
@@ -448,10 +493,41 @@ export default function ConfiguracoesPage() {
           </div>
         </div>
       </div>
-      <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-        <button className="btn btn-secondary">Restaurar Padrões</button>
-        <button className="btn btn-primary" onClick={salvarAdmin}>💾 Salvar Configurações</button>
+      <div className="config-page-admin-actions" style={{marginTop: '2rem', display: 'flex', gap: '1rem', justifyContent: 'flex-end'}}>
+        <button className="btn btn-secondary dota-btn">RESTAURAR PADRÕES</button>
+        <button className="btn btn-primary dota-btn" onClick={salvarAdmin}>💾 SALVAR CONFIGURAÇÕES</button>
       </div>
+    </div>
+  )
+
+  return (
+    <div className="fade-in-up">
+      <div className="page-header" style={{ marginBottom: isAdmin ? '1rem' : '2rem' }}>
+        <h2 style={{fontFamily: 'var(--font-display)'}}>{isAdmin ? 'Configurações' : 'Minha Conta'}</h2>
+        <p>{isAdmin ? 'Painel de controle do sistema e perfil' : 'Gerencie seus dados de acesso e acompanhe sua ficha de RPG'}</p>
+      </div>
+
+      {isAdmin && (
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border-gold)', paddingBottom: '0.5rem' }}>
+          <button 
+            className={`btn ${activeTab === 'perfil' ? 'btn-primary' : 'btn-ghost'}`} 
+            onClick={() => setActiveTab('perfil')}
+            style={{ borderRadius: 0 }}
+          >
+            MEU PERFIL
+          </button>
+          <button 
+            className={`btn ${activeTab === 'sistema' ? 'btn-primary' : 'btn-ghost'}`} 
+            onClick={() => setActiveTab('sistema')}
+            style={{ borderRadius: 0 }}
+          >
+            SISTEMA GERAL
+          </button>
+        </div>
+      )}
+
+      {isAdmin && activeTab === 'sistema' ? renderSystemTab() : renderProfileTab()}
+
       {toast && <div className="toast">{toastMsg}</div>}
     </div>
   )

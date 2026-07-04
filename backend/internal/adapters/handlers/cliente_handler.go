@@ -37,10 +37,11 @@ type LoginRequest struct {
 }
 
 type CadastrarClienteRequest struct {
-	Nome  string `json:"nome"`
-	Login string `json:"login"`
-	Senha string `json:"senha"`
-	Cargo string `json:"cargo"`
+	Nome            string `json:"nome"`
+	Login           string `json:"login"`
+	Senha           string `json:"senha"`
+	Cargo           string `json:"cargo"`
+	WhatsappConsent bool   `json:"whatsappConsent"`
 }
 
 func NewClienteHandler(service *services.ClienteService) *ClienteHandler {
@@ -375,9 +376,10 @@ func (h *ClienteHandler) CadastrarCliente(c *fiber.Ctx) error {
 	}
 
 	cliente := &domain.Cliente{
-		Nome:  req.Nome,
-		Login: req.Login,
-		Cargo: req.Cargo,
+		Nome:            req.Nome,
+		Login:           req.Login,
+		Cargo:           req.Cargo,
+		WhatsappConsent: req.WhatsappConsent,
 	}
 
 	err := h.service.CadastrarCliente(cliente, req.Senha)
@@ -425,6 +427,16 @@ func (h *ClienteHandler) ListarAgendamentos(c *fiber.Ctx) error {
 	if data == "" {
 		data = time.Now().Format("2006-01-02")
 	}
+
+	if userCargo == "Barbeiro" {
+		agendamentos, err := h.service.ListarAgendamentosDoBarbeiro(userId, data)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(agendamentos)
+	}
+
+	// Se for Adm, lista todos
 	agendamentos, err := h.service.ListarAgendamentos(data)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
@@ -546,9 +558,10 @@ func (h *ClienteHandler) RegisterPublico(c *fiber.Ctx) error {
 	}
 
 	cliente := &domain.Cliente{
-		Nome:  req.Nome,
-		Login: req.Login,
-		Cargo: "Cliente",
+		Nome:            req.Nome,
+		Login:           req.Login,
+		Cargo:           "Cliente",
+		WhatsappConsent: req.WhatsappConsent,
 	}
 
 	err := h.service.CadastrarCliente(cliente, req.Senha)
@@ -599,11 +612,13 @@ func (h *ClienteHandler) AtualizarPerfil(c *fiber.Ctx) error {
 	}
 
 	var req struct {
-		Nome      string `json:"nome"`
-		Login     string `json:"login"`
-		Senha     string `json:"senha"`
-		AvatarURL string `json:"avatarUrl"`
-		Cargo     string `json:"cargo"`
+		Nome            string `json:"nome"`
+		Login           string `json:"login"`
+		Senha           string `json:"senha"`
+		AvatarURL       string `json:"avatarUrl"`
+		Telefone        string `json:"telefone"`
+		WhatsappConsent bool   `json:"whatsappConsent"`
+		Cargo           string `json:"cargo"`
 	}
 
 	if err := c.BodyParser(&req); err != nil {
@@ -615,7 +630,7 @@ func (h *ClienteHandler) AtualizarPerfil(c *fiber.Ctx) error {
 		cargoToUpdate = req.Cargo
 	}
 
-	err = h.service.AtualizarPerfil(id, req.Nome, req.Login, req.Senha, req.AvatarURL, cargoToUpdate)
+	err = h.service.AtualizarPerfil(id, req.Nome, req.Login, req.Senha, req.AvatarURL, req.Telefone, req.WhatsappConsent, cargoToUpdate)
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -748,6 +763,11 @@ func (h *ClienteHandler) SalvarConfiguracoes(c *fiber.Ctx) error {
 		ChaveAPIWhatsApp string `json:"chaveApiWhatsapp"`
 		UrlWebhook       string `json:"urlWebhook"`
 		TokenValidacao   string `json:"tokenValidacao"`
+		AceitaDinheiro   bool   `json:"aceitaDinheiro"`
+		AceitaPix        bool   `json:"aceitaPix"`
+		AceitaCartao     bool   `json:"aceitaCartao"`
+		ChavePix         string `json:"chavePix"`
+		MercadoPagoToken string `json:"mercadoPagoToken"`
 	}
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "corpo inválido"})
@@ -757,6 +777,11 @@ func (h *ClienteHandler) SalvarConfiguracoes(c *fiber.Ctx) error {
 		ChaveAPIWhatsApp: req.ChaveAPIWhatsApp,
 		UrlWebhook:       req.UrlWebhook,
 		TokenValidacao:   req.TokenValidacao,
+		AceitaDinheiro:   req.AceitaDinheiro,
+		AceitaPix:        req.AceitaPix,
+		AceitaCartao:     req.AceitaCartao,
+		ChavePix:         req.ChavePix,
+		MercadoPagoToken: req.MercadoPagoToken,
 	}
 
 	err := h.service.SalvarConfiguracoes(cfg)
