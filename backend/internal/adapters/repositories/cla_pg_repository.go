@@ -6,6 +6,7 @@ import (
 	"errors"
 	"ruivobarber-api/internal/core/domain"
 	"ruivobarber-api/internal/core/ports"
+	"ruivobarber-api/internal/pkg/contextutils"
 )
 
 type ClaPgRepository struct {
@@ -17,6 +18,11 @@ func NewClaPgRepository(db *sql.DB) ports.ClaRepository {
 }
 
 func (r *ClaPgRepository) Create(ctx context.Context, cla *domain.Cla) error {
+	tenantID, err := contextutils.GetTenantID(ctx)
+	if err != nil {
+		return err
+	}
+
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -24,11 +30,11 @@ func (r *ClaPgRepository) Create(ctx context.Context, cla *domain.Cla) error {
 	defer tx.Rollback()
 
 	queryCla := `
-		INSERT INTO Clas (nome, descricao, liderid, xpcoletivo, nivelatual, criadoem)
-		VALUES ($1, $2, $3, $4, $5, NOW())
+		INSERT INTO Clas (nome, descricao, liderid, xpcoletivo, nivelatual, criadoem, tenant_id)
+		VALUES ($1, $2, $3, $4, $5, NOW(), $6)
 		RETURNING id, criadoem
 	`
-	err = tx.QueryRowContext(ctx, queryCla, cla.Nome, cla.Descricao, cla.LiderID, 0, 1).Scan(&cla.ID, &cla.CriadoEm)
+	err = tx.QueryRowContext(ctx, queryCla, cla.Nome, cla.Descricao, cla.LiderID, 0, 1, tenantID).Scan(&cla.ID, &cla.CriadoEm)
 	if err != nil {
 		return err
 	}
@@ -46,9 +52,13 @@ func (r *ClaPgRepository) Create(ctx context.Context, cla *domain.Cla) error {
 }
 
 func (r *ClaPgRepository) FindByID(ctx context.Context, id int) (*domain.Cla, error) {
+	tenantID, err := contextutils.GetTenantID(ctx)
+	if err != nil {
+		return nil, err
+	}
 	var c domain.Cla
-	query := "SELECT id, nome, descricao, xpcoletivo, nivelatual, liderid, criadoem FROM Clas WHERE id = $1"
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&c.ID, &c.Nome, &c.Descricao, &c.XPColetivo, &c.NivelAtual, &c.LiderID, &c.CriadoEm)
+	query := "SELECT id, nome, descricao, xpcoletivo, nivelatual, liderid, criadoem FROM Clas WHERE id = $1 AND tenant_id = $2"
+	err = r.db.QueryRowContext(ctx, query, id, tenantID).Scan(&c.ID, &c.Nome, &c.Descricao, &c.XPColetivo, &c.NivelAtual, &c.LiderID, &c.CriadoEm)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -59,9 +69,13 @@ func (r *ClaPgRepository) FindByID(ctx context.Context, id int) (*domain.Cla, er
 }
 
 func (r *ClaPgRepository) FindByName(ctx context.Context, name string) (*domain.Cla, error) {
+	tenantID, err := contextutils.GetTenantID(ctx)
+	if err != nil {
+		return nil, err
+	}
 	var c domain.Cla
-	query := "SELECT id, nome, descricao, xpcoletivo, nivelatual, liderid, criadoem FROM Clas WHERE nome = $1"
-	err := r.db.QueryRowContext(ctx, query, name).Scan(&c.ID, &c.Nome, &c.Descricao, &c.XPColetivo, &c.NivelAtual, &c.LiderID, &c.CriadoEm)
+	query := "SELECT id, nome, descricao, xpcoletivo, nivelatual, liderid, criadoem FROM Clas WHERE nome = $1 AND tenant_id = $2"
+	err = r.db.QueryRowContext(ctx, query, name, tenantID).Scan(&c.ID, &c.Nome, &c.Descricao, &c.XPColetivo, &c.NivelAtual, &c.LiderID, &c.CriadoEm)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -94,6 +108,10 @@ func (r *ClaPgRepository) AddMember(ctx context.Context, member *domain.ClaMembr
 }
 
 func (r *ClaPgRepository) ListMembers(ctx context.Context, claID int) ([]domain.Cliente, error) {
+	tenantID, err := contextutils.GetTenantID(ctx)
+	if err != nil {
+		return nil, err
+	}
 	query := `
 		SELECT u.id, u.nome, u.login, u.cargo, 
 			   COALESCE(p.xpatual, 0) as xp, 
@@ -105,10 +123,10 @@ func (r *ClaPgRepository) ListMembers(ctx context.Context, claID int) ([]domain.
 		JOIN Usuarios u ON m.usuarioid = u.id
 		LEFT JOIN ProgressoCliente p ON u.id = p.clienteid
 		LEFT JOIN Niveis n ON p.nivelatual = n.id
-		WHERE m.claid = $1
+		WHERE m.claid = $1 AND u.tenant_id = $2
 		ORDER BY CASE WHEN m.cargo = 'Lider' THEN 1 WHEN m.cargo = 'ViceLider' THEN 2 ELSE 3 END, u.nome ASC
 	`
-	rows, err := r.db.QueryContext(ctx, query, claID)
+	rows, err := r.db.QueryContext(ctx, query, claID, tenantID)
 	if err != nil {
 		return nil, err
 	}
@@ -149,15 +167,19 @@ func (r *ClaPgRepository) UpdateInviteStatus(ctx context.Context, inviteID int, 
 }
 
 func (r *ClaPgRepository) ListInvitesByConvidadoID(ctx context.Context, convidadoID int) ([]domain.ClaConviteDTO, error) {
+	tenantID, err := contextutils.GetTenantID(ctx)
+	if err != nil {
+		return nil, err
+	}
 	query := `
 		SELECT c.id, c.claid, cl.nome as nome_cla, u.nome as enviado_por, c.criadoem
 		FROM ClaConvites c
 		JOIN Clas cl ON c.claid = cl.id
 		JOIN Usuarios u ON c.enviadopor = u.id
-		WHERE c.convidadoid = $1 AND c.status = 'Pendente'
+		WHERE c.convidadoid = $1 AND c.status = 'Pendente' AND u.tenant_id = $2
 		ORDER BY c.criadoem DESC
 	`
-	rows, err := r.db.QueryContext(ctx, query, convidadoID)
+	rows, err := r.db.QueryContext(ctx, query, convidadoID, tenantID)
 	if err != nil {
 		return nil, err
 	}
@@ -176,14 +198,19 @@ func (r *ClaPgRepository) ListInvitesByConvidadoID(ctx context.Context, convidad
 }
 
 func (r *ClaPgRepository) ListarClas(ctx context.Context) ([]domain.ClaRankingDTO, error) {
+	tenantID, err := contextutils.GetTenantID(ctx)
+	if err != nil {
+		return nil, err
+	}
 	query := `
 		SELECT c.id, c.nome, c.descricao, c.xpcoletivo, c.nivelatual, c.liderid, u.nome as nome_lider,
 			   (SELECT COUNT(*) FROM ClaMembros WHERE claid = c.id) as membros_qtd, c.criadoem
 		FROM Clas c
 		JOIN Usuarios u ON c.liderid = u.id
+		WHERE c.tenant_id = $1
 		ORDER BY c.nivelatual DESC, c.xpcoletivo DESC, c.nome ASC
 	`
-	rows, err := r.db.QueryContext(ctx, query)
+	rows, err := r.db.QueryContext(ctx, query, tenantID)
 	if err != nil {
 		return nil, err
 	}
@@ -237,17 +264,22 @@ func (r *ClaPgRepository) ListarMensagensMural(ctx context.Context, claID int) (
 }
 
 func (r *ClaPgRepository) BuscarJogadoresSemCla(ctx context.Context, query string) ([]domain.JogadorBuscaDTO, error) {
+	tenantID, err := contextutils.GetTenantID(ctx)
+	if err != nil {
+		return nil, err
+	}
 	dbQuery := `
 		SELECT id, nome, login
 		FROM Usuarios
 		WHERE cargo = 'Cliente'
 		  AND id NOT IN (SELECT usuarioid FROM ClaMembros)
 		  AND (nome ILIKE $1 OR login ILIKE $1)
+		  AND tenant_id = $2
 		ORDER BY nome ASC
 		LIMIT 10
 	`
 	searchPattern := "%" + query + "%"
-	rows, err := r.db.QueryContext(ctx, dbQuery, searchPattern)
+	rows, err := r.db.QueryContext(ctx, dbQuery, searchPattern, tenantID)
 	if err != nil {
 		return nil, err
 	}
