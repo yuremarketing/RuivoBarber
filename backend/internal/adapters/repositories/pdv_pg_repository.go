@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"fmt"
+
 	"context"
 	"database/sql"
 	"ruivobarber-api/internal/core/domain"
@@ -159,13 +161,14 @@ func (r *PdvPgRepository) AdicionarVenda(ctx context.Context, venda *domain.Vend
 
 	// 1. Inserir a venda
 	queryVenda := `
-		INSERT INTO Vendas (caixaid, clienteid, agendamentoid, valorbruto, desconto, valorliquido, metodopagamento, tenant_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO Vendas (caixaid, clienteid, agendamentoid, valorbruto, desconto, valorliquido, metodopagamento, tenant_id, status_pagamento, gateway_id, idempotency_key)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		RETURNING id, criadoem
 	`
 	err = tx.QueryRowContext(ctx, queryVenda,
 		venda.CaixaID, venda.ClienteID, venda.AgendamentoID,
 		venda.ValorBruto, venda.Desconto, venda.ValorLiquido, venda.MetodoPagamento, tenantID,
+		venda.StatusPagamento, venda.GatewayID, venda.IdempotencyKey,
 	).Scan(&venda.ID, &venda.CriadoEm)
 	if err != nil {
 		return err
@@ -225,7 +228,17 @@ func (r *PdvPgRepository) AdicionarVenda(ctx context.Context, venda *domain.Vend
 		}
 	}
 
+	
+	if venda.StatusPagamento == "approved" {
+		payload := fmt.Sprintf(`{"tipo": "venda_aprovada", "venda_id": %d, "cliente_id": %v}`, venda.ID, ptrToInt(venda.ClienteID))
+		_, err = tx.ExecContext(ctx, "INSERT INTO eventos_rpg_outbox (payload) VALUES ($1)", payload)
+		if err != nil {
+			return err
+		}
+	}
+	
 	return tx.Commit()
+
 }
 
 func (r *PdvPgRepository) ObterTotalVendasDinheiro(ctx context.Context, caixaID int) (float64, error) {
@@ -272,11 +285,37 @@ func (r *PdvPgRepository) AtualizarVenda(ctx context.Context, venda *domain.Vend
 		return err
 	}
 
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	query := `
 		UPDATE vendas
 		SET status_pagamento = $1
 		WHERE id = $2 AND tenant_id = $3
 	`
-	_, err = r.db.ExecContext(ctx, query, venda.StatusPagamento, venda.ID, tenantID)
-	return err
+	_, err = tx.ExecContext(ctx, query, venda.StatusPagamento, venda.ID, tenantID)
+	if err != nil {
+		return err
+	}
+
+	if venda.StatusPagamento == "approved" {
+		payload := fmt.Sprintf(`{"tipo": "venda_aprovada", "venda_id": %d, "cliente_id": %v}`, venda.ID, ptrToInt(venda.ClienteID))
+		_, err = tx.ExecContext(ctx, "INSERT INTO eventos_rpg_outbox (payload) VALUES ($1)", payload)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
+
+func ptrToInt(p *int) interface{} {
+	if p == nil {
+		return "null"
+	}
+	return *p
+}
+
