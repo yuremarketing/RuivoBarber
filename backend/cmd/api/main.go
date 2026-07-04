@@ -483,6 +483,34 @@ func main() {
 		log.Println("✅ Migração automática: tabela de Avaliações garantida no banco")
 	}
 
+	// Migração automática para RPG Worker (Gamification / Resiliência)
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS eventos_rpg_outbox (
+			id SERIAL PRIMARY KEY,
+			venda_id INT,
+			tenant_id INT,
+			payload JSONB NOT NULL,
+			processado BOOLEAN DEFAULT FALSE,
+			dlq BOOLEAN DEFAULT FALSE,
+			erro_msg TEXT,
+			criado_em TIMESTAMPTZ DEFAULT NOW(),
+			atualizado_em TIMESTAMPTZ DEFAULT NOW()
+		);
+		CREATE TABLE IF NOT EXISTS historico_xp (
+			id SERIAL PRIMARY KEY,
+			venda_id INT,
+			cliente_id INT,
+			tenant_id INT,
+			xp_concedido INT NOT NULL,
+			criado_em TIMESTAMPTZ DEFAULT NOW()
+		);
+	`)
+	if err != nil {
+		log.Printf("[DB] Erro ao executar migração automática para RPG Worker: %v", err)
+	} else {
+		log.Println("✅ Migração automática: tabelas do RPG Worker (Outbox, Historico) garantidas no banco")
+	}
+
 	// Migração automática para PDV (Pontos de Venda) e Controle Financeiro
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS Caixas (
