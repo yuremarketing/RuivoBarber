@@ -141,7 +141,7 @@ func (m *mockPdvClienteRepository) CriarAgendamento(ctx context.Context, cliente
 		ClienteID:  clienteID,
 		BarbeiroID: barbeiroID,
 		ServicoID:  servicoID,
-		Status:     "Pendente",
+		Status:     "pending",
 		DataHora:   dataHora,
 	}
 	return id, nil

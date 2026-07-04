@@ -321,7 +321,7 @@ func (s *PdvService) ProcessarVenda(ctx context.Context, operadorID int, req *Pr
 	if req.MetodoPagamento == "Pix" && s.pagamentoService != nil {
 		idempotencyKey := uuid.New().String()
 		venda.IdempotencyKey = &idempotencyKey
-		venda.StatusPagamento = "Pendente"
+		venda.StatusPagamento = domain.StatusPending
 		
 		pixReq := ports.CobrancaPixRequest{
 			VendaID:        venda.ID,
@@ -347,7 +347,7 @@ func (s *PdvService) ProcessarVenda(ctx context.Context, operadorID int, req *Pr
 		}, nil
 	}
 	
-	venda.StatusPagamento = "Aprovado" // Dinheiro, etc
+	venda.StatusPagamento = domain.StatusApproved // Dinheiro, etc
 	return venda, nil
 }
 
@@ -384,7 +384,10 @@ func (s *PdvService) ProcessarWebhookPix(ctx context.Context, paymentID int64) e
 	}
 
 	if pixResp.Status == "approved" {
-		venda.StatusPagamento = "Aprovado"
+		err = venda.UpdateStatus(domain.StatusApproved)
+		if err != nil {
+			return err
+		}
 		err = s.repo.AtualizarVenda(ctx, venda)
 		if err != nil {
 			return fmt.Errorf("erro ao atualizar venda: %w", err)
@@ -401,8 +404,10 @@ func (s *PdvService) ProcessarWebhookPix(ctx context.Context, paymentID int64) e
 			}
 		}
 	} else if pixResp.Status == "rejected" || pixResp.Status == "cancelled" {
-		venda.StatusPagamento = "Cancelado"
-		_ = s.repo.AtualizarVenda(ctx, venda)
+		err = venda.UpdateStatus(domain.StatusCancelled)
+		if err == nil {
+			_ = s.repo.AtualizarVenda(ctx, venda)
+		}
 	}
 
 	return nil
