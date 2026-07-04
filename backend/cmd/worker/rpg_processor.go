@@ -8,6 +8,8 @@ import (
 	"log"
 	"sync"
 	"time"
+    
+    "github.com/getsentry/sentry-go"
 )
 
 type SSEBroadcaster interface {
@@ -121,6 +123,14 @@ func (p *RPGProcessor) processBatch(ctx context.Context) {
 			_ = tx.QueryRowContext(ctx, "SELECT dlq FROM eventos_rpg_outbox WHERE id = $1", e.ID).Scan(&dlq)
 			if dlq {
 				log.Printf("[RPG_PROCESSOR] [DLQ] Evento %d movido para DLQ após falhas sucessivas", e.ID)
+                
+                // Capture DLQ error to Sentry
+                sentry.WithScope(func(scope *sentry.Scope) {
+                    scope.SetTag("tenant_id", fmt.Sprintf("%d", e.TenantID))
+                    scope.SetTag("evento_id", fmt.Sprintf("%d", e.ID))
+                    scope.SetTag("venda_id", fmt.Sprintf("%d", e.VendaID))
+                    sentry.CaptureException(fmt.Errorf("DLQ Reached for Event %d: %w", e.ID, err))
+                })
 			}
 		} else {
 			_, _ = tx.ExecContext(ctx, "UPDATE eventos_rpg_outbox SET processado = true, erro_ultimo = NULL WHERE id = $1", e.ID)
@@ -138,6 +148,14 @@ func (p *RPGProcessor) safeProcessEvent(ctx context.Context, tx *sql.Tx, e Outbo
 		if r := recover(); r != nil {
 			err = fmt.Errorf("panic recover: %v", r)
 			log.Printf("[RPG_PROCESSOR] [RECOVER] Panic no evento %d isolado: %v", e.ID, r)
+            
+            // Capture Panic to Sentry with context
+            sentry.WithScope(func(scope *sentry.Scope) {
+                scope.SetTag("tenant_id", fmt.Sprintf("%d", e.TenantID))
+                scope.SetTag("evento_id", fmt.Sprintf("%d", e.ID))
+                scope.SetTag("venda_id", fmt.Sprintf("%d", e.VendaID))
+                sentry.CurrentHub().Recover(r)
+            })
 		}
 	}()
 	return p.processEvent(ctx, tx, e)

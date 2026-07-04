@@ -21,6 +21,9 @@ import (
 	_ "github.com/lib/pq"
 	_ "time/tzdata"
 
+    "github.com/getsentry/sentry-go"
+    sentryfiber "github.com/getsentry/sentry-go/fiber"
+
 	"golang.org/x/crypto/bcrypt"
 	"ruivobarber-api/cmd/worker"
 	"ruivobarber-api/internal/adapters/handlers"
@@ -49,6 +52,16 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("Ficheiro .env não encontrado, a usar variáveis do sistema")
 	}
+
+    errSentry := sentry.Init(sentry.ClientOptions{
+        Dsn: os.Getenv("SENTRY_DSN"),
+        EnableTracing: true,
+        TracesSampleRate: 1.0,
+    })
+    if errSentry != nil {
+        log.Printf("⚠️ Sentry initialization failed: %v", errSentry)
+    }
+    defer sentry.Flush(2 * time.Second)
 
 	// Configurar fuso horário global America/Sao_Paulo
 	loc, err := time.LoadLocation("America/Sao_Paulo")
@@ -741,6 +754,38 @@ func main() {
     healthHandler := handlers.NewHealthHandler(db)
 
     app := fiber.New(fiber.Config{AppName: "RuivoBarber API v1.0"})
+    
+    // Add Sentry fiber middleware
+    app.Use(sentryfiber.New(sentryfiber.Options{
+        Repanic: true,
+        WaitForDelivery: true,
+    }))
+    
+    // Custom Sentry Context Enrichment
+    app.Use(func(c *fiber.Ctx) error {
+        if hub := sentryfiber.GetHubFromContext(c); hub != nil {
+            // Scrubbing logic will be handled at the SDK level or we just omit passing raw headers
+            hub.Scope().SetTag("tenant_id", c.Get("X-Tenant-ID", "unknown"))
+            // Normally user_id comes from JWT claims, but we can set it from a context variable or header if available
+            // In a real app you'd extract it from c.Locals("user"). For now we add standard request IDs.
+            hub.Scope().SetTag("request_id", c.Get("X-Request-ID", "unknown"))
+        }
+        err := c.Next()
+        
+        // Capture 5xx HTTP Errors manually if the Fiber handler returns them
+        if err != nil {
+            if fiberErr, ok := err.(*fiber.Error); ok && fiberErr.Code >= 500 {
+                if hub := sentryfiber.GetHubFromContext(c); hub != nil {
+                    hub.CaptureException(err)
+                }
+            } else if hub := sentryfiber.GetHubFromContext(c); hub != nil {
+                hub.CaptureException(err)
+            }
+        }
+        
+        return err
+    })
+
     app.Use(logger.New())
     app.Use(cors.New())
     app.Use(func(c *fiber.Ctx) error {
@@ -750,6 +795,10 @@ func main() {
             log.Printf("[DEBUG LOG] Status %d - Request Body: %s", status, string(c.Body()))
         }
         return err
+    })
+
+    app.Get("/api/v1/debug-sentry", func(c *fiber.Ctx) error {
+        panic("Sentry test panic from GET /api/v1/debug-sentry!")
     })
 
     healthHandler.RegisterRoutes(app)
