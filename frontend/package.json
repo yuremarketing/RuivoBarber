@@ -6,7 +6,10 @@
     "dev": "vite",
     "build": "vite build",
     "start": "vite --host 0.0.0.0 --port 3000",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run --headless",
+    "cy:run:ci": "cypress run --headless --reporter json"
   },
   "dependencies": {
     "@sentry/react": "^10.63.0",
@@ -22,6 +25,7 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.0",
     "cypress": "^15.18.0",
-    "vite": "^5.0.0"
+    "vite": "^5.0.0",
+    "wait-on": "^9.0.10"
   }
 }

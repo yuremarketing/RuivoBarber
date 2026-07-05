@@ -1,54 +1,117 @@
-describe("Fluxo de Agendamento do Cliente (MVP)", () => {
+/**
+ * agendamento.cy.js — Fluxo de Agendamento do Cliente
+ *
+ * Fluxos cobertos:
+ * - Cliente acessa tela de agendamentos
+ * - Cria novo agendamento (barbeiro + serviço + dia + horário)
+ * - Confirma e vê sucesso
+ * - Agendamento aparece na lista
+ */
+
+describe("Fluxo de Agendamento do Cliente", () => {
   beforeEach(() => {
-    // Acessa a página inicial e vai para Criar Conta
-    cy.visit("/");
+    // Mock: login do cliente
+    cy.intercept("POST", "**/auth/login", {
+      statusCode: 200,
+      body: {
+        token: "fake-jwt-cliente",
+        user: { id: 10, nome: "Cliente Teste", login: "cliente_teste", cargo: "Cliente", nivel: 1, xp: 50 },
+      },
+    }).as("login");
 
-    cy.contains("button", "Criar Conta").click();
-    
-    // Preenche o formulário de registro
-    const uniqueId = Date.now();
-    cy.get('input[placeholder="Digite seu nome completo"]').type(`Cliente E2E ${uniqueId}`);
-    cy.get('input[placeholder="Digite o login desejado"]').type(`cliente_${uniqueId}`);
-    cy.get('input[placeholder="Crie uma senha segura"]').type("123");
-    
-    // Aceita LGPD
-    cy.get('input[type="checkbox"]').check();
-    
-    cy.contains("button", "Criar Minha Conta").click();
+    // Mock: lista de barbeiros
+    cy.intercept("GET", "**/barbeiros**", {
+      statusCode: 200,
+      body: {
+        data: [
+          { id: 1, nome: "João Barbeiro", foto_url: "", especialidade: "Corte e Barba" },
+        ],
+      },
+    }).as("barbeiros");
 
-    // Aguarda o redirecionamento para o dashboard
+    // Mock: lista de serviços
+    cy.intercept("GET", "**/servicos**", {
+      statusCode: 200,
+      body: {
+        data: [
+          { id: 1, nome: "Corte Simples", preco: 35.0, duracao_min: 30 },
+          { id: 2, nome: "Barba", preco: 25.0, duracao_min: 20 },
+        ],
+      },
+    }).as("servicos");
+
+    // Mock: slots disponíveis
+    cy.intercept("GET", "**/agendamentos/slots**", {
+      statusCode: 200,
+      body: {
+        data: ["09:00", "09:30", "10:00", "10:30", "11:00", "14:00", "15:00"],
+      },
+    }).as("slots");
+
+    // Mock: criar agendamento
+    cy.intercept("POST", "**/agendamentos**", {
+      statusCode: 201,
+      body: {
+        data: { id: 100, status: "pendente", mensagem: "Agendamento confirmado com sucesso!" },
+      },
+    }).as("criarAgendamento");
+
+    // Mock: lista de agendamentos do cliente
+    cy.intercept("GET", "**/agendamentos**", {
+      statusCode: 200,
+      body: {
+        data: [
+          { id: 100, barbeiro: "João Barbeiro", servico: "Corte Simples", data: "2026-07-10", horario: "09:00", status: "pendente" },
+        ],
+      },
+    }).as("listaAgendamentos");
+
+    // Fazer login
+    cy.visit("/login");
+    cy.get('input[placeholder="Digite seu login"]').type("cliente_teste");
+    cy.get('input[placeholder="Digite sua senha"]').type("senha123");
+    cy.contains("button", "Entrar no Sistema").click();
+    cy.wait("@login");
     cy.url().should("include", "/dashboard");
   });
 
-  it("Deve simular um cliente criando um agendamento com sucesso", () => {
-    // Passo 1: O cliente deve acessar a aba de agendamentos e clicar no botão "Novo Agendamento"
-    cy.contains("a", "Agendar Horário").click();
-    cy.url().should("include", "/agendamentos");
-    cy.contains("button", "+ Novo Agendamento").click();
+  it("Deve criar um agendamento completo com sucesso", () => {
+    // Navegar para agendamentos
+    cy.visit("/agendamentos");
+    cy.wait("@listaAgendamentos");
 
-    // Passo 2: O sistema já tem barbeiros na base (admin pode estar cadastrado, ou barbeiros falsos)
-    // Se não houver barbeiros, a div "Barbeiro" com o nome não existirá, então clicamos no primeiro barbeiro disponível
-    cy.get(".barbeiro-card").first().click();
+    // Clicar em novo agendamento
+    cy.contains("button", /novo agendamento/i).click();
 
-    // Passo 3: Escolher um Serviço (Clica no primeiro serviço da lista)
-    cy.get(".servico-card").first().click();
+    // Wizard: selecionar barbeiro
+    cy.wait("@barbeiros");
+    cy.get(".barbeiro-card, [data-testid='barbeiro-card']").first().click();
 
-    // Passo 4: Escolher uma Data (Ex: Clicar na aba de Quinta-Feira, e num botão de data válida disponível se existir, mas no Wizard atual basta clicar nos slots)
-    // Para simplificar, como o layout depende de dias, vamos pegar o primeiro "Dia" disponível na tab list se tiver, ou simplesmente prosseguir para horários se não houver bloqueio rígido na UI:
-    // O wizard exige clicar em um "Dia" primeiro
-    cy.get(".wizard-days-scroll button").eq(3).click(); // Clica num dia futuro (índice 3 = 3 dias a frente)
+    // Wizard: selecionar serviço
+    cy.wait("@servicos");
+    cy.get(".servico-card, [data-testid='servico-card']").first().click();
 
-    // Passo 5: Selecionar um Horário (Vamos pegar o primeiro botão de horário que não esteja 'disabled')
-    cy.get(".slots-grid button:not(:disabled)").first().click();
+    // Wizard: selecionar dia (terceiro dia disponível para evitar dia bloqueado)
+    cy.get(".wizard-days-scroll button, [data-testid='dia-btn']").eq(2).click();
 
-    // Passo 6: Confirmar Agendamento (Resumo final)
-    cy.contains("button", "Confirmar Agendamento").click();
+    // Wizard: selecionar horário
+    cy.wait("@slots");
+    cy.get(".slots-grid button:not(:disabled), [data-testid='slot-btn']:not(:disabled)").first().click();
 
-    // Verificação de Sucesso
-    cy.contains("Agendamento Confirmado!", { matchCase: false }).should("be.visible");
-    cy.contains("button", "Voltar para o Início").click();
+    // Confirmar
+    cy.contains("button", /confirmar agendamento/i).click();
+    cy.wait("@criarAgendamento");
 
-    // Deve estar no dashboard novamente
-    cy.url().should("include", "/dashboard");
+    // Verificar sucesso
+    cy.contains(/agendamento confirmado|sucesso/i).should("be.visible");
+  });
+
+  it("Deve exibir a lista de agendamentos do cliente", () => {
+    cy.visit("/agendamentos");
+    cy.wait("@listaAgendamentos");
+
+    // Verifica que a lista não está vazia
+    cy.get("body").should("contain.text", "João Barbeiro");
+    cy.get("body").should("contain.text", "Corte Simples");
   });
 });

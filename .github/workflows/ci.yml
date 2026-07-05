@@ -5,6 +5,9 @@ on:
     branches:
       - develop
       - main
+  push:
+    branches:
+      - main
 
 jobs:
   # ─── Frontend: verificar se compila sem erros ───
@@ -53,3 +56,51 @@ jobs:
 
       - name: Run tests
         run: go test ./... -v -count=1
+
+  # ─── E2E: Cypress contra o frontend local ───
+  e2e:
+    name: 🧪 E2E Tests (Cypress)
+    runs-on: ubuntu-latest
+    needs: frontend-build
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Start preview server (background)
+        run: npm run preview -- --port 3000 &
+        env:
+          VITE_API_URL: https://ruivobarber-backend.onrender.com/api/v1
+
+      - name: Wait for server to be ready
+        run: npx wait-on http://localhost:3000 --timeout 30000
+
+      - name: Run Cypress E2E tests
+        run: npm run cy:run
+        env:
+          CYPRESS_BASE_URL: http://localhost:3000
+          CYPRESS_ADMIN_LOGIN: agentAdmin
+          CYPRESS_ADMIN_SENHA: ${{ secrets.E2E_ADMIN_SENHA }}
+
+      - name: Upload screenshots on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: frontend/cypress/screenshots
+          retention-days: 7
