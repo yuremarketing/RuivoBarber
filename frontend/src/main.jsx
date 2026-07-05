@@ -11,7 +11,7 @@ Sentry.init({
   environment: import.meta.env.MODE,
   integrations: [
     Sentry.browserTracingIntegration(),
-    Sentry.replayIntegration(),
+    // Sentry.replayIntegration(), // TODO: Reativar após investigar crash com icones SVG
   ],
   tracesSampleRate: 1.0,
   replaysSessionSampleRate: 0.1,

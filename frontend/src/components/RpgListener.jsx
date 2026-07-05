@@ -27,7 +27,8 @@ export default function RpgListener() {
     const connect = () => {
       // In production, token should be passed securely. EventSource does not support headers easily.
       // Can be passed via query string if needed: `/api/v1/stream?user_id=${userId}&token=${token}`
-      const url = `/api/v1/stream?user_id=${userId}&tenant_id=${tenantId}`
+      const baseURL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:8080/api/v1' : '/api/v1')
+      const url = `${baseURL}/stream?user_id=${userId}&tenant_id=${tenantId}`
       const es = new EventSource(url)
       eventSourceRef.current = es
 
