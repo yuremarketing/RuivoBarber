@@ -1,23 +1,27 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-function RpgProgressBar({ xpAtual = 0, nivel = 'Corte Iniciante' }) {
-  const safeXpAtual = Number(xpAtual) || 0;
-  const getProximoNivelXP = (nivelNome, currentXp) => {
-    let nomeNormalizado = ''
-    if (typeof nivelNome === 'number') {
-      const mapeamento = {
-        1: 'Corte Iniciante',
-        2: 'Barba de Respeito',
-        3: 'Lenda da Navalha',
-        4: 'Rei da Cadeira'
-      }
-      nomeNormalizado = mapeamento[nivelNome] || 'Corte Iniciante'
-    } else {
-      nomeNormalizado = String(nivelNome || '')
-    }
+const NIVEL_MAP = {
+  1: 'Corte Iniciante',
+  2: 'Barba de Respeito',
+  3: 'Lenda da Navalha',
+  4: 'Rei da Cadeira'
+}
 
-    switch (nomeNormalizado) {
+function resolveNivel(val) {
+  if (val == null) return 'Corte Iniciante'
+  if (typeof val === 'number' || !isNaN(Number(val))) {
+    return NIVEL_MAP[Number(val)] || 'Corte Iniciante'
+  }
+  return String(val)
+}
+
+function RpgProgressBar({ xpAtual = 0, nivel }) {
+  const safeXpAtual = Number(xpAtual) || 0;
+  const nivelStr = resolveNivel(nivel)
+
+  const getProximoNivelXP = (nivelNome, currentXp) => {
+    switch (nivelNome) {
       case 'Rei da Cadeira':
         return { nextXp: 1000, nextNivel: 'Nível Máximo', xpFaltando: 0, maxLevel: true }
       case 'Lenda da Navalha':
@@ -29,7 +33,7 @@ function RpgProgressBar({ xpAtual = 0, nivel = 'Corte Iniciante' }) {
     }
   }
 
-  const { nextXp, nextNivel, xpFaltando, maxLevel } = getProximoNivelXP(nivel, safeXpAtual)
+  const { nextXp, nextNivel, xpFaltando, maxLevel } = getProximoNivelXP(nivelStr, safeXpAtual)
   const percentual = maxLevel ? 100 : Math.min((safeXpAtual / nextXp) * 100, 100)
   
   // Média de 15 XP por atendimento
@@ -72,4 +76,3 @@ RpgProgressBar.propTypes = {
 }
 
 export default RpgProgressBar
-

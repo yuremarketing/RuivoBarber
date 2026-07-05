@@ -1,30 +1,34 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
+const NIVEL_MAP = {
+  1: 'Corte Iniciante',
+  2: 'Barba de Respeito',
+  3: 'Lenda da Navalha',
+  4: 'Rei da Cadeira'
+}
+
+function resolveNivel(val) {
+  if (val == null) return 'Corte Iniciante'
+  if (typeof val === 'number' || !isNaN(Number(val))) {
+    return NIVEL_MAP[Number(val)] || 'Corte Iniciante'
+  }
+  return String(val)
+}
+
 function PlayerCard({ 
   nome = 'Cliente', 
-  nivel = 'Corte Iniciante', 
+  nivel, 
   xp = 0, 
   avatarUrl = '', 
   molduraEquipada = '', 
   fundoEquipado = '', 
   efeitoEquipado = '' 
 }) {
-  const getPatenteInfo = (nivelNome) => {
-    let nomeNormalizado = ''
-    if (typeof nivelNome === 'number') {
-      const mapeamento = {
-        1: 'Corte Iniciante',
-        2: 'Barba de Respeito',
-        3: 'Lenda da Navalha',
-        4: 'Rei da Cadeira'
-      }
-      nomeNormalizado = mapeamento[nivelNome] || 'Corte Iniciante'
-    } else {
-      nomeNormalizado = String(nivelNome || '')
-    }
+  const nivelStr = resolveNivel(nivel)
 
-    switch (nomeNormalizado) {
+  const getPatenteInfo = (nivelNome) => {
+    switch (nivelNome) {
       case 'Rei da Cadeira':
         return { frameClass: 'frame-royal', crown: true, color: '#b026ff', badgeEmoji: '👑' }
       case 'Lenda da Navalha':
@@ -36,7 +40,7 @@ function PlayerCard({
     }
   }
 
-  const { frameClass: defaultFrameClass, crown, color, badgeEmoji } = getPatenteInfo(nivel)
+  const { frameClass: defaultFrameClass, crown, color, badgeEmoji } = getPatenteInfo(nivelStr)
   const frameClass = molduraEquipada || defaultFrameClass
   const iniciais = String(nome || '')
     .split(' ')
@@ -44,22 +48,15 @@ function PlayerCard({
     .slice(0, 2)
     .join('')
 
-  const getGlowClass = (levelName) => {
-    let normalized = ''
-    if (typeof levelName === 'number') {
-      const mapeamento = { 1: 'Corte Iniciante', 2: 'Barba de Respeito', 3: 'Lenda da Navalha', 4: 'Rei da Cadeira' }
-      normalized = mapeamento[levelName] || 'Corte Iniciante'
-    } else {
-      normalized = String(levelName || '')
-    }
-    switch (normalized) {
+  const getGlowClass = (nivelNome) => {
+    switch (nivelNome) {
       case 'Rei da Cadeira': return 'player-card-glow-royal';
       case 'Lenda da Navalha': return 'player-card-glow-gold';
       default: return '';
     }
   }
 
-  const glowClass = getGlowClass(nivel)
+  const glowClass = getGlowClass(nivelStr)
 
   return (
     <div className={`player-card-rpg dota-card ${fundoEquipado} ${efeitoEquipado} ${glowClass}`}>
@@ -82,7 +79,7 @@ function PlayerCard({
 
       <div className="player-card-badges">
         <span className="rpg-level-badge" style={{ background: color, color: '#fff' }}>
-          {badgeEmoji} {nivel}
+          {badgeEmoji} {nivelStr}
         </span>
       </div>
 
@@ -107,5 +104,3 @@ PlayerCard.propTypes = {
 }
 
 export default PlayerCard
-
-
