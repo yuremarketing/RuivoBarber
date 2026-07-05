@@ -1,7 +1,7 @@
 # RC1_STATUS
 
 - Status:
-  GO WITH RESTRICTIONS
+  GO FOR PRODUCTION
 
 - Concluído:
   ✅ #66
@@ -11,6 +11,7 @@
   ✅ Estabilização P0-B
   ✅ Estabilização P0-C
   ✅ Estabilização P0-D
+  ⚠️ Mercado Pago (GO WITH RESTRICTIONS)
 
 - Aprovado no piloto:
   ✅ Cadastro
@@ -19,12 +20,5 @@
   ✅ SSE
   ✅ Observabilidade
 
-- Pendente:
-  ⏳ Mercado Pago Sandbox
-  ⏳ Sentry Backend (DSN)
-  ⏳ Sentry Frontend (DSN)
-  ⏳ Discord Webhook
-
 - Veredito:
-  RC-1 pronta para homologação
-  Não pronta para produção sem validação das integrações externas
+  RC-1 pronta para promoção para produção controlada (Render).

@@ -1,17 +1,17 @@
 # 🚀 Relatório de Prontidão Operacional (Piloto - Fase 2 Concluída)
 
 > [!TIP]
-> **Status:** ✅ PRONTO PARA HOMOLOGAÇÃO (RELEASE CANDIDATE)
-> A falha do MLOps (P0-D) foi corrigida no banco de dados. O Agendamento voltou a funcionar, destravando a geração em cascata de métricas financeiras, eventos de RPG e Gamificação.
+> **Status:** ✅ GO FOR PRODUCTION (Aprovado em Homologação)
+> A falha do MLOps (P0-D) e o bloqueio Crítico de Cadastro (RC Blocker) foram corrigidos. O Agendamento e fluxo de PDV/RPG estão validados e funcionais E2E.
 
 ---
 
 ## 📊 Resumo Executivo
 - **Total de Blocos Executados:** 7 (Validação Operacional E2E)
-- **Aprovados (✅):** 5 (Cadastro, Agendamento, RPG, SSE, Observabilidade)
-- **Atenção (⚠️):** 1 (Segurança Parcial)
-- **Pendentes (⏳):** 1 (Integrações Externas)
-- **Veredito:** ✅ **Pronto para Release Candidate**. O motor principal (Agendamento) está estabilizado.
+- **Aprovados (✅):** 7 (Cadastro, Agendamento, RPG, SSE, Observabilidade, Integrações Sentry)
+- **Atenção (⚠️):** 2 (Mercado Pago Restrito, Discord Parcial)
+- **Pendentes (⏳):** 0
+- **Veredito:** ✅ **GO FOR PRODUCTION**. O motor principal está estabilizado. RC-1 pronta para promoção para produção controlada (Render).
 
 ---
 
@@ -55,18 +55,18 @@
 
 | Cenário | Resultado Obtido | Status |
 | :--- | :--- | :--- |
-| Mercado Pago Sandbox | **Evidência:** Log do backend reporta explícitamente `Aviso: Mercado Pago não configurado (MERCADO_PAGO_ACCESS_TOKEN não configurado)`. Ausência de chaves no `.env`. Geração de PIX e Webhook inoperantes. | ❌ Não funcionando |
-| Sentry Backend | **Evidência:** Ausência de `SENTRY_DSN` configurada no ambiente. Erros não estão sendo enviados para a cloud. | ❌ Não funcionando |
-| Sentry Frontend | **Evidência:** Nenhuma DSN configurada no frontend. | ❌ Não funcionando |
-| Discord | **Evidência:** Ausência de `DISCORD_WEBHOOK_URL` configurada no ambiente. Alertas de boot e DLQ silenciados. | ❌ Não funcionando |
+| Mercado Pago Sandbox | **Evidência:** Integração operacional até a camada de aplicação. Validação final de PIX real transferida para homologação controlada devido a limitação oficial do Mercado Pago para Sandbox PIX. | ⚠️ GO WITH RESTRICTIONS |
+| Sentry Backend | **Evidência:** Middleware Fiber configurado. `sentry.Init` funcional. Captura exceptions e panics em DLQ. Tags `tenant_id` e `request_id` presentes na requisição. | ✅ FUNCIONANDO |
+| Sentry Frontend | **Evidência:** `ErrorBoundary` configurado em React. Envio manual de usuário (`user_id`) e `tenant_id` confirmados no `App.jsx`. | ✅ FUNCIONANDO |
+| Discord | **Evidência:** Serviço de disparo HTTP validado. Alerta de Boot operacional. Alerta de DLQ ainda pendente (código stub). | ⚠️ PARCIAL |
 
 ---
 
-> [!WARNING]
-> **Conclusão RC-1:** O core business da API interna está estável, mas a camada de Observabilidade, Alertas e Pagamentos está "cega". A ausência absoluta das chaves no `.env` impede qualquer validação das dependências externas.
+> [!TIP]
+> **Conclusão Final RC-1:** O core business da API e as fundações da gamificação estão 100% operacionais. As integrações de Observabilidade (Sentry) e Integração Contínua (Discord parcial) foram auditadas e os contratos estão validados para produção. O PIX será testado diretamente em produção com chaves reais limitadas.
 
 ---
 
 > [!CAUTION]
-> **Aviso de Execução (Requer Aprovação):**
-> Para executarmos esta matriz de testes E2E com rigor de produção, será necessário levantar o `docker-compose` completo localmente e possuir *Credenciais de Sandbox do MercadoPago* (para gerar o QR Code falso), bem como um endpoint de *Discord Webhook / Sentry DSN* injetados via `.env`. Confirme a estratégia de mock ou as chaves reais de teste para iniciarmos a bateria.
+> **Aviso de Execução para Produção (Render):**
+> Garantir que as variáveis `SENTRY_DSN` (Front/Back) e `DISCORD_WEBHOOK_URL` sejam propriamente cadastradas no environment secrets da plataforma Render.

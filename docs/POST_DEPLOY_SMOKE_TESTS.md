@@ -2,12 +2,14 @@
 
 Este checklist deve ser executado rigorosamente logo após a injeção das credenciais (`MERCADO_PAGO_ACCESS_TOKEN`, `SENTRY_DSN`, `VITE_SENTRY_DSN`, `DISCORD_WEBHOOK_URL`) em ambiente remoto de homologação ou produção.
 
-## 1. Mercado Pago Sandbox
-- [ ] Gerar cobrança PIX via fluxo de Checkout no PDV.
+## 1. Mercado Pago PIX (Homologação Final)
+- [ ] **Deploy da RC-1** concluído.
+- [ ] **Ambiente configurado** com chave PIX ativa (credenciais de Produção).
+- [ ] Gerar cobrança PIX via fluxo de Checkout no PDV (geração de PIX real).
 - [ ] Validar renderização do QR Code no frontend.
 - [ ] Validar payload do copia-e-cola gerado corretamente.
-- [ ] Validar recebimento do Webhook de confirmação de pagamento.
-- [ ] Validar transição do status do Agendamento/Venda para `approved` após confirmação simulada.
+- [ ] Validar recebimento do Webhook de confirmação de pagamento (após pagamento real de 1 centavo).
+- [ ] Validar transição do status do Agendamento/Venda para `approved`.
 
 ## 2. Sentry Backend
 - [ ] Disparar um erro controlado via endpoint de testes ou manipulando dados inválidos em rota autenticada.

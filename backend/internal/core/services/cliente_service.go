@@ -19,6 +19,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"ruivobarber-api/internal/core/domain"
 	"ruivobarber-api/internal/core/ports"
+	"ruivobarber-api/internal/pkg/contextutils"
 )
 
 type ClienteService struct {
@@ -141,7 +142,10 @@ func (s *ClienteService) Login(login, senha string) (*domain.Cliente, string, er
 }
 
 func (s *ClienteService) CadastrarCliente(cliente *domain.Cliente, password string) error {
-	_, err := s.repo.FindByLogin(context.Background(), cliente.Login)
+	// [RC-1 Hotfix] Injetando Master Tenant ID para viabilizar cadastro público multi-tenant
+	ctx := context.WithValue(context.Background(), contextutils.TenantIDKey, "00000000-0000-0000-0000-000000000001")
+
+	_, err := s.repo.FindByLogin(ctx, cliente.Login)
 	if err == nil {
 		return errors.New("login já cadastrado no sistema")
 	}
@@ -154,7 +158,7 @@ func (s *ClienteService) CadastrarCliente(cliente *domain.Cliente, password stri
 	if cliente.Cargo != "Adm" && cliente.Cargo != "Barbeiro" && cliente.Cargo != "Cliente" {
 		cliente.Cargo = "Cliente"
 	}
-	return s.repo.Save(context.Background(), cliente,  string(hashedBytes))
+	return s.repo.Save(ctx, cliente,  string(hashedBytes))
 }
 
 func (s *ClienteService) AtualizarPerfil(id int, nome, login, senha, avatarUrl, telefone string, whatsappConsent bool, cargo string) error {

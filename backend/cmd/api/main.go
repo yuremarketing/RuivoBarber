@@ -146,6 +146,18 @@ func main() {
 		log.Println("✅ Migração automática: coluna avatar_url garantida na tabela Usuarios")
 	}
 
+	// Migração automática: Garantir colunas telefone, lgpdaceito e lgpdaceitoem
+	_, err = db.Exec(`
+		ALTER TABLE Usuarios ADD COLUMN IF NOT EXISTS telefone VARCHAR(20);
+		ALTER TABLE Usuarios ADD COLUMN IF NOT EXISTS lgpdaceito BOOLEAN DEFAULT FALSE;
+		ALTER TABLE Usuarios ADD COLUMN IF NOT EXISTS lgpdaceitoem TIMESTAMPTZ;
+	`)
+	if err != nil {
+		log.Printf("[DB] Erro ao garantir colunas de LGPD na tabela Usuarios: %v", err)
+	} else {
+		log.Println("✅ Migração automática: colunas telefone e LGPD garantidas na tabela Usuarios")
+	}
+
 	// Migração automática: Garantir colunas foto_url e avaliacao_media na tabela Usuarios
 	_, err = db.Exec("ALTER TABLE Usuarios ADD COLUMN IF NOT EXISTS foto_url VARCHAR(300) DEFAULT ''")
 	if err != nil {
