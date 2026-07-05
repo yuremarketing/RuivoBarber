@@ -14,7 +14,7 @@ function RpgProgressBar({ xpAtual = 0, nivel = 'Corte Iniciante' }) {
       }
       nomeNormalizado = mapeamento[nivelNome] || 'Corte Iniciante'
     } else {
-      nomeNormalizado = String(nivelNome || '').trim()
+      nomeNormalizado = String(nivelNome || '')
     }
 
     switch (nomeNormalizado) {

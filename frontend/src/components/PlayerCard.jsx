@@ -21,7 +21,7 @@ function PlayerCard({
       }
       nomeNormalizado = mapeamento[nivelNome] || 'Corte Iniciante'
     } else {
-      nomeNormalizado = String(nivelNome || '').trim()
+      nomeNormalizado = String(nivelNome || '')
     }
 
     switch (nomeNormalizado) {
@@ -50,7 +50,7 @@ function PlayerCard({
       const mapeamento = { 1: 'Corte Iniciante', 2: 'Barba de Respeito', 3: 'Lenda da Navalha', 4: 'Rei da Cadeira' }
       normalized = mapeamento[levelName] || 'Corte Iniciante'
     } else {
-      normalized = String(levelName || '').trim()
+      normalized = String(levelName || '')
     }
     switch (normalized) {
       case 'Rei da Cadeira': return 'player-card-glow-royal';
