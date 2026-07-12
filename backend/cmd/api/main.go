@@ -116,6 +116,23 @@ func main() {
 	}
 
 	// Migração automática para novas colunas (garante que a tabela está sincronizada no Render)
+	if _, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS tenants (
+			id UUID PRIMARY KEY,
+			nome VARCHAR(255) NOT NULL,
+			slug VARCHAR(255) UNIQUE NOT NULL,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW()
+		);
+		INSERT INTO tenants (id, nome, slug) VALUES ('00000000-0000-0000-0000-000000000001', 'RuivoBarber Oficial', 'ruivobarber') ON CONFLICT (id) DO NOTHING;
+	`); err != nil {
+		log.Printf("[DB AVISO] Erro ao criar tenants: %v", err)
+	}
+
+	if _, err = db.Exec("ALTER TABLE Usuarios ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;"); err != nil {
+		log.Printf("[DB FATAL] Erro ao adicionar tenant_id na tabela Usuarios: %v", err)
+	}
+	db.Exec("UPDATE Usuarios SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL;")
+
 	if _, err = db.Exec("ALTER TABLE Usuarios ADD COLUMN IF NOT EXISTS whatsappconsent BOOLEAN DEFAULT FALSE;"); err != nil {
 		log.Printf("[DB FATAL] Erro ao adicionar whatsappconsent: %v", err)
 	} else {
