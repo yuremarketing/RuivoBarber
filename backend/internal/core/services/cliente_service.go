@@ -918,7 +918,10 @@ func (s *ClienteService) GoogleLogin(authCode string) (*domain.Cliente, string, 
 		nome = email
 	}
 
-	cliente, err := s.repo.FindByLogin(context.Background(), email)
+	// [RC-1 Hotfix] Injetando Master Tenant ID para viabilizar login/cadastro multi-tenant
+	ctx := context.WithValue(context.Background(), contextutils.TenantIDKey, "00000000-0000-0000-0000-000000000001")
+
+	cliente, err := s.repo.FindByLogin(ctx, email)
 	if err != nil {
 		// Auto-cadastro de novos usuários via Google OAuth
 		cargo := "Cliente"
@@ -937,12 +940,12 @@ func (s *ClienteService) GoogleLogin(authCode string) (*domain.Cliente, string, 
 			return nil, "", err
 		}
 
-		err = s.repo.Save(context.Background(), novoCliente, string(hashedBytes))
+		err = s.repo.Save(ctx, novoCliente, string(hashedBytes))
 		if err != nil {
 			return nil, "", err
 		}
 
-		cliente, err = s.repo.FindByLogin(context.Background(), email)
+		cliente, err = s.repo.FindByLogin(ctx, email)
 		if err != nil {
 			return nil, "", err
 		}
