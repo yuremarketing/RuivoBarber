@@ -116,8 +116,17 @@ func main() {
 	}
 
 	// Migração automática para novas colunas (garante que a tabela está sincronizada no Render)
-	_, _ = db.Exec("ALTER TABLE Usuarios ADD COLUMN IF NOT EXISTS whatsappconsent BOOLEAN DEFAULT FALSE;")
-	_, _ = db.Exec("ALTER TABLE Usuarios ALTER COLUMN telefone TYPE VARCHAR(255);")
+	if _, err = db.Exec("ALTER TABLE Usuarios ADD COLUMN IF NOT EXISTS whatsappconsent BOOLEAN DEFAULT FALSE;"); err != nil {
+		log.Printf("[DB FATAL] Erro ao adicionar whatsappconsent: %v", err)
+	} else {
+		log.Println("✅ Migração concluída: coluna whatsappconsent verificada/adicionada")
+	}
+
+	if _, err = db.Exec("ALTER TABLE Usuarios ALTER COLUMN telefone TYPE VARCHAR(255);"); err != nil {
+		log.Printf("[DB AVISO] Erro ao alterar coluna telefone (pode não existir ainda): %v", err)
+	} else {
+		log.Println("✅ Migração concluída: coluna telefone alterada para VARCHAR(255)")
+	}
 
 	var tz string
 	if err := db.QueryRow("SHOW TIMEZONE").Scan(&tz); err != nil {
