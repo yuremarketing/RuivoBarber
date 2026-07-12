@@ -27,13 +27,17 @@ Sentry.init({
   }
 })
 
+import { GoogleOAuthProvider } from '@react-oauth/google'
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <ErrorBoundary>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </ErrorBoundary>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || '875304695392-ps6bpdh818gs2dirgd7eqea3omvrggdb.apps.googleusercontent.com'}>
+      <ErrorBoundary>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </ErrorBoundary>
+    </GoogleOAuthProvider>
   </React.StrictMode>
 )
 
