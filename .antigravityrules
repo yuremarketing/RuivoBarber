@@ -55,11 +55,20 @@
     <rule>Fluxo: commit → push direto na develop</rule>
   </git>
 
+  <ci_cd priority="ALTA">
+    <rule>APÓS cada git push, verificar o status do GitHub Actions usando o MCP do GitHub ou acessando a aba Actions do repositório.</rule>
+    <rule>Se o CI (Build & Test) falhar, PARAR o desenvolvimento e investigar a causa da falha ANTES de continuar codando.</rule>
+    <rule>O job de E2E (Cypress) é opcional (continue-on-error: true) e não bloqueia o merge, mas falhas devem ser reportadas ao usuário.</rule>
+    <rule>Nunca ignorar um ❌ vermelho no CI. Reportar ao usuário mesmo que pareça irrelevante.</rule>
+    <rule>Ao fazer merge de develop → main, o CI DEVE estar verde (frontend-build + backend-build-test).</rule>
+  </ci_cd>
+
   <strategy>
     <rule>Resolver pelo menor caminho possível</rule>
     <rule>Evitar overthinking</rule>
     <rule>Expandir contexto só se necessário</rule>
   </strategy>
+
   <approval_gate priority="MAXIMA">
     <rule>Esta seção tem prioridade sobre todas as outras regras do arquivo.</rule>
     <rule>SEMPRE QUE apresentar um plano de ação, lista de mudanças ou proposta técnica ao usuário para revisão, PARE IMEDIATAMENTE e aguarde a confirmação humana explícita (ex: "ok", "pode fazer", "aprovado", "execute") antes de rodar qualquer comando ou modificar qualquer arquivo.</rule>
@@ -68,4 +77,3 @@
   </approval_gate>
 
 </system_constraints>
-``

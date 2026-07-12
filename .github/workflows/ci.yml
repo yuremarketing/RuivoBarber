@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - main
+      - develop
 
 jobs:
   # ─── Frontend: verificar se compila sem erros ───
@@ -57,11 +58,13 @@ jobs:
       - name: Run tests
         run: go test ./... -v -count=1
 
-  # ─── E2E: Cypress contra o frontend local ───
+  # ─── E2E: Cypress (opcional — não bloqueia o merge) ───
   e2e:
     name: 🧪 E2E Tests (Cypress)
     runs-on: ubuntu-latest
     needs: frontend-build
+    # E2E depende de backend externo — não bloqueia o CI se falhar
+    continue-on-error: true
     defaults:
       run:
         working-directory: ./frontend
@@ -94,7 +97,7 @@ jobs:
         run: npm run cy:run
         env:
           CYPRESS_BASE_URL: http://localhost:3000
-          CYPRESS_ADMIN_LOGIN: agentAdmin
+          CYPRESS_ADMIN_LOGIN: agadmin
           CYPRESS_ADMIN_SENHA: ${{ secrets.E2E_ADMIN_SENHA }}
 
       - name: Upload screenshots on failure
