@@ -18,7 +18,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
-	"google.golang.org/api/idtoken"
+
 
 	"ruivobarber-api/internal/core/domain"
 	"ruivobarber-api/internal/core/ports"
