@@ -847,33 +847,82 @@ func (s *ClienteService) resolverFunctionCall(apiKey string, clienteID int, reqB
 	return s.executarChamadaGeminiStream(apiKey, clienteID, reqBody, writeChunk)
 }
 
-func (s *ClienteService) GoogleLogin(googleIdToken string) (*domain.Cliente, string, error) {
+
+func (s *ClienteService) GoogleLogin(authCode string) (*domain.Cliente, string, error) {
 	googleClientID := os.Getenv("GOOGLE_CLIENT_ID")
+	googleClientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
 	if googleClientID == "" {
 		return nil, "", errors.New("variável GOOGLE_CLIENT_ID não configurada no backend")
 	}
 
-	// Validar a assinatura e aud (Audience) do token JWT com a chave pública do Google
-	payload, err := idtoken.Validate(context.Background(), googleIdToken, googleClientID)
-	if err != nil {
-		return nil, "", fmt.Errorf("token do Google inválido: %v", err)
+	// Trocar o authorization code por tokens usando o endpoint OAuth2 do Google
+	redirectURI := os.Getenv("GOOGLE_REDIRECT_URI")
+	if redirectURI == "" {
+		// Em desenvolvimento, postmessage é o valor padrão para fluxo popup
+		redirectURI = "postmessage"
 	}
 
-	email := fmt.Sprintf("%v", payload.Claims["email"])
-	nome := fmt.Sprintf("%v", payload.Claims["name"])
-	if email == "" || email == "<nil>" {
+	tokenURL := "https://oauth2.googleapis.com/token"
+	formData := fmt.Sprintf(
+		"code=%s&client_id=%s&client_secret=%s&redirect_uri=%s&grant_type=authorization_code",
+		authCode, googleClientID, googleClientSecret, redirectURI,
+	)
+
+	resp, err := http.Post(tokenURL, "application/x-www-form-urlencoded", strings.NewReader(formData))
+	if err != nil {
+		return nil, "", fmt.Errorf("falha ao comunicar com o Google: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var tokenResp struct {
+		AccessToken string `json:"access_token"`
+		Error       string `json:"error"`
+		ErrorDesc   string `json:"error_description"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+		return nil, "", fmt.Errorf("falha ao decodificar resposta do Google: %v", err)
+	}
+	if tokenResp.Error != "" {
+		return nil, "", fmt.Errorf("Google OAuth erro: %s - %s", tokenResp.Error, tokenResp.ErrorDesc)
+	}
+
+	// Usar o access_token para buscar informações do usuário
+	userInfoURL := "https://www.googleapis.com/oauth2/v2/userinfo"
+	req, err := http.NewRequest("GET", userInfoURL, nil)
+	if err != nil {
+		return nil, "", err
+	}
+	req.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
+
+	httpClient := &http.Client{}
+	userResp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, "", fmt.Errorf("falha ao buscar dados do usuário no Google: %v", err)
+	}
+	defer userResp.Body.Close()
+
+	var userInfo struct {
+		Email string `json:"email"`
+		Name  string `json:"name"`
+	}
+	if err := json.NewDecoder(userResp.Body).Decode(&userInfo); err != nil {
+		return nil, "", fmt.Errorf("falha ao decodificar dados do usuário: %v", err)
+	}
+	if userInfo.Email == "" {
 		return nil, "", errors.New("e-mail não fornecido pelo Google")
 	}
 
+	email := userInfo.Email
+	nome := userInfo.Name
+	if nome == "" {
+		nome = email
+	}
+
 	cliente, err := s.repo.FindByLogin(context.Background(), email)
-	if err == nil {
-		// Opcional: Aqui poderíamos checar o cargo se não for cliente
-		// if cliente.Cargo != "Cliente" { return nil, "", errors.New(...) }
-	} else {
+	if err != nil {
 		// Auto-cadastro de novos usuários via Google OAuth
-		
 		cargo := "Cliente"
-		// Regra de exemplo: se o e-mail for do domínio, é barbeiro
+		// Regra de exemplo: se o e-mail for do domínio da empresa, é barbeiro
 		// if strings.HasSuffix(email, "@ruivobarber.com.br") { cargo = "Barbeiro" }
 
 		novoCliente := &domain.Cliente{
