@@ -115,6 +115,10 @@ func main() {
 		log.Println("✅ Migração automática: tipos de data/hora atualizados para TIMESTAMPTZ")
 	}
 
+	// Migração automática para novas colunas (garante que a tabela está sincronizada no Render)
+	_, _ = db.Exec("ALTER TABLE Usuarios ADD COLUMN IF NOT EXISTS whatsappconsent BOOLEAN DEFAULT FALSE;")
+	_, _ = db.Exec("ALTER TABLE Usuarios ALTER COLUMN telefone TYPE VARCHAR(255);")
+
 	var tz string
 	if err := db.QueryRow("SHOW TIMEZONE").Scan(&tz); err != nil {
 		log.Printf("⚠️ Erro ao obter session timezone: %v", err)
