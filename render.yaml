@@ -37,6 +37,10 @@ services:
         generateValue: true
       - key: TZ
         value: America/Sao_Paulo
+      - key: GOOGLE_CLIENT_ID
+        value: 875304695392-ps6bpdh818gs2dirgd7eqea3omvrggdb.apps.googleusercontent.com
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
 
   # Frontend React Static Site
   - type: web
@@ -53,6 +57,8 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://ruivobarber-backend.onrender.com/api/v1
+      - key: VITE_GOOGLE_CLIENT_ID
+        value: 875304695392-ps6bpdh818gs2dirgd7eqea3omvrggdb.apps.googleusercontent.com
 
 databases:
   - name: ruivobarber-db
