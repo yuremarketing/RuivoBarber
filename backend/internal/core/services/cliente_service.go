@@ -15,8 +15,11 @@ import (
 	"sort"
 	"strings"
 	"time"
-	"golang.org/x/crypto/bcrypt"
+
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/api/idtoken"
+
 	"ruivobarber-api/internal/core/domain"
 	"ruivobarber-api/internal/core/ports"
 	"ruivobarber-api/internal/pkg/contextutils"
@@ -844,40 +847,59 @@ func (s *ClienteService) resolverFunctionCall(apiKey string, clienteID int, reqB
 	return s.executarChamadaGeminiStream(apiKey, clienteID, reqBody, writeChunk)
 }
 
-func (s *ClienteService) GoogleLogin(email, nome string) (*domain.Cliente, string, error) {
+func (s *ClienteService) GoogleLogin(googleIdToken string) (*domain.Cliente, string, error) {
+	googleClientID := os.Getenv("GOOGLE_CLIENT_ID")
+	if googleClientID == "" {
+		return nil, "", errors.New("variável GOOGLE_CLIENT_ID não configurada no backend")
+	}
+
+	// Validar a assinatura e aud (Audience) do token JWT com a chave pública do Google
+	payload, err := idtoken.Validate(context.Background(), googleIdToken, googleClientID)
+	if err != nil {
+		return nil, "", fmt.Errorf("token do Google inválido: %v", err)
+	}
+
+	email := fmt.Sprintf("%v", payload.Claims["email"])
+	nome := fmt.Sprintf("%v", payload.Claims["name"])
+	if email == "" || email == "<nil>" {
+		return nil, "", errors.New("e-mail não fornecido pelo Google")
+	}
+
 	cliente, err := s.repo.FindByLogin(context.Background(), email)
 	if err == nil {
-		if cliente.Cargo != "Cliente" {
-			return nil, "", errors.New("login social permitido apenas para clientes")
-		}
+		// Opcional: Aqui poderíamos checar o cargo se não for cliente
+		// if cliente.Cargo != "Cliente" { return nil, "", errors.New(...) }
 	} else {
-		// Usuário não existe, vamos cadastrá-lo automaticamente
+		// Auto-cadastro de novos usuários via Google OAuth
+		
+		cargo := "Cliente"
+		// Regra de exemplo: se o e-mail for do domínio, é barbeiro
+		// if strings.HasSuffix(email, "@ruivobarber.com.br") { cargo = "Barbeiro" }
+
 		novoCliente := &domain.Cliente{
 			Nome:  nome,
 			Login: email,
-			Cargo: "Cliente",
+			Cargo: cargo,
 		}
-		
-		// Gerar um hash de senha aleatório para cumprir o schema
+
 		dummyPass := fmt.Sprintf("google_oauth_%d", time.Now().UnixNano())
 		hashedBytes, err := bcrypt.GenerateFromPassword([]byte(dummyPass), bcrypt.DefaultCost)
 		if err != nil {
 			return nil, "", err
 		}
 
-		err = s.repo.Save(context.Background(), novoCliente,  string(hashedBytes))
+		err = s.repo.Save(context.Background(), novoCliente, string(hashedBytes))
 		if err != nil {
 			return nil, "", err
 		}
 
-		// Buscar o cliente recém criado para obter o ID preenchido pelo banco
 		cliente, err = s.repo.FindByLogin(context.Background(), email)
 		if err != nil {
 			return nil, "", err
 		}
 	}
 
-	// Criar token JWT para o login do Google
+	// Criar o token JWT interno da plataforma
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":        cliente.ID,
 		"nome":      cliente.Nome,

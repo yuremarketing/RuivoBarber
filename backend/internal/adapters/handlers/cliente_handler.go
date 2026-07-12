@@ -614,8 +614,32 @@ func (h *ClienteHandler) RegisterPublico(c *fiber.Ctx) error {
 }
 
 func (h *ClienteHandler) GoogleLogin(c *fiber.Ctx) error {
-	return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
-		"error": "Login com Google desativado temporariamente para manutenção de segurança. Será reativado na última fase do projeto.",
+	var req struct {
+		Credential string `json:"credential"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "corpo da requisição inválido"})
+	}
+
+	if req.Credential == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "credencial do Google não fornecida"})
+	}
+
+	cliente, token, err := h.service.GoogleLogin(req.Credential)
+	if err != nil {
+		return c.Status(401).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{
+		"token": token,
+		"user": fiber.Map{
+			"id":        cliente.ID,
+			"nome":      cliente.Nome,
+			"cargo":     cliente.Cargo,
+			"login":     cliente.Login,
+			"avatarUrl": cliente.AvatarURL,
+		},
 	})
 }
 

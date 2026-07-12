@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { login as loginService, registrarPublico, loginComGoogle } from '../services/api'
+import { GoogleOAuthProvider, GoogleLogin as ReactGoogleLogin } from '@react-oauth/google'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -49,40 +50,26 @@ export default function LoginPage() {
     }
   }, [])
 
-  // Efeito para configurar o Google Sign-In
-  useEffect(() => {
-    // Carregar SDK oficial do Google
-    const script = document.createElement('script')
-    script.src = 'https://accounts.google.com/gsi/client'
-    script.async = true
-    script.defer = true
-    document.body.appendChild(script)
-
-    window.handleCredentialResponse = (response) => {
-      if (cargoRef.current !== 'Cliente') {
-        setErro('Login social do Google permitido apenas para clientes.')
-        return
-      }
-      setLoading(true)
-      setErro('')
-      loginComGoogle(response.credential)
-        .then(res => {
-          const data = res.data
-          saveSessionAndNavigate(data)
-        })
-        .catch(err => {
-          console.error(err)
-          setErro('Erro no login do Google: ' + (err.response?.data?.error || err.message))
-          setLoading(false)
-        })
+  // O script manual do Google Sign-In foi removido.
+  // Estamos usando o componente oficial @react-oauth/google agora.
+  const handleGoogleSuccess = (credentialResponse) => {
+    if (cargoRef.current !== 'Cliente') {
+      setErro('Login social do Google permitido apenas para clientes.')
+      return
     }
-
-    return () => {
-      try {
-        document.body.removeChild(script)
-      } catch (e) {}
-    }
-  }, [])
+    setLoading(true)
+    setErro('')
+    loginComGoogle(credentialResponse.credential)
+      .then(res => {
+        const data = res.data
+        saveSessionAndNavigate(data)
+      })
+      .catch(err => {
+        console.error(err)
+        setErro('Erro no login do Google: ' + (err.response?.data?.error || err.message))
+        setLoading(false)
+      })
+  }
 
   const saveSessionAndNavigate = (data) => {
     const userSession = {
@@ -223,7 +210,10 @@ export default function LoginPage() {
     }, 1000)
   }
 
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'COLE_SEU_CLIENT_ID_AQUI.apps.googleusercontent.com'
+
   return (
+    <GoogleOAuthProvider clientId={clientId}>
     <div className="login-page">
       {/* ── Dota 2 Particles ─── */}
       {Array.from({ length: 15 }).map((_, i) => (
@@ -377,27 +367,16 @@ export default function LoginPage() {
         </div>
 
         {/* Container do Google One Tap / Sign In (oculto para administradores e barbeiros via CSS display) */}
-        {/* Container do Google One Tap / Sign In (Desativado temporariamente por segurança. Será reativado apenas na última task do projeto.) */}
-        {/*
+        {/* Container do Google Sign In oficial */}
         <div style={{ display: cargo === 'Cliente' ? 'flex' : 'none', flexDirection: 'column', gap: '0.8rem', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-          <div 
-            id="g_id_onload"
-            data-client_id="875304695392-ps6bpdh818gs2dirgd7eqea3omvrggdb.apps.googleusercontent.com" // ID de cliente do Google real configurado
-            data-context="signin"
-            data-ux_mode="popup"
-            data-callback="handleCredentialResponse"
-            data-auto_select="false"
-          />
-          
-          <div 
-            className="g_id_signin"
-            data-type="standard"
-            data-shape="rectangular"
-            data-theme="filled_blue"
-            data-text="signin_with"
-            data-size="large"
-            data-logo_alignment="left"
-            style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+          <ReactGoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setErro('Falha na autenticação com o Google.')}
+            theme="filled_blue"
+            size="large"
+            width="100%"
+            text="signin_with"
+            shape="rectangular"
           />
 
           {devMode && (
@@ -441,7 +420,6 @@ export default function LoginPage() {
             </>
           )}
         </div>
-        */}
 
         <div className="login-page-dev-section">
           {devMode ? (
@@ -469,5 +447,6 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+    </GoogleOAuthProvider>
   )
 }

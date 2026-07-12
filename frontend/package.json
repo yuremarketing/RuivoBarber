@@ -12,6 +12,7 @@
     "cy:run:ci": "cypress run --headless --reporter json"
   },
   "dependencies": {
+    "@react-oauth/google": "^0.13.5",
     "@sentry/react": "^10.63.0",
     "axios": "^1.6.0",
     "canvas-confetti": "^1.9.4",

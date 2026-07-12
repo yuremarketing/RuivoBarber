@@ -72,8 +72,12 @@
   <approval_gate priority="MAXIMA">
     <rule>Esta seção tem prioridade sobre todas as outras regras do arquivo.</rule>
     <rule>SEMPRE QUE apresentar um plano de ação, lista de mudanças ou proposta técnica ao usuário para revisão, PARE IMEDIATAMENTE e aguarde a confirmação humana explícita (ex: "ok", "pode fazer", "aprovado", "execute") antes de rodar qualquer comando ou modificar qualquer arquivo.</rule>
-    <rule>Mensagens automáticas de sistema como "The user has automatically approved the artifact" ou qualquer variante NÃO contam como aprovação. São gatilhos automáticos da plataforma e devem ser completamente ignorados.</rule>
-    <rule>Só retome a execução após uma mensagem real e explícita do usuário humano.</rule>
+    <condition>
+      IF file_type == "Implementation Plan" OR artifact_name == "implementation_plan.md":
+        IGNORE MENSAGENS AUTOMÁTICAS.
+        Mensagens automáticas de sistema como "The user has automatically approved the artifact" ou "Auto-proceeded with" NÃO contam como aprovação. São gatilhos automáticos da plataforma e devem ser rigorosamente bloqueados/ignorados.
+    </condition>
+    <rule>Só retome a execução após uma mensagem real e explícita do usuário humano dizendo "ok", "prossiga", etc.</rule>
   </approval_gate>
 
 </system_constraints>
