@@ -5,7 +5,7 @@ import RedeemCouponManager from '../components/RedeemCouponManager.jsx'
 import BadgeShowcase from '../components/BadgeShowcase.jsx'
 import AvaliacaoModal from '../components/AvaliacaoModal.jsx'
 import AgendaConsolidada from '../components/AgendaConsolidada.jsx'
-import { buscarCliente, listarClientes, fetchTemporadaAtiva, fetchMeusBadges, fetchUltimoCorte, fetchGorjetasBarbeiro, confirmarPagamentoGorjeta, fetchDashboard } from '../services/api.js'
+import { buscarCliente, fetchHallOfFame, fetchTemporadaAtiva, fetchMeusBadges, fetchUltimoCorte, fetchGorjetasBarbeiro, confirmarPagamentoGorjeta, fetchDashboard } from '../services/api.js'
 import { playLevelUpSound, fireConfetti } from '../services/soundEffects.js'
 import ErrorState from '../components/ErrorState.jsx'
 // Stats format: { icon, label, value, change }
@@ -34,10 +34,9 @@ export default function DashboardPage() {
  
   const loadRanking = async () => {
     try {
-      const res = await listarClientes()
+      const res = await fetchHallOfFame()
       if (res && Array.isArray(res.data)) {
-        const sorted = [...res.data].sort((a, b) => (b.xp || 0) - (a.xp || 0))
-        setRanking(sorted)
+        setRanking(res.data)
       }
     } catch (err) {
       console.error('Erro ao buscar ranking:', err)
@@ -131,7 +130,11 @@ export default function DashboardPage() {
 
     fetchTemporadaAtiva()
       .then(res => setTemporadaAtiva(res.data))
-      .catch(err => console.log('Sem temporada ativa cadastrada ou erro:', err))
+      .catch(err => {
+        if (err.response?.status !== 404) {
+          console.error('Erro ao buscar temporada:', err)
+        }
+      })
 
     if (isClient) {
       setLoadingBadges(true)
