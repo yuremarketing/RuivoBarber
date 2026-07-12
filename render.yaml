@@ -38,7 +38,7 @@ services:
       - key: TZ
         value: America/Sao_Paulo
       - key: GOOGLE_CLIENT_ID
-        value: 875304695392-ps6bpdh818gs2dirgd7eqea3omvrggdb.apps.googleusercontent.com
+        value: 875304695392-0itk83onvtqanood37lk0mqjgr2jljph.apps.googleusercontent.com
       - key: GOOGLE_CLIENT_SECRET
         sync: false
 
@@ -58,7 +58,7 @@ services:
       - key: VITE_API_URL
         value: https://ruivobarber-backend.onrender.com/api/v1
       - key: VITE_GOOGLE_CLIENT_ID
-        value: 875304695392-ps6bpdh818gs2dirgd7eqea3omvrggdb.apps.googleusercontent.com
+        value: 875304695392-0itk83onvtqanood37lk0mqjgr2jljph.apps.googleusercontent.com
 
 databases:
   - name: ruivobarber-db
